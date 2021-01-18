@@ -7,7 +7,7 @@ import com.essence.business.xqh.api.rainfall.vo.RainDzmReq;
 import com.essence.business.xqh.dao.dao.baseInfoManage.HbmAddvcdDDao;
 import com.essence.business.xqh.dao.dao.fhybdd.StPptnRDao;
 import com.essence.business.xqh.dao.dao.rainfall.TRiverRDao;
-import com.essence.business.xqh.dao.dao.rainfall.TStbprpBDao;
+import com.essence.business.xqh.dao.dao.rainfall.TStbprpBOldDao;
 import com.essence.business.xqh.dao.dao.rainfall.dto.THdmisTotalRainfallDto;
 import com.essence.business.xqh.dao.entity.baseInfoManage.HbmAddvcdD;
 import com.essence.business.xqh.dao.entity.rainfall.StPptnR;
@@ -45,7 +45,7 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
     private HbmAddvcdDDao hbmAddvcdDDao;
 
     @Autowired
-    TStbprpBDao tStbprpBDao;
+    TStbprpBOldDao tStbprpBOldDao;
 
     @Autowired
     private StPptnRDao pptnRDao;
@@ -97,7 +97,7 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
 
 
         //查询筛选的所有开启的测站信息
-        List<TStbprpBOld> stbprpBList = tStbprpBDao.findUseStationByAdmauthInAndSttp(sourceList, "PP");
+        List<TStbprpBOld> stbprpBList = tStbprpBOldDao.findUseStationByAdmauthInAndSttp(sourceList, "PP");
         List<String> stcdList = new ArrayList<>();
         if (stbprpBList.size() > 0) {
             for (int i = 0; i < stbprpBList.size(); i++) {
@@ -364,7 +364,7 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
         List<String> source = new ArrayList<>();  //dto.getSource();
         source.add("1");
         source.add("4");
-        List<TStbprpBOld> tStbprpBSListOld = tStbprpBDao.findUseStationByAdmauthInAndSttp(source, "ZZ");
+        List<TStbprpBOld> tStbprpBSListOld = tStbprpBOldDao.findUseStationByAdmauthInAndSttp(source, "ZZ");
         List<String> stcdList = new ArrayList<>();
         if (tStbprpBSListOld.size() > 0) {
             for (TStbprpBOld tStbprpBOld : tStbprpBSListOld) {
@@ -417,7 +417,7 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
     @Override
     public StationWaterDto getWaterLevelByStationAndTime(QueryParamDto dto) {
         String name = dto.getName();
-        List<TStbprpBOld> tStbprpBOlds = tStbprpBDao.findByName(name);
+        List<TStbprpBOld> tStbprpBOlds = tStbprpBOldDao.findByName(name);
         List<String> stcds = new ArrayList<>();
         Map<String, String> nameMap = new HashMap<>(2);
         for (TStbprpBOld tStbprpBOld : tStbprpBOlds) {

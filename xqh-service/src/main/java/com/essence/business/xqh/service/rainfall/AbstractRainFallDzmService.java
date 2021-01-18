@@ -6,8 +6,8 @@ import com.essence.business.xqh.api.rainfall.dto.dzm.StationRainVgeDto;
 import com.essence.business.xqh.api.rainfall.vo.RainDzmReq;
 import com.essence.business.xqh.common.RainConstants;
 import com.essence.business.xqh.dao.dao.rainanalyse.dto.StPptnCommonRainfall;
-import com.essence.business.xqh.dao.dao.rainfall.TStbprpBDao;
-import com.essence.business.xqh.dao.dao.rainfall.TStsmtaskBDao;
+import com.essence.business.xqh.dao.dao.rainfall.TStbprpBOldDao;
+import com.essence.business.xqh.dao.dao.rainfall.TStsmtaskBOldDao;
 import com.essence.business.xqh.dao.dao.rainfall.dto.THdmisTotalRainfallDto;
 import com.essence.business.xqh.dao.entity.rainfall.TStbprpBOld;
 import com.essence.business.xqh.dao.entity.rainfall.TStsmtaskBOld;
@@ -41,9 +41,9 @@ public abstract class AbstractRainFallDzmService {
     private DecimalFormat format1 = new DecimalFormat("##.0");
 
     @Autowired
-    TStbprpBDao tStbprpBDao;
+    TStbprpBOldDao tStbprpBOldDao;
     @Autowired
-    TStsmtaskBDao tStsmtaskBDao;
+    TStsmtaskBOldDao tStsmtaskBOldDao;
     /**
      * @Description 策略模式
      * @Author xzc
@@ -69,9 +69,9 @@ public abstract class AbstractRainFallDzmService {
      **/
     protected Map<String, Object> getRainStation() {
         //查询所有雨量站
-        List<TStsmtaskBOld> stsmtaskBList = tStsmtaskBDao.findByPfl(1L);
+        List<TStsmtaskBOld> stsmtaskBList = tStsmtaskBOldDao.findByPfl(1L);
         //查询所有开启的站
-        List<TStbprpBOld> stbprpBList = tStbprpBDao.findByUsfl("1");
+        List<TStbprpBOld> stbprpBList = tStbprpBOldDao.findByUsfl("1");
         List<String> stcdList = stbprpBList.stream().map(TStbprpBOld::getStcd).collect(Collectors.toList());
         //所有开启的站的map  <测站编码， this>
         Map<String, TStbprpBOld> stcdBprpMap = stbprpBList.stream().collect(Collectors.toMap(TStbprpBOld::getStcd, Function.identity()));
@@ -100,7 +100,7 @@ public abstract class AbstractRainFallDzmService {
         Set<String> validStcdList = validRainList.stream().map(TStsmtaskBOld::getStcd).collect(Collectors.toSet());
 
         List<THdmisTotalRainfallDto> dbCollect = getDbRainfall(req);
-        List<TStbprpBOld> selectedAll = tStbprpBDao.findByAdmauthIn(req.getSource());
+        List<TStbprpBOld> selectedAll = tStbprpBOldDao.findByAdmauthIn(req.getSource());
         Set<String> selectedStcdList = selectedAll.stream().map(TStbprpBOld::getStcd).collect(Collectors.toSet());
         //交集
         Sets.SetView<String> intersection = Sets.intersection(validStcdList, selectedStcdList);

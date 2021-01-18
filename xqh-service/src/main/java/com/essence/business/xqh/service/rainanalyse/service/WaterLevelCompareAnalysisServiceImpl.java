@@ -7,7 +7,7 @@ import com.essence.business.xqh.api.rainanalyse.dto.WaterLevelStationInfoDto;
 import com.essence.business.xqh.api.rainanalyse.service.WaterLevelCompareAnalysisService;
 import com.essence.business.xqh.dao.dao.information.StBRiverDao;
 import com.essence.business.xqh.dao.dao.information.dto.StBRiverDto;
-import com.essence.business.xqh.dao.dao.rainfall.TStbprpBDao;
+import com.essence.business.xqh.dao.dao.rainfall.TStbprpBOldDao;
 import com.essence.business.xqh.dao.entity.rainfall.TRiverR;
 import com.essence.business.xqh.dao.entity.rainfall.TStbprpBOld;
 import com.essence.framework.jpa.Criterion;
@@ -39,7 +39,7 @@ import java.util.*;
 @Service
 public class WaterLevelCompareAnalysisServiceImpl implements WaterLevelCompareAnalysisService {
     @Autowired
-    private TStbprpBDao stbprpBDao;
+    private TStbprpBOldDao stbprpBDao;
     @Autowired
     private MongoTemplate mongoTemplate;
 

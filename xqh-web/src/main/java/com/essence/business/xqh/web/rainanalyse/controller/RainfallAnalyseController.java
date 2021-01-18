@@ -3,7 +3,7 @@ package com.essence.business.xqh.web.rainanalyse.controller;
 import com.essence.business.xqh.api.rainanalyse.service.BaseStPptnRainfallService;
 import com.essence.business.xqh.api.rainanalyse.vo.RainAnalyseReq;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
-import com.essence.business.xqh.dao.dao.rainfall.TStbprpBDao;
+import com.essence.business.xqh.dao.dao.rainfall.TStbprpBOldDao;
 import com.essence.framework.jpa.Paginator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class RainfallAnalyseController {
     BaseStPptnRainfallService baseStPptnRainfallService;
 
     @Autowired
-    TStbprpBDao stbprpBDao;
+    TStbprpBOldDao stbprpBDao;
 
     /**
      * 雨晴分析
