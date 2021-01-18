@@ -5,7 +5,7 @@ import com.essence.business.xqh.api.rainfall.service.RainFallService;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
 import com.essence.business.xqh.api.rainfall.vo.RainDzmReq;
 import com.essence.business.xqh.dao.dao.baseInfoManage.HbmAddvcdDDao;
-import com.essence.business.xqh.dao.dao.rainfall.StPptnRDao;
+import com.essence.business.xqh.dao.dao.fhybdd.StPptnRDao;
 import com.essence.business.xqh.dao.dao.rainfall.TRiverRDao;
 import com.essence.business.xqh.dao.dao.rainfall.TStbprpBDao;
 import com.essence.business.xqh.dao.dao.rainfall.dto.THdmisTotalRainfallDto;
@@ -361,7 +361,7 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
         LocalDateTime currentTime = LocalDateTime.now();
         Date time = Date.from(currentTime.atZone(ZoneId.systemDefault()).toInstant());
         Date preDayTime2 = Date.from(currentTime.plusDays(-2).atZone(ZoneId.systemDefault()).toInstant());
-        List<String> source =  new ArrayList<>();  //dto.getSource();
+        List<String> source = new ArrayList<>();  //dto.getSource();
         source.add("1");
         source.add("4");
         List<TStbprpBOld> tStbprpBSListOld = tStbprpBDao.findUseStationByAdmauthInAndSttp(source, "ZZ");
@@ -414,7 +414,6 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
     }
 
 
-
     @Override
     public StationWaterDto getWaterLevelByStationAndTime(QueryParamDto dto) {
         String name = dto.getName();
@@ -434,10 +433,10 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
         for (String stcd : collect.keySet()) {
             List<TRiverR> tRiverRS1 = collect.get(stcd);
             List<TRiverRDto> tRiverDto = new ArrayList();
-            if(!CollectionUtils.isEmpty(tRiverRS1)){
-                for(TRiverR t : tRiverRS1){
+            if (!CollectionUtils.isEmpty(tRiverRS1)) {
+                for (TRiverR t : tRiverRS1) {
                     TRiverRDto d = new TRiverRDto();
-                    BeanUtils.copyProperties(t,d);
+                    BeanUtils.copyProperties(t, d);
                     tRiverDto.add(d);
                 }
             }

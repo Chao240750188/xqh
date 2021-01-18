@@ -4,7 +4,7 @@ import com.essence.business.xqh.api.rainfall.dto.dzm.StationRainVgeDto;
 import com.essence.business.xqh.api.rainfall.service.RainFallDzmGtDateService;
 import com.essence.business.xqh.api.rainfall.vo.RainDzmReq;
 import com.essence.business.xqh.common.util.gis.RainFallLevelTz;
-import com.essence.business.xqh.dao.dao.rainfall.StPptnRDao;
+import com.essence.business.xqh.dao.dao.fhybdd.StPptnRDao;
 import com.essence.business.xqh.dao.dao.rainfall.dto.THdmisTotalRainfallDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
