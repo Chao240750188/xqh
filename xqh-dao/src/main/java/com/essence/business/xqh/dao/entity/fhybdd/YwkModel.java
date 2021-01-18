@@ -5,7 +5,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "YWK_MODEL", schema = "XQH", catalog = "")
-public class YwkModelEntity {
+public class YwkModel {
     @Id
     @Column(name = "IDMODEL_ID")
     private String idmodelId;

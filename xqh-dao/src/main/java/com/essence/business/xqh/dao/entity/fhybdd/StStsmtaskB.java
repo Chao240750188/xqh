@@ -8,7 +8,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "ST_STSMTASK_B", schema = "XQH", catalog = "")
-public class StStsmtaskBEntity {
+public class StStsmtaskB {
     //测站编码
     @Id
     @Column(name = "STCD")

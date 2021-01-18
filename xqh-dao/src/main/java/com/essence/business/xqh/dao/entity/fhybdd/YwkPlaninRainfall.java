@@ -8,7 +8,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "YWK_PLANIN_RAINFALL", schema = "XQH", catalog = "")
-public class YwkPlaninRainfallEntity {
+public class YwkPlaninRainfall {
     @Id
     @Column(name = "C_ID")
     private String cId;

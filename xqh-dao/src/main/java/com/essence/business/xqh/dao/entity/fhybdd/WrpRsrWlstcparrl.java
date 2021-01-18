@@ -5,8 +5,8 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "WRP_RSR_WLSTCPARRL", schema = "XQH", catalog = "")
-@IdClass(WrpRsrWlstcparrlEntityPK.class)
-public class WrpRsrWlstcparrlEntity {
+@IdClass(WrpRsrWlstcparrlPK.class)
+public class WrpRsrWlstcparrl {
     @Id
     @Column(name = "RSCD")
     private String rscd;

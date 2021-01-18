@@ -5,7 +5,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "WRP_RSR_BSIN", schema = "XQH", catalog = "")
-public class WrpRsrBsinEntity {
+public class WrpRsrBsin {
     @Id
     @Column(name = "RSCD")
     private String rscd;

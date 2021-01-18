@@ -7,7 +7,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "WRP_RSR_ST_STBPRP", schema = "XQH", catalog = "")
-public class WrpRsrStStbprpEntity {
+public class WrpRsrStStbprp {
     @Id
     @Column(name = "C_ID")
     private String cId;

@@ -9,7 +9,7 @@ import java.util.Date;
 
 @Entity
 @Table(name = "YWK_PLANINFO", schema = "XQH", catalog = "")
-public class YwkPlaninfoEntity {
+public class YwkPlaninfo {
     @Id
     @Column(name = "N_PLANID")
     private String nPlanid;

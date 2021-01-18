@@ -4,7 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import java.io.Serializable;
 
-public class WrpRsrWlstcparrlEntityPK implements Serializable {
+public class WrpRsrWlstcparrlPK implements Serializable {
     private String rscd;
     private Double wl;
 

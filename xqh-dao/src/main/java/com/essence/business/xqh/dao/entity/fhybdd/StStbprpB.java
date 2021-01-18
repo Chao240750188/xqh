@@ -5,7 +5,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "ST_STBPRP_B", schema = "XQH", catalog = "")
-public class StStbprpBEntity {
+public class StStbprpB {
     //测站编码
     @Id
     @Column(name = "STCD")
