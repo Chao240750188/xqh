@@ -1,9 +1,14 @@
 package com.essence.business.xqh.dao.entity.fhybdd;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.sql.Timestamp;
+import java.util.Date;
 
 @Entity
 @Table(name = "ST_PPTN_R", schema = "XQH", catalog = "")
@@ -15,7 +20,9 @@ public class StPptnR {
     private String stcd;
     //时间
     @Column(name = "TM")
-    private Timestamp tm;
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date tm;
     //时段降水量
     @Column(name = "DRP")
     private Double drp;
@@ -48,11 +55,11 @@ public class StPptnR {
         this.stcd = stcd;
     }
 
-    public Timestamp getTm() {
+    public Date getTm() {
         return tm;
     }
 
-    public void setTm(Timestamp tm) {
+    public void setTm(Date tm) {
         this.tm = tm;
     }
 
