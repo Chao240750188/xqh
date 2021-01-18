@@ -10,6 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <!--666-->
     <artifactId>xqh-web</artifactId>
     <dependencies>
         <dependency>
