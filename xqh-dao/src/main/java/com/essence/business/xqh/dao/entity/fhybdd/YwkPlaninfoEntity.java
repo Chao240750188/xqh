@@ -12,7 +12,7 @@ import java.util.Date;
 public class YwkPlaninfoEntity {
     @Id
     @Column(name = "N_PLANID")
-    private Long nPlanid;
+    private String nPlanid;
     @Column(name = "C_PLANNAME")
     private String cPlanname;
     @Column(name = "C_MIKESCENARIOCODE")
@@ -54,12 +54,11 @@ public class YwkPlaninfoEntity {
     @Column(name = "N_CREATETIME")
     private Timestamp nCreatetime;
 
-
-    public Long getnPlanid() {
+    public String getnPlanid() {
         return nPlanid;
     }
 
-    public void setnPlanid(Long nPlanid) {
+    public void setnPlanid(String nPlanid) {
         this.nPlanid = nPlanid;
     }
 

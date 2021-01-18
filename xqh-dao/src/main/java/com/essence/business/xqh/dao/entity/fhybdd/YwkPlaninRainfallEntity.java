@@ -19,7 +19,7 @@ public class YwkPlaninRainfallEntity {
     @Column(name = "D_TIME")
     private Timestamp dTime;
     @Column(name = "N_PLANID")
-    private Long nPlanid;
+    private String nPlanid;
 
 
     public String getcId() {
@@ -56,13 +56,11 @@ public class YwkPlaninRainfallEntity {
         this.dTime = dTime;
     }
 
-    public Long getnPlanid() {
+    public String getnPlanid() {
         return nPlanid;
     }
 
-    public void setnPlanid(Long nPlanid) {
+    public void setnPlanid(String nPlanid) {
         this.nPlanid = nPlanid;
     }
-
-
 }

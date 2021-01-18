@@ -13,7 +13,7 @@ public class YwkPlanOutputQEntity {
     @Column(name = "IDC_ID")
     private String idcId;
     @Column(name = "N_PLANID")
-    private Long nPlanid;
+    private String nPlanid;
     @Column(name = "D_TIME")
     private Timestamp dTime;
     @Column(name = "N_Q")
@@ -28,11 +28,11 @@ public class YwkPlanOutputQEntity {
         this.idcId = idcId;
     }
 
-    public Long getnPlanid() {
+    public String getnPlanid() {
         return nPlanid;
     }
 
-    public void setnPlanid(Long nPlanid) {
+    public void setnPlanid(String nPlanid) {
         this.nPlanid = nPlanid;
     }
 
