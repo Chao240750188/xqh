@@ -22,7 +22,7 @@ public class ModelCallConrtroller {
     @RequestMapping(value = "/modelCallBySWDD", method = RequestMethod.POST)
     public SystemSecurityMessage modelCallBySWDD(ModelCallBySWDDVo vo) {
         try {
-            //modelCallService.callMode(vo
+    //,modelCallService.callMode(vo)
             return SystemSecurityMessage.getSuccessMsg("调用防洪与报警水文调度模型成功！");
         }catch (Exception e){
             e.printStackTrace();
