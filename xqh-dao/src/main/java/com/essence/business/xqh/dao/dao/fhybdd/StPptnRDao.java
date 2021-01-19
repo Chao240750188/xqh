@@ -2,7 +2,6 @@ package com.essence.business.xqh.dao.dao.fhybdd;
 
 import com.essence.business.xqh.dao.dao.rainfall.dto.THdmisTotalRainfallDto;
 import com.essence.business.xqh.dao.entity.fhybdd.StPptnR;
-import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 import com.essence.framework.jpa.EssenceJpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,21 +14,21 @@ import java.util.List;
 public interface StPptnRDao extends EssenceJpaRepository<StPptnR,String > {
 
 
-    List<com.essence.business.xqh.dao.entity.rainfall.StPptnR> findByStcdOrderByTmDesc(String stcd);
+    List<StPptnR> findByStcdOrderByTmDesc(String stcd);
 
     //    @Query(value = "select * from st_pptn_r where stcd = :stcd and (tm BETWEEN  :startTime and :endTime ) order by tm ", nativeQuery = true)
 //    List<StPptnR> findByStcdAndTmBetweenOrderByTm(@Param("stcd") String stcd, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
-    List<com.essence.business.xqh.dao.entity.rainfall.StPptnR> findByStcdAndTmBetweenOrderByTm(String stcd, Date startTime, Date endTime);
+    List<StPptnR> findByStcdAndTmBetweenOrderByTm(String stcd, Date startTime, Date endTime);
 
     @Query(value = "select * from ST_PPTN_R where STCD = :stcd and (TM BETWEEN  :startTime and :endTime ) ", nativeQuery = true)
-    List<com.essence.business.xqh.dao.entity.rainfall.StPptnR> findByStcdAndTmBetween(@Param("stcd") String stcd, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<StPptnR> findByStcdAndTmBetween(@Param("stcd") String stcd, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
-    com.essence.business.xqh.dao.entity.rainfall.StPptnR findByStcdAndTm(String stcd, Date tm);
+    StPptnR findByStcdAndTm(String stcd, Date tm);
 
 
-    List<com.essence.business.xqh.dao.entity.rainfall.StPptnR> findByTmBetweenOrderByTm(Date startTime, Date endTime);
+    List<StPptnR> findByTmBetweenOrderByTm(Date startTime, Date endTime);
 
-    List<com.essence.business.xqh.dao.entity.rainfall.StPptnR> findByTmBetween(Date startTime, Date endTime);
+    List<StPptnR> findByTmBetween(Date startTime, Date endTime);
 
 
 //    @Query(value = "SELECT t.tm2,SUM(t.drp)/COUNT(DISTINCT stcd) AS num FROM (SELECT stcd ,tm , drp ,DATE_FORMAT(tm,'%Y-%m-%d %H') AS tm2 FROM st_pptn_r WHERE tm >= :startTime AND tm < :endTime ) AS t GROUP BY t.tm2 ", nativeQuery = true)

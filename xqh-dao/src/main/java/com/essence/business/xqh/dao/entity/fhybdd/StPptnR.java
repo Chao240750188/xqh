@@ -6,6 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.Table;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -13,6 +14,7 @@ import java.util.Date;
 @Entity
 @Table(name = "ST_PPTN_R", schema = "XQH", catalog = "")
 public class StPptnR {
+    @Id
     @Column(name = "ID")
     private String id;
     //测站编码
