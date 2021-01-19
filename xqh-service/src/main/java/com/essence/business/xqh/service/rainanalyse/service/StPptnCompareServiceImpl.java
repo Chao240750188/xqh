@@ -6,12 +6,12 @@ import com.essence.business.xqh.api.rainanalyse.vo.RainCompareAnalyseReq;
 import com.essence.business.xqh.api.rainfall.vo.RainDzmReq;
 import com.essence.business.xqh.common.RainConstants;
 import com.essence.business.xqh.common.util.DateUtil;
+import com.essence.business.xqh.dao.dao.fhybdd.StPptnRDao;
 import com.essence.business.xqh.dao.dao.rainanalyse.StPptnYearRainfallDao;
 import com.essence.business.xqh.dao.dao.rainanalyse.dto.StPptnCommonRainfall;
-import com.essence.business.xqh.dao.dao.rainfall.StPptnRDao;
 import com.essence.business.xqh.dao.dao.rainfall.dto.THdmisTotalRainfallDto;
+import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 import com.essence.business.xqh.dao.entity.rainanalyse.StPptnYearRainfall;
-import com.essence.business.xqh.dao.entity.rainfall.TStbprpBOld;
 import com.essence.business.xqh.dao.entity.rainfall.TStsmtaskBOld;
 import com.essence.business.xqh.service.rainfall.AbstractRainFallDzmService;
 import org.springframework.beans.BeanUtils;
@@ -460,7 +460,7 @@ public class StPptnCompareServiceImpl extends AbstractRainFallDzmService impleme
            // 公共逻辑 开始
            Map<String, Object> rainStation = getRainStation();
            //所有开启的站的map  <测站编码， this>
-           Map<String, TStbprpBOld> stcdBprpMap = (Map<String, TStbprpBOld>) rainStation.get(RainConstants.STCDBPRPMAP);
+           Map<String, StStbprpB> stcdBprpMap = (Map<String, StStbprpB>) rainStation.get(RainConstants.STCDBPRPMAP);
            //所有开启的雨量站
            List<TStsmtaskBOld> validRainList = (List<TStsmtaskBOld>) rainStation.get(RainConstants.VALIDRAINLIST);
            //所有开启的雨量站编码

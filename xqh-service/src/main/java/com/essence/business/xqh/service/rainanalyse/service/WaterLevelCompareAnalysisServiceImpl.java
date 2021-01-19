@@ -5,11 +5,11 @@ import com.essence.business.xqh.api.rainanalyse.dto.WaterLevelCompareDetailInfoD
 import com.essence.business.xqh.api.rainanalyse.dto.WaterLevelCompareInfoDto;
 import com.essence.business.xqh.api.rainanalyse.dto.WaterLevelStationInfoDto;
 import com.essence.business.xqh.api.rainanalyse.service.WaterLevelCompareAnalysisService;
+import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
 import com.essence.business.xqh.dao.dao.information.StBRiverDao;
 import com.essence.business.xqh.dao.dao.information.dto.StBRiverDto;
-import com.essence.business.xqh.dao.dao.rainfall.TStbprpBDao;
+import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 import com.essence.business.xqh.dao.entity.rainfall.TRiverR;
-import com.essence.business.xqh.dao.entity.rainfall.TStbprpBOld;
 import com.essence.framework.jpa.Criterion;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
@@ -39,7 +39,7 @@ import java.util.*;
 @Service
 public class WaterLevelCompareAnalysisServiceImpl implements WaterLevelCompareAnalysisService {
     @Autowired
-    private TStbprpBDao stbprpBDao;
+    private StStbprpBDao stbprpBDao;
     @Autowired
     private MongoTemplate mongoTemplate;
 
@@ -100,12 +100,12 @@ public class WaterLevelCompareAnalysisServiceImpl implements WaterLevelCompareAn
         List<WaterLevelStationInfoDto> waterLevelStationInfoList = new ArrayList<>();
 
         //查询正在启用的远程传送的水位站信息
-        List<TStbprpBOld> stbprpBList = stbprpBDao.findUseWaterLevelStbprpB("ZZ");
+        List<StStbprpB> stbprpBList = stbprpBDao.findUseWaterLevelStbprpB("ZZ");
         if (stbprpBList.size()>0){
-            for (TStbprpBOld tStbprpBOld : stbprpBList) {
+            for (StStbprpB stStbprpB : stbprpBList) {
                 WaterLevelStationInfoDto waterLevelStationInfoDto = new WaterLevelStationInfoDto();
-                waterLevelStationInfoDto.setStcd(tStbprpBOld.getStcd());
-                waterLevelStationInfoDto.setStnm(tStbprpBOld.getStnm());
+                waterLevelStationInfoDto.setStcd(stStbprpB.getStcd());
+                waterLevelStationInfoDto.setStnm(stStbprpB.getStnm());
                 waterLevelStationInfoDto.setType("0");
                 waterLevelStationInfoList.add(waterLevelStationInfoDto);
             }
@@ -440,18 +440,18 @@ public class WaterLevelCompareAnalysisServiceImpl implements WaterLevelCompareAn
         if (StringUtils.isEmpty(type)) {//查询所有测站
 
             //查询远程接收的测站信息
-            List<TStbprpBOld> stbprpBList = stbprpBDao.findUseWaterLevelStbprpB("ZZ");
+            List<StStbprpB> stbprpBList = stbprpBDao.findUseWaterLevelStbprpB("ZZ");
             List<String> stcdList = new ArrayList<>();
             if (stbprpBList.size() > 0) {
-                for (TStbprpBOld tStbprpBOld : stbprpBList) {
-                    stcdList.add(tStbprpBOld.getStcd());
+                for (StStbprpB stStbprpB : stbprpBList) {
+                    stcdList.add(stStbprpB.getStcd());
 
                     WaterLevelAnalysisInfoDto waterLevelAnalysisInfoDto = new WaterLevelAnalysisInfoDto();
-                    waterLevelAnalysisInfoDto.setStcd(tStbprpBOld.getStcd());
-                    waterLevelAnalysisInfoDto.setStnm(tStbprpBOld.getStnm());
-                    waterLevelAnalysisInfoDto.setRvnm(tStbprpBOld.getRvnm());
+                    waterLevelAnalysisInfoDto.setStcd(stStbprpB.getStcd());
+                    waterLevelAnalysisInfoDto.setStnm(stStbprpB.getStnm());
+                    waterLevelAnalysisInfoDto.setRvnm(stStbprpB.getRvnm());
                     waterLevelAnalysisInfoDto.setType("0");
-                    waterLevelAnalysisInfoMap.put(tStbprpBOld.getStcd(), waterLevelAnalysisInfoDto);
+                    waterLevelAnalysisInfoMap.put(stStbprpB.getStcd(), waterLevelAnalysisInfoDto);
                 }
 
 
@@ -494,7 +494,7 @@ public class WaterLevelCompareAnalysisServiceImpl implements WaterLevelCompareAn
         }else {
 
 
-            TStbprpBOld stbprpB = stbprpBDao.findByStcd(stcd);
+            StStbprpB stbprpB = stbprpBDao.findByStcd(stcd);
             if (null!=stbprpB){
                 WaterLevelAnalysisInfoDto waterLevelAnalysisInfoDto = new WaterLevelAnalysisInfoDto();
                 waterLevelAnalysisInfoDto.setStcd(stbprpB.getStcd());
@@ -926,18 +926,18 @@ public class WaterLevelCompareAnalysisServiceImpl implements WaterLevelCompareAn
         if (StringUtils.isEmpty(type)) {//查询所有测站
 
             //查询远程接收的测站信息
-            List<TStbprpBOld> stbprpBList = stbprpBDao.findUseWaterLevelStbprpB("ZZ");
+            List<StStbprpB> stbprpBList = stbprpBDao.findUseWaterLevelStbprpB("ZZ");
             List<String> stcdList = new ArrayList<>();
             if (stbprpBList.size() > 0) {
-                for (TStbprpBOld tStbprpBOld : stbprpBList) {
-                    stcdList.add(tStbprpBOld.getStcd());
+                for (StStbprpB stStbprpB : stbprpBList) {
+                    stcdList.add(stStbprpB.getStcd());
 
                     WaterLevelAnalysisInfoDto waterLevelAnalysisInfoDto = new WaterLevelAnalysisInfoDto();
-                    waterLevelAnalysisInfoDto.setStcd(tStbprpBOld.getStcd());
-                    waterLevelAnalysisInfoDto.setStnm(tStbprpBOld.getStnm());
-                    waterLevelAnalysisInfoDto.setRvnm(tStbprpBOld.getRvnm());
+                    waterLevelAnalysisInfoDto.setStcd(stStbprpB.getStcd());
+                    waterLevelAnalysisInfoDto.setStnm(stStbprpB.getStnm());
+                    waterLevelAnalysisInfoDto.setRvnm(stStbprpB.getRvnm());
                     waterLevelAnalysisInfoDto.setType("0");//远程对接的测站
-                    waterLevelAnalysisInfoMap.put(tStbprpBOld.getStcd(), waterLevelAnalysisInfoDto);
+                    waterLevelAnalysisInfoMap.put(stStbprpB.getStcd(), waterLevelAnalysisInfoDto);
                 }
 
 
@@ -963,7 +963,7 @@ public class WaterLevelCompareAnalysisServiceImpl implements WaterLevelCompareAn
         }else {
             if ("0".equals(type)){//查询远程接收的测站信息
 
-                TStbprpBOld stbprpB = stbprpBDao.findByStcd(stcd);
+                StStbprpB stbprpB = stbprpBDao.findByStcd(stcd);
                 if (null!=stbprpB){
                     WaterLevelAnalysisInfoDto waterLevelAnalysisInfoDto = new WaterLevelAnalysisInfoDto();
                     waterLevelAnalysisInfoDto.setStcd(stbprpB.getStcd());

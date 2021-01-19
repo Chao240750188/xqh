@@ -10,7 +10,7 @@ import com.essence.business.xqh.dao.dao.rainanalyse.StPptnDayRainfallDao;
 import com.essence.business.xqh.dao.dao.rainanalyse.StPptnHourRainfallDao;
 import com.essence.business.xqh.dao.dao.rainanalyse.dto.StPptnCommonRainfall;
 import com.essence.business.xqh.dao.dao.rainfall.dto.THdmisTotalRainfallDto;
-import com.essence.business.xqh.dao.entity.rainfall.TStbprpBOld;
+import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 import com.essence.business.xqh.dao.entity.rainfall.TStsmtaskBOld;
 import com.essence.business.xqh.service.rainanalyse.strategy.*;
 import com.essence.business.xqh.service.rainfall.AbstractRainFallDzmService;
@@ -75,7 +75,7 @@ public class BaseStPptnRainfallServiceImpl extends AbstractRainFallDzmService im
         List<StPptnCommonRainfall> validRainfallStation = (List<StPptnCommonRainfall>) common.get("validRainfallStation");
         Map<String, List<StPptnCommonRainfall>> collectSort = (Map<String, List<StPptnCommonRainfall>>) common.get("collectSort");
         Map<String, List<StPptnCommonRainfall>> collect = (Map<String, List<StPptnCommonRainfall>>) common.get("collect");
-        Map<String, TStbprpBOld> stcdBprpMap = (Map<String, TStbprpBOld>) common.get("stcdBprpMap");
+        Map<String, StStbprpB> stcdBprpMap = (Map<String, StStbprpB>) common.get("stcdBprpMap");
 
         switch (req.getType()) {
             //年
@@ -136,7 +136,7 @@ public class BaseStPptnRainfallServiceImpl extends AbstractRainFallDzmService im
         // 公共逻辑 开始
         Map<String, Object> rainStation = getRainStation();
         //所有开启的站的map  <测站编码， this>
-        Map<String, TStbprpBOld> stcdBprpMap = (Map<String, TStbprpBOld>) rainStation.get(RainConstants.STCDBPRPMAP);
+        Map<String, StStbprpB> stcdBprpMap = (Map<String, StStbprpB>) rainStation.get(RainConstants.STCDBPRPMAP);
         //所有开启的雨量站
         List<TStsmtaskBOld> validRainList = (List<TStsmtaskBOld>) rainStation.get(RainConstants.VALIDRAINLIST);
         //所有开启的雨量站编码
@@ -164,7 +164,7 @@ public class BaseStPptnRainfallServiceImpl extends AbstractRainFallDzmService im
             List<StPptnCommonRainfall> validRainfallStation,
             Map<String, List<StPptnCommonRainfall>> collectSort,
             Map<String, List<StPptnCommonRainfall>> collect,
-            Map<String, TStbprpBOld> stcdBprpMap) {
+            Map<String, StStbprpB> stcdBprpMap) {
         return dealWithDayNew(validRainfallStation, collectSort, collect, stcdBprpMap);
     }
 
@@ -177,7 +177,7 @@ public class BaseStPptnRainfallServiceImpl extends AbstractRainFallDzmService im
     private List<Object> dealWithMonthNew(List<StPptnCommonRainfall> validRainfallStation,
                                           Map<String, List<StPptnCommonRainfall>> collectSort,
                                           Map<String, List<StPptnCommonRainfall>> collect,
-                                          Map<String, TStbprpBOld> stcdBprpMap) {
+                                          Map<String, StStbprpB> stcdBprpMap) {
         return dealWithDayNew(validRainfallStation, collectSort, collect, stcdBprpMap);
     }
 
@@ -190,7 +190,7 @@ public class BaseStPptnRainfallServiceImpl extends AbstractRainFallDzmService im
     private List<Object> dealWithDayNew(List<StPptnCommonRainfall> validRainfallStation,
                                         Map<String, List<StPptnCommonRainfall>> collectSort,
                                         Map<String, List<StPptnCommonRainfall>> collect,
-                                        Map<String, TStbprpBOld> stcdBprpMap) {
+                                        Map<String, StStbprpB> stcdBprpMap) {
 
         List<Object> objectList = new ArrayList<>();
         //平均值
@@ -282,7 +282,7 @@ public class BaseStPptnRainfallServiceImpl extends AbstractRainFallDzmService im
     private List<Object> dealWithHourNew(List<StPptnCommonRainfall> validRainfallStation,
                                          Map<String, List<StPptnCommonRainfall>> collectSort,
                                          Map<String, List<StPptnCommonRainfall>> collect,
-                                         Map<String, TStbprpBOld> stcdBprpMap) {
+                                         Map<String, StStbprpB> stcdBprpMap) {
         List<Object> objectList = new ArrayList<>();
         //根据时间分组得到每个事件的平均值
         Map<String, Double> tmAndDrpAvg = validRainfallStation.stream().collect(Collectors.groupingBy(StPptnCommonRainfall::getShowTm, Collectors.averagingDouble(StPptnCommonRainfall::getDrp)));
