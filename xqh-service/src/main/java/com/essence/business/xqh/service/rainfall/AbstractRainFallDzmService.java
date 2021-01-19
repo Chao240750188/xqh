@@ -5,11 +5,11 @@ import com.essence.business.xqh.api.rainfall.dto.dzm.StationRainDto;
 import com.essence.business.xqh.api.rainfall.dto.dzm.StationRainVgeDto;
 import com.essence.business.xqh.api.rainfall.vo.RainDzmReq;
 import com.essence.business.xqh.common.RainConstants;
+import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
 import com.essence.business.xqh.dao.dao.rainanalyse.dto.StPptnCommonRainfall;
-import com.essence.business.xqh.dao.dao.rainfall.TStbprpBOldDao;
 import com.essence.business.xqh.dao.dao.rainfall.TStsmtaskBOldDao;
 import com.essence.business.xqh.dao.dao.rainfall.dto.THdmisTotalRainfallDto;
-import com.essence.business.xqh.dao.entity.rainfall.TStbprpBOld;
+import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 import com.essence.business.xqh.dao.entity.rainfall.TStsmtaskBOld;
 import com.essence.business.xqh.service.rainanalyse.strategy.*;
 import com.essence.framework.util.DateUtil;
@@ -41,7 +41,7 @@ public abstract class AbstractRainFallDzmService {
     private DecimalFormat format1 = new DecimalFormat("##.0");
 
     @Autowired
-    TStbprpBOldDao tStbprpBOldDao;
+    StStbprpBDao tStbprpBOldDao;
     @Autowired
     TStsmtaskBOldDao tStsmtaskBOldDao;
     /**
@@ -71,10 +71,10 @@ public abstract class AbstractRainFallDzmService {
         //查询所有雨量站
         List<TStsmtaskBOld> stsmtaskBList = tStsmtaskBOldDao.findByPfl(1L);
         //查询所有开启的站
-        List<TStbprpBOld> stbprpBList = tStbprpBOldDao.findByUsfl("1");
-        List<String> stcdList = stbprpBList.stream().map(TStbprpBOld::getStcd).collect(Collectors.toList());
+        List<StStbprpB> stbprpBList = tStbprpBOldDao.findByUsfl("1");
+        List<String> stcdList = stbprpBList.stream().map(StStbprpB::getStcd).collect(Collectors.toList());
         //所有开启的站的map  <测站编码， this>
-        Map<String, TStbprpBOld> stcdBprpMap = stbprpBList.stream().collect(Collectors.toMap(TStbprpBOld::getStcd, Function.identity()));
+        Map<String, StStbprpB> stcdBprpMap = stbprpBList.stream().collect(Collectors.toMap(StStbprpB::getStcd, Function.identity()));
         //所有开启的雨量站
         List<TStsmtaskBOld> validRainList = stsmtaskBList.stream().filter(item -> stcdList.contains(item.getStcd())).collect(Collectors.toList());
         Map map = new HashMap(2);
@@ -92,7 +92,7 @@ public abstract class AbstractRainFallDzmService {
     protected StationRainVgeDto getAllStationTotalRainfall(RainDzmReq req) {
         Map rainStation = getRainStation();
         //所有开启的站的map  <测站编码， this>
-        Map<String, TStbprpBOld> stcdBprpMap = (Map<String, TStbprpBOld>) rainStation.get(RainConstants.STCDBPRPMAP);
+        Map<String, StStbprpB> stcdBprpMap = (Map<String, StStbprpB>) rainStation.get(RainConstants.STCDBPRPMAP);
         //所有开启的雨量站
         List<TStsmtaskBOld> validRainList = (List<TStsmtaskBOld>) rainStation.get(RainConstants.VALIDRAINLIST);
 
@@ -100,8 +100,8 @@ public abstract class AbstractRainFallDzmService {
         Set<String> validStcdList = validRainList.stream().map(TStsmtaskBOld::getStcd).collect(Collectors.toSet());
 
         List<THdmisTotalRainfallDto> dbCollect = getDbRainfall(req);
-        List<TStbprpBOld> selectedAll = tStbprpBOldDao.findByAdmauthIn(req.getSource());
-        Set<String> selectedStcdList = selectedAll.stream().map(TStbprpBOld::getStcd).collect(Collectors.toSet());
+        List<StStbprpB> selectedAll = tStbprpBOldDao.findByAdmauthIn(req.getSource());
+        Set<String> selectedStcdList = selectedAll.stream().map(StStbprpB::getStcd).collect(Collectors.toSet());
         //交集
         Sets.SetView<String> intersection = Sets.intersection(validStcdList, selectedStcdList);
         System.out.println("交集为："+intersection);
@@ -117,10 +117,10 @@ public abstract class AbstractRainFallDzmService {
         intersection.forEach(stcd -> {
             // 全站累计雨量，为了求平均值。
             StationRainDto stationRainDto = new StationRainDto();
-            TStbprpBOld tStbprpBOld = stcdBprpMap.get(stcd);
-            stationRainDto.setLgtd(tStbprpBOld.getLgtd());
-            stationRainDto.setLttd(tStbprpBOld.getLttd());
-            stationRainDto.setStnm(tStbprpBOld.getStnm());
+            StStbprpB stStbprpB = stcdBprpMap.get(stcd);
+            stationRainDto.setLgtd(stStbprpB.getLgtd());
+            stationRainDto.setLttd(stStbprpB.getLttd());
+            stationRainDto.setStnm(stStbprpB.getStnm());
             stationRainDto.setStcd(stcd);
             Double drp = stcdAndDrpMap.get(stcd);
             if (!ObjectUtils.isEmpty(drp)) {

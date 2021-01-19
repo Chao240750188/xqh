@@ -6,13 +6,13 @@ import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
 import com.essence.business.xqh.api.rainfall.vo.RainDzmReq;
 import com.essence.business.xqh.dao.dao.baseInfoManage.HbmAddvcdDDao;
 import com.essence.business.xqh.dao.dao.fhybdd.StPptnRDao;
+import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
 import com.essence.business.xqh.dao.dao.rainfall.TRiverRDao;
-import com.essence.business.xqh.dao.dao.rainfall.TStbprpBOldDao;
 import com.essence.business.xqh.dao.dao.rainfall.dto.THdmisTotalRainfallDto;
 import com.essence.business.xqh.dao.entity.baseInfoManage.HbmAddvcdD;
-import com.essence.business.xqh.dao.entity.rainfall.StPptnR;
+import com.essence.business.xqh.dao.entity.fhybdd.StPptnR;
+import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 import com.essence.business.xqh.dao.entity.rainfall.TRiverR;
-import com.essence.business.xqh.dao.entity.rainfall.TStbprpBOld;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -45,7 +45,7 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
     private HbmAddvcdDDao hbmAddvcdDDao;
 
     @Autowired
-    TStbprpBOldDao tStbprpBOldDao;
+    StStbprpBDao tStbprpBOldDao;
 
     @Autowired
     private StPptnRDao pptnRDao;
@@ -97,25 +97,25 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
 
 
         //查询筛选的所有开启的测站信息
-        List<TStbprpBOld> stbprpBList = tStbprpBOldDao.findUseStationByAdmauthInAndSttp(sourceList, "PP");
+        List<StStbprpB> stbprpBList = tStbprpBOldDao.findUseStationByAdmauthInAndSttp(sourceList, "PP");
         List<String> stcdList = new ArrayList<>();
         if (stbprpBList.size() > 0) {
             for (int i = 0; i < stbprpBList.size(); i++) {
-                TStbprpBOld tStbprpBOld = stbprpBList.get(i);
-                stcdList.add(tStbprpBOld.getStcd());
+                StStbprpB stStbprpB = stbprpBList.get(i);
+                stcdList.add(stStbprpB.getStcd());
 
                 RainFallDto rainFallDto = new RainFallDto();
 
-                String addvcd = tStbprpBOld.getAddvcd();
+                String addvcd = stStbprpB.getAddvcd();
                 String addvnm = hbmAddvcdDMap.get(addvcd);
                 if (null != addvnm) {
                     rainFallDto.setTownship(addvnm);
                 }
-                rainFallDto.setStcd(tStbprpBOld.getStcd());
-                rainFallDto.setStnm(tStbprpBOld.getStnm());
-                rainFallDto.setLgtd(tStbprpBOld.getLgtd());
-                rainFallDto.setLttd(tStbprpBOld.getLttd());
-                rainFallDto.setSource(tStbprpBOld.getLocality());
+                rainFallDto.setStcd(stStbprpB.getStcd());
+                rainFallDto.setStnm(stStbprpB.getStnm());
+                rainFallDto.setLgtd(stStbprpB.getLgtd());
+                rainFallDto.setLttd(stStbprpB.getLttd());
+                rainFallDto.setSource(stStbprpB.getLocality());
                 rainFallDto.setOneh(0d);
                 rainFallDto.setTwoh(0d);
                 rainFallDto.setThreeh(0d);
@@ -124,7 +124,7 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
                 rainFallDto.setFrameh(0d);
                 rainFallDto.setCurrenth(0d);
                 rainFallDto.setCount(0d);
-                rainFallDtosMap.put(tStbprpBOld.getStcd(), rainFallDto);
+                rainFallDtosMap.put(stStbprpB.getStcd(), rainFallDto);
             }
 
             // 把前24小时查出来
@@ -364,21 +364,21 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
         List<String> source = new ArrayList<>();  //dto.getSource();
         source.add("1");
         source.add("4");
-        List<TStbprpBOld> tStbprpBSListOld = tStbprpBOldDao.findUseStationByAdmauthInAndSttp(source, "ZZ");
+        List<StStbprpB> stStbprpBSListOld = tStbprpBOldDao.findUseStationByAdmauthInAndSttp(source, "ZZ");
         List<String> stcdList = new ArrayList<>();
-        if (tStbprpBSListOld.size() > 0) {
-            for (TStbprpBOld tStbprpBOld : tStbprpBSListOld) {
-                stcdList.add(tStbprpBOld.getStcd());
+        if (stStbprpBSListOld.size() > 0) {
+            for (StStbprpB stStbprpB : stStbprpBSListOld) {
+                stcdList.add(stStbprpB.getStcd());
 
                 WalterLevelDto walterLevelDto = new WalterLevelDto();
-                walterLevelDto.setStcd(tStbprpBOld.getStcd());
-                walterLevelDto.setStnm(tStbprpBOld.getStnm());
-                walterLevelDto.setRvnm(tStbprpBOld.getRvnm());
-                walterLevelDto.setLgtd(tStbprpBOld.getLgtd());
-                walterLevelDto.setLttd(tStbprpBOld.getLttd());
+                walterLevelDto.setStcd(stStbprpB.getStcd());
+                walterLevelDto.setStnm(stStbprpB.getStnm());
+                walterLevelDto.setRvnm(stStbprpB.getRvnm());
+                walterLevelDto.setLgtd(stStbprpB.getLgtd());
+                walterLevelDto.setLttd(stStbprpB.getLttd());
                 List<Double> waterLevelList = new ArrayList<>();
                 walterLevelDto.setWaterlevel(waterLevelList);
-                walterLevelDtoMap.put(tStbprpBOld.getStcd(), walterLevelDto);
+                walterLevelDtoMap.put(stStbprpB.getStcd(), walterLevelDto);
             }
 
             //查询最新水位
@@ -417,12 +417,12 @@ public class RainFallServiceImpl extends AbstractRainFallDzmService implements R
     @Override
     public StationWaterDto getWaterLevelByStationAndTime(QueryParamDto dto) {
         String name = dto.getName();
-        List<TStbprpBOld> tStbprpBOlds = tStbprpBOldDao.findByName(name);
+        List<StStbprpB> stStbprpBS = tStbprpBOldDao.findByStnm(name);
         List<String> stcds = new ArrayList<>();
         Map<String, String> nameMap = new HashMap<>(2);
-        for (TStbprpBOld tStbprpBOld : tStbprpBOlds) {
-            String stcd = tStbprpBOld.getStcd();
-            String stnm = tStbprpBOld.getStnm();
+        for (StStbprpB stStbprpB : stStbprpBS) {
+            String stcd = stStbprpB.getStcd();
+            String stnm = stStbprpB.getStnm();
             stcds.add(stcd);
             nameMap.put(stcd, stnm);
         }
