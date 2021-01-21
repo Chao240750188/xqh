@@ -87,7 +87,7 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         //编写模型的配置文件
 
         //调用模型
-        runModelExe(MODEL_RUN + File.separator + "_main_xiaoqinghe.exe");
+        runModelExe(MODEL_RUN + File.separator + "startUp.bat");
 
         //获取输入结果,57个断面也包含水库
         Map<String,List<String>> model_result = getModelResult(MODEL_TEMPLATE_OUTPUT);
@@ -358,4 +358,5 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         CacheUtil.saveOrUpdate("rainfall",planId,results);
         return results;
     }
+
 }
