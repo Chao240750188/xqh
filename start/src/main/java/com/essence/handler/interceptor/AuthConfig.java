@@ -24,7 +24,7 @@ public class AuthConfig extends WebMvcConfigurerAdapter {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(authInterceptor).addPathPatterns("/**")
+        registry.addInterceptor(authInterceptor).addPathPatterns("/aaa")
                 .excludePathPatterns("/index.html",
                         "/assets/**",
                         "/mock/**",
