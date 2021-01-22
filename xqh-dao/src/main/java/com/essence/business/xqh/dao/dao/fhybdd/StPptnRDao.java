@@ -21,7 +21,10 @@ public interface StPptnRDao extends EssenceJpaRepository<StPptnR,String > {
             "and to_date(?2,'yyyy-mm-dd hh24:mi:ss') \n" +
             "\n" +
             "GROUP BY TO_CHAR(TM,'yyyy-mm-dd hh24'),STCD ORDER BY tm asc",nativeQuery = true)
-    public List<Map<String,Object>> findStPptnRByStartTimeAndEndTime(Date startTime, Date endTIme);
+    public List<Map<String,Object>> findStPptnRByStartTimeAndEndTime(String startTime, String endTIme);
+
+
+
     List<StPptnR> findByStcdOrderByTmDesc(String stcd);
 
     //    @Query(value = "select * from st_pptn_r where stcd = :stcd and (tm BETWEEN  :startTime and :endTime ) order by tm ", nativeQuery = true)
