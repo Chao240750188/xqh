@@ -1,7 +1,9 @@
 package com.essence.business.xqh.service.fhybdd;
 
 import com.essence.business.xqh.api.fhybdd.dto.ModelCallBySWDDVo;
+import com.essence.business.xqh.api.fhybdd.dto.SkProperties;
 import com.essence.business.xqh.api.fhybdd.service.ModelCallFhybddService;
+import com.essence.business.xqh.api.task.fhybdd.ReservoirModelCallTask;
 import com.essence.business.xqh.common.util.CacheUtil;
 import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
@@ -21,6 +23,7 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,6 +45,12 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
 
     @Autowired
     WrpRsrBsinDao wrpRsrBsinDao; //水库的
+
+    @Autowired
+    SkProperties skProperties;
+
+    @Autowired
+    ReservoirModelCallTask reservoirModelCallTask;
 
     @Transactional
     @Override
@@ -68,35 +77,32 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         } else if ("2".equals(modelid)) {
             SWYB_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_DWX_Path");
         }
-        String MODEL_TEMPLATE_INPUT = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE")
+        String SWYB_MODEL_TEMPLATE = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
+
+        String SWYB_MODEL_TEMPLATE_INPUT = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE")
                 + File.separator + "INPUT" + File.separator + planId; //输入的地址
-        String MODEL_TEMPLATE_OUTPUT = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
-                + File.separator + planId;//输入的地址
-        //入参
-        String MODEL_TEMPLATE = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
+        String SWYB_MODEL_TEMPLATE_OUTPUT = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                + File.separator + planId;//输出的地址
         //模型运行的config
         String MODEL_RUN = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
-        File inputPath = new File(MODEL_TEMPLATE_INPUT);
-        File outPath = new File(MODEL_TEMPLATE_OUTPUT);
+        File inputPath = new File(SWYB_MODEL_TEMPLATE_INPUT);
+        File outPath = new File(SWYB_MODEL_TEMPLATE_OUTPUT);
         inputPath.mkdir();
         outPath.mkdir();
         //写入到csv入参里 雨量
-        writeDataToInputPcpCsv(MODEL_TEMPLATE_INPUT, results);
+        writeDataToInputPcpCsv(SWYB_MODEL_TEMPLATE_INPUT, results);
         //写入河流的数据
-        writeDataToInputModelSelectCsv(MODEL_TEMPLATE_INPUT, allParentIdIsNull, modelid);
+        writeDataToInputModelSelectCsv(SWYB_MODEL_TEMPLATE_INPUT, allParentIdIsNull, modelid);
         //修改config文件里
-        writeDataToConfig(MODEL_RUN, MODEL_TEMPLATE_INPUT, MODEL_TEMPLATE_OUTPUT);
-        //编写模型的配置文件
 
+        writeDataToConfig(MODEL_RUN, SWYB_MODEL_TEMPLATE_INPUT, SWYB_MODEL_TEMPLATE_OUTPUT);
+        //编写模型的配置文件
         //调用模型
         runModelExe(MODEL_RUN + File.separator + "startUp.bat");
 
         //获取输入结果,57个断面也包含水库
-        Map<String, List<String>> model_result = getModelResult(MODEL_TEMPLATE_OUTPUT);
+        Map<String, List<String>> model_result = getModelResult(SWYB_MODEL_TEMPLATE_OUTPUT);
 
-
-        //List<WrpRcsBsin> wrpRcsBsins = wrpRcsBsinDao.findAll();
-        //List<String> collect = wrpRcsBsins.stream().map(WrpRcsBsin::getRvcrcrsccd).collect(Collectors.toList());
         //水库编码
         List<String> collect = wrpRsrBsinDao.findAll().stream().map(WrpRsrBsin::getRscd).collect(Collectors.toList());
 
@@ -104,12 +110,56 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         for (Map.Entry<String, List<String>> entry : model_result.entrySet()) {
             String key = entry.getKey();
             if (collect.contains(key)) {
-                model_shuiku.put(key, entry.getValue());
+                model_shuiku.put(key, entry.getValue());//9个水库。
             }
         }
 
+        Long step = planInfo.getnOutputtm() / 60;//步长
+
+        //水库调度的外层文件夹
+        String SKDD_PATH=PropertiesUtil.read("/filePath.properties").getProperty("SKDD_BASE_PATH");
+
+
+
+        Map<String, String> sk_id_name = skProperties.getID_NAME();
+
+        List<CompletableFuture<Integer>> skddFuture = new ArrayList<>();
+
+        //水文调度模型的出参为水库调度的入参数
+        for (Map.Entry<String,String> entry: sk_id_name.entrySet()){
+            String key = entry.getKey();
+            List<String> rkll = model_shuiku.get(key);//入库流量
+            String name = entry.getValue();
+            String SKDD_MODEL_TEMPLATE_INPUT = SKDD_PATH+File.separator+name+
+                    File.separator+PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE")
+            +File.separator+"INPUT"+File.separator+planId;
+
+            String SKDD_MODEL_TEMPLATE_OUTPUT = SKDD_PATH+File.separator+name+File.separator+
+                    PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")+File.separator+planId;
+
+            String SKDD_RUN = SKDD_PATH + File.separator + name + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
+
+            String SWYB_SK_TEMPLATE = SWYB_MODEL_TEMPLATE+name.toUpperCase();//水文预报的入参数 不是input
+            skddFuture.add(reservoirModelCallTask.reservoirModelCall(SKDD_RUN,SKDD_MODEL_TEMPLATE_INPUT,SKDD_MODEL_TEMPLATE_OUTPUT,step,rkll,SWYB_MODEL_TEMPLATE_INPUT,SWYB_SK_TEMPLATE));
+        }
+
+        CompletableFuture []result = new CompletableFuture[skddFuture.size()];
+        for (int i=0;i<skddFuture.size();i++){
+            result[i] = skddFuture.get(i);
+        }
+
+        CompletableFuture.allOf(result).join();//全部执行完后 然后整水文模型
+
+        runModelExe(MODEL_RUN + File.separator + "startUp.bat");
+
+        Map<String, List<String>> finalResult = getModelResult(SWYB_MODEL_TEMPLATE_OUTPUT);
+
         return null;
     }
+
+
+
+
 
     private void writeDataToInputModelSelectCsv(String model_template_input, List<WrpRvrBsin> allParentIdIsNull, String modelId) {
         String modelSelectInputUrl = model_template_input + File.separator + "model_selection.csv";
@@ -283,6 +333,7 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
 
     @Override
     public String savePlanWithCache(ModelCallBySWDDVo vo) {
+        Map<String, String> id_name = skProperties.getID_NAME();
         Date startTime = vo.getStartTime(); //开始时间
         Date endTIme = vo.getEndTime();  //结束时间
         Date periodEndTime = vo.getPeriodEndTime();//预见结束时间
@@ -432,35 +483,35 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
      */
     @Override
     public void makeSwModelToSkdd(String planId) {
-        YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);
-        Long step = planInfo.getnOutputtm() / 60;//步长(小时)
-        String modelId = planInfo.getnModelid();
-        Date startTime = planInfo.getdCaculatestarttm();
-        Date endTime = planInfo.getdCaculateendtm();
-
-        //创建入参、出参
-        String SWYB_PATH = "";
-        if ("1".equals(modelId)) {
-            SWYB_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_SCS_Path");
-        } else if ("2".equals(modelId)) {
-            SWYB_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_DWX_Path");
-        }
-        String MODEL_TEMPLATE_OUTPUT = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
-                + File.separator + planId;//输出地址
-        String MODEL_TEMPLATE = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("TEMPLATE")
-                + File.separator +"INPUT"+File.separator+ planId;//输入模板文件
-        //获取水文模型输出结果57个断面流量数据
-        Map<String, String> rcsqMap = getSwModelResultToSkdd(MODEL_TEMPLATE_OUTPUT);
-        //水库编码
-        List<String> rsrList = wrpRsrBsinDao.findAll().stream().map(WrpRsrBsin::getRscd).collect(Collectors.toList());
-        //处理结果文件
-        for (String rsrId: rsrList) {
-            //大站水库
-             if(rsrId.equals("RCS_018")){
-                 //写水文模型template
-                 String RCS_INPUT_MODEL = rcsqMap.get(rsrId);
-             }
-        }
+//        YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);
+//        Long step = planInfo.getnOutputtm() / 60;//步长(小时)
+//        String modelId = planInfo.getnModelid();
+//        Date startTime = planInfo.getdCaculatestarttm();
+//        Date endTime = planInfo.getdCaculateendtm();
+//
+//        //创建入参、出参
+//        String SWYB_PATH = "";
+//        if ("1".equals(modelId)) {
+//            SWYB_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_SCS_Path");
+//        } else if ("2".equals(modelId)) {
+//            SWYB_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_DWX_Path");
+//        }
+//        String MODEL_TEMPLATE_OUTPUT = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+//                + File.separator + planId;//输出地址
+//        String MODEL_TEMPLATE = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("TEMPLATE")
+//                + File.separator +"INPUT"+File.separator+ planId;//输入模板文件
+//        //获取水文模型输出结果57个断面流量数据
+//        Map<String, String> rcsqMap = getSwModelResultToSkdd(MODEL_TEMPLATE_OUTPUT);
+//        //水库编码
+//        List<String> rsrList = wrpRsrBsinDao.findAll().stream().map(WrpRsrBsin::getRscd).collect(Collectors.toList());
+//        //处理结果文件
+//        for (String rsrId: rsrList) {
+//            //大站水库
+//             if(rsrId.equals("RCS_018")){
+//                 //写水文模型template
+//                 String RCS_INPUT_MODEL = rcsqMap.get(rsrId);
+//             }
+//        }
 
     }
 
