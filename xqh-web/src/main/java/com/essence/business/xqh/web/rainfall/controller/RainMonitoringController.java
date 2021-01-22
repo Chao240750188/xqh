@@ -37,7 +37,7 @@ public class RainMonitoringController {
      * @param dto
      * @return
      */
-    @GetMapping(value = "/getRainDistributionList")
+    @PostMapping(value = "/getRainDistributionList")
     public SystemSecurityMessage getRainDistributionList(@RequestBody QueryParamDto dto) {
         try {
             return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getRainDistributionList(dto));
