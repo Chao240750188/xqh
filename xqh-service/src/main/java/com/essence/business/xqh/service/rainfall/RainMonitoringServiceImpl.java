@@ -56,7 +56,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             BigDecimal drp = new BigDecimal(0);
             Map<String, Object> map = rainSituation.get(0);
             stnm = map.get("STNM").toString();
-            drp = new BigDecimal(map.get("DRP").toString());
+            drp = new BigDecimal(map.get("DRP") == null ? "0" : map.get("DRP").toString());
             for (Map<String, Object> tempMap : rainSituation) {
                 String stcd = tempMap.get("STCD").toString();
                 if (!booleanMap.containsKey(stcd)) {
@@ -85,7 +85,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             hashMap.put("count", value);
             double percent = 0;
             if (size > 0) {
-                percent = value / size;
+                percent = 100.00 * value / size;
             }
             hashMap.put("percent", new BigDecimal(percent).setScale(2).doubleValue());
             arrayList.add(hashMap);
