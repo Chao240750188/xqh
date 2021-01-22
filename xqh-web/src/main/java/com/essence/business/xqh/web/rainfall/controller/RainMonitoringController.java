@@ -61,14 +61,4 @@ public class RainMonitoringController {
         }
     }
 
-
-    public SystemSecurityMessage rainfallProcess() {
-
-        try {
-            return new SystemSecurityMessage("ok", "查询成功");
-        } catch (Exception e) {
-            return new SystemSecurityMessage("error", "查询失败");
-        }
-    }
-
 }
