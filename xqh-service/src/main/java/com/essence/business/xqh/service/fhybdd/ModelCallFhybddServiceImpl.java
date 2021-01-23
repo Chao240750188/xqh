@@ -1,19 +1,17 @@
 package com.essence.business.xqh.service.fhybdd;
 
-import com.essence.business.xqh.api.fhybdd.dto.ModelCallBySWDDVo;
-import com.essence.business.xqh.api.fhybdd.dto.SkProperties;
+import com.essence.business.xqh.api.fhybdd.dto.*;
 import com.essence.business.xqh.api.fhybdd.service.ModelCallFhybddService;
 import com.essence.business.xqh.api.task.fhybdd.ReservoirModelCallTask;
 import com.essence.business.xqh.common.util.CacheUtil;
 import com.essence.business.xqh.common.util.DateUtil;
+import com.essence.business.xqh.common.util.FileUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.*;
-import com.essence.business.xqh.dao.entity.fhybdd.WrpRsrBsin;
-import com.essence.business.xqh.dao.entity.fhybdd.WrpRvrBsin;
-import com.essence.business.xqh.dao.entity.fhybdd.YwkPlanOutputQ;
-import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
+import com.essence.business.xqh.dao.entity.fhybdd.*;
 import com.essence.euauth.common.util.UuidUtil;
 import com.essence.framework.util.StrUtil;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,31 +48,45 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
     SkProperties skProperties;
 
     @Autowired
+    ModelProperties modelProperties;
+
+    @Autowired
+    YwkModelDao ywkModelDao;//水文模型
+
+    @Autowired
     ReservoirModelCallTask reservoirModelCallTask;
 
     @Transactional
     @Override
-    public List<Map<String, Object>> callMode(String planId) {
+    public Map<String,List<String>>callMode(String planId) {
 
         //写入txt文件,组装雨量 pcp文件
         ///Users/xiongchao/小清河/XQH_SWYB_MODEL/SCS/MODEL/config.txt
 
         YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);//方案基本信息
+
+        if(planInfo == null){
+            System.out.println("计划信息为空，无法计算");
+            return new HashMap<>();
+        }
         //雨量信息表
         List<Map<String, Object>> results = (List<Map<String, Object>>) CacheUtil.get("rainfall", planId);
+        if (CollectionUtils.isEmpty(results)){
+            System.out.println("雨量信息为空，无法计算");
+            return new HashMap<>();
+        }
 
         //河流信息
-        List<WrpRvrBsin> allParentIdIsNull = wrpRvrBsinDao.findAllParentIdIsNull();
-
+        List<WrpRvrBsin> allParentIdIsNull = wrpRvrBsinDao.findAllParentIdIsNull();//模型入参使用
         String modelid = planInfo.getnModelid();// 1是SCS  2是单位线
+        String modelPyId = modelProperties.getModelMap().get(modelid);
 
-        String riverId = "RVR_011"; //小清河
-
+        String riverId = planInfo.getRiverId(); //小清河
         //创建入参、出参
         String SWYB_PATH = "";
-        if ("1".equals(modelid)) {
+        if ("1".equals(modelPyId)) {
             SWYB_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_SCS_Path");
-        } else if ("2".equals(modelid)) {
+        } else if ("2".equals(modelPyId)) {
             SWYB_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_DWX_Path");
         }
         String SWYB_MODEL_TEMPLATE = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
@@ -90,21 +102,34 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         inputPath.mkdir();
         outPath.mkdir();
         //写入到csv入参里 雨量
-        writeDataToInputPcpCsv(SWYB_MODEL_TEMPLATE_INPUT, results);
+       int result0 = writeDataToInputPcpCsv(SWYB_MODEL_TEMPLATE_INPUT, results);
+       if (result0 == 0 ){
+           System.out.println("水文模型写入雨量pcp.Csv失败");
+           return new HashMap<>();
+       }
         //写入河流的数据
-        writeDataToInputModelSelectCsv(SWYB_MODEL_TEMPLATE_INPUT, allParentIdIsNull, modelid);
+       int result1 = writeDataToInputModelSelectCsv(SWYB_MODEL_TEMPLATE_INPUT, allParentIdIsNull, modelPyId);
+       if (result1 == 0){
+           System.out.println("水文模型写入河流的数据model_select失败");
+           return new HashMap<>();
+       }
         //修改config文件里
-
-        writeDataToConfig(MODEL_RUN, SWYB_MODEL_TEMPLATE_INPUT, SWYB_MODEL_TEMPLATE_OUTPUT);
+        int result2 = writeDataToConfig(MODEL_RUN, SWYB_MODEL_TEMPLATE_INPUT, SWYB_MODEL_TEMPLATE_OUTPUT);
+        if (result2 == 0){
+            System.out.println("水文模型修改config文件失败");
+            return new HashMap<>();
+        }
         //编写模型的配置文件
         //调用模型
         runModelExe(MODEL_RUN + File.separator + "startUp.bat");
-
         //获取输入结果,57个断面也包含水库
         Map<String, List<String>> model_result = getModelResult(SWYB_MODEL_TEMPLATE_OUTPUT);
-
+        if (model_result.size()<=0){
+            System.out.println("水文模型调用结果result文件失败");
+            return new HashMap<>();
+        }
         //水库编码
-        List<String> collect = wrpRsrBsinDao.findAll().stream().map(WrpRsrBsin::getRscd).collect(Collectors.toList());
+        List<String> collect = wrpRsrBsinDao.findAll().stream().map(WrpRsrBsin::getRvcrcrsccd).collect(Collectors.toList());
 
         Map<String, List<String>> model_shuiku = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : model_result.entrySet()) {
@@ -115,11 +140,8 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         }
 
         Long step = planInfo.getnOutputtm() / 60;//步长
-
         //水库调度的外层文件夹
         String SKDD_PATH=PropertiesUtil.read("/filePath.properties").getProperty("SKDD_BASE_PATH");
-
-
 
         Map<String, String> sk_id_name = skProperties.getID_NAME();
 
@@ -129,18 +151,25 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         for (Map.Entry<String,String> entry: sk_id_name.entrySet()){
             String key = entry.getKey();
             List<String> rkll = model_shuiku.get(key);//入库流量
+            System.out.println("key:"+key+",rkll:"+rkll);
             String name = entry.getValue();
             String SKDD_MODEL_TEMPLATE_INPUT = SKDD_PATH+File.separator+name+
                     File.separator+PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE")
             +File.separator+"INPUT"+File.separator+planId;
+            String SKDD_MODEL_TEMPLATE = SKDD_PATH+File.separator+name+
+                    File.separator+PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
 
             String SKDD_MODEL_TEMPLATE_OUTPUT = SKDD_PATH+File.separator+name+File.separator+
                     PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")+File.separator+planId;
 
             String SKDD_RUN = SKDD_PATH + File.separator + name + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
 
-            String SWYB_SK_TEMPLATE = SWYB_MODEL_TEMPLATE+name.toUpperCase();//水文预报的入参数 不是input
-            skddFuture.add(reservoirModelCallTask.reservoirModelCall(SKDD_RUN,SKDD_MODEL_TEMPLATE_INPUT,SKDD_MODEL_TEMPLATE_OUTPUT,step,rkll,SWYB_MODEL_TEMPLATE_INPUT,SWYB_SK_TEMPLATE));
+            String SWYB_SK_TEMPLATE = SWYB_MODEL_TEMPLATE+File.separator+name.toLowerCase()+"shuiku.txt";//水文预报的入参数 不是input 小写
+            File file1= new File(SKDD_MODEL_TEMPLATE_INPUT);
+            file1.mkdir();
+            File file2= new File(SKDD_MODEL_TEMPLATE_OUTPUT);
+            file2.mkdir();
+            skddFuture.add(reservoirModelCallTask.reservoirModelCall(SKDD_RUN,SKDD_MODEL_TEMPLATE,SKDD_MODEL_TEMPLATE_INPUT,SKDD_MODEL_TEMPLATE_OUTPUT,step,rkll,SWYB_SK_TEMPLATE));
         }
 
         CompletableFuture []result = new CompletableFuture[skddFuture.size()];
@@ -149,23 +178,32 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         }
 
         CompletableFuture.allOf(result).join();//全部执行完后 然后整水文模型
-
+        System.out.println("开始二次调用水文模型");
         runModelExe(MODEL_RUN + File.separator + "startUp.bat");
+        System.out.println("二次调用水文模型成功");
 
         Map<String, List<String>> finalResult = getModelResult(SWYB_MODEL_TEMPLATE_OUTPUT);
+        //找到河系关联的断面
+        List<WrpRcsBsin> listByRiverId = wrpRcsBsinDao.findListByRiverId(riverId);
+        List<String> sections = listByRiverId.stream().map(WrpRcsBsin::getRvcrcrsccd).collect(Collectors.toList());
 
-        return null;
+        Map<String,List<String>> resultMap = new HashMap<>();
+        for(String sectionId : sections){
+            resultMap.put(sectionId,finalResult.get(sectionId));
+        }
+
+        return resultMap;
     }
 
 
 
 
 
-    private void writeDataToInputModelSelectCsv(String model_template_input, List<WrpRvrBsin> allParentIdIsNull, String modelId) {
+    private int writeDataToInputModelSelectCsv(String model_template_input, List<WrpRvrBsin> allParentIdIsNull, String modelId) {
         String modelSelectInputUrl = model_template_input + File.separator + "model_selection.csv";
 
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(modelSelectInputUrl, true)); // 附加
+            BufferedWriter bw = new BufferedWriter(new FileWriter(modelSelectInputUrl, false)); // 附加
             // 添加新的数据行
             String riverId = "";
             String modelSelect = "";
@@ -180,14 +218,18 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
             bw.write(modelSelect);
             bw.newLine();
             bw.close();
-            System.out.println("河系写入成功");
-
+            System.out.println("水文模型河系写入成功");
+            return 1;
         } catch (FileNotFoundException e) {
             // File对象的创建过程中的异常捕获
             e.printStackTrace();
+            System.out.println("水文模型河系写入失败");
+            return 0;
         } catch (IOException e) {
             // BufferedWriter在关闭对象捕捉异常
             e.printStackTrace();
+            System.out.println("水文模型河系写入失败");
+            return 0;
         }
 
     }
@@ -197,7 +239,7 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
      * @param model_template_output
      * @return
      */
-    private static Map<String, List<String>> getModelResult(String model_template_output) {
+    private  Map<String, List<String>> getModelResult(String model_template_output) {
         Map<String, List<String>> resultMap = new HashMap<>();
         List<String> datas = new ArrayList<>();
 
@@ -216,7 +258,8 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
                 resultMap.put(split.get(0), new ArrayList<>(split.subList(1, split.size())));
             }
         } catch (Exception e) {
-            System.err.println("read errors :" + e);
+            System.err.println("水文模型调用结果读取失败:read errors :" + e);
+            return new HashMap<>();
         } finally {
             try {
                 br.close();
@@ -259,11 +302,11 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
                 }
             }
         }
-        System.out.println("模型调用成功！");
+        System.out.println("水文模型调用成功！");
     }
 
 
-    private static void writeDataToConfig(String model_run, String model_template_input, String model_template_output) {
+    private  int writeDataToConfig(String model_run, String model_template_input, String model_template_output) {
         String configUrl = model_run + File.separator + "config.txt";
         String inputPcPUrl = "pcp&&" + model_template_input + File.separator + "pcp.csv";
         String inputModelSelectUrl = "model_selection&&" + model_template_input + File.separator + "model_selection.csv";
@@ -278,7 +321,9 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
             }
             br.close();
         } catch (Exception e) {
+            System.out.println("读取水文模型config失败");
             e.printStackTrace();
+            return 0;
         }
         result.set(0, inputPcPUrl);
         result.set(1, inputModelSelectUrl);
@@ -286,30 +331,40 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, false)); // 附加
             // 添加新的数据行
-            for (String s : result) {
-                bw.write(s);
-                bw.newLine();
+            for (int i=0;i<result.size();i++){
+                String s = result.get(i);
+                if (i==result.size()-1){
+                    bw.write(s);
+                }else {
+                    bw.write(s);
+                    bw.newLine();
+                }
             }
             bw.close();
-            System.out.println("");
+            System.out.println("写入水文模型config成功");
+            return 1;
         } catch (FileNotFoundException e) {
             // File对象的创建过程中的异常捕获
+            System.out.println("写入水文模型config失败");
             e.printStackTrace();
+            return 0;
         } catch (IOException e) {
             // BufferedWriter在关闭对象捕捉异常
+            System.out.println("写入水文模型config失败");
             e.printStackTrace();
+            return 0;
         }
 
     }
 
 
-    private static void writeDataToInputPcpCsv(String MODEL_TEMPLATE_INPUT, List<Map<String, Object>> results) {
+    private  int writeDataToInputPcpCsv(String MODEL_TEMPLATE_INPUT, List<Map<String, Object>> results) {
 
         //String railFallUrl = MODEL_TEMPLATE+File.separator+"pcp.csv";
         String railFallInputUrl = MODEL_TEMPLATE_INPUT + File.separator + "pcp.csv";
 
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(railFallInputUrl, true)); // 附加
+            BufferedWriter bw = new BufferedWriter(new FileWriter(railFallInputUrl, false)); // 附加
             // 添加新的数据行
             bw.write("\"time\"" + "," + "\"pcp\"");
             bw.newLine();
@@ -319,14 +374,18 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
                 bw.newLine();
             }
             bw.close();
-            System.out.println("雨量输入文件写入成功");
-
+            System.out.println("水文模型雨量输入文件写入成功");
+            return 1;
         } catch (FileNotFoundException e) {
             // File对象的创建过程中的异常捕获
+            System.out.println("水文模型雨量输入文件写入失败");
             e.printStackTrace();
+            return 0;
         } catch (IOException e) {
             // BufferedWriter在关闭对象捕捉异常
+            System.out.println("水文模型雨量输入文件写入失败");
             e.printStackTrace();
+            return 0;
         }
     }
 
@@ -355,6 +414,7 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         ywkPlaninfo.setnModelid(vo.getModelId());
         ywkPlaninfo.setdRainstarttime(startTime);
         ywkPlaninfo.setdRainendtime(endTIme);
+        ywkPlaninfo.setRiverId(vo.getRiverId());
         //tm,sum
         Boolean flag = CacheUtil.saveOrUpdate("planInfo", ywkPlaninfo.getnPlanid(), ywkPlaninfo);
         if (flag) {
@@ -401,12 +461,12 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
             for (Map m : value) {
                 sum = sum.add(new BigDecimal(m.get("sum") + ""));
             }
-            sum = sum.divide(sum, value.size(), BigDecimal.ROUND_HALF_UP).setScale(2, BigDecimal.ROUND_HALF_UP);
+            sum = sum.divide(new BigDecimal(value.size()), 2, BigDecimal.ROUND_HALF_UP);
             stPptnRMap.put(key, sum);
         }
         int i = 0;
         List<Map<String, Object>> results = new ArrayList<>();
-        while (startTime.before(endTime)) {
+        while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
             Map<String, Object> result = new HashMap<>();
             String hourStart = format.format(startTime);
             BigDecimal bigDecimal = stPptnRMap.get(hourStart);
@@ -547,5 +607,38 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
             }
         }
         return resultMap;
+    }
+
+
+    /**
+     * 获取河流列表信息
+     * @return
+     */
+    @Override
+    public List<WrpRvrBsinDto> getRiverInfos() {
+        List<WrpRvrBsinDto> list = new ArrayList<>();
+        List<WrpRvrBsin> wrpRvrBsinList = wrpRvrBsinDao.findAll();
+        for (WrpRvrBsin wrpRvrBsin:wrpRvrBsinList) {
+            WrpRvrBsinDto wrpRvrBsinDto = new WrpRvrBsinDto();
+            BeanUtils.copyProperties(wrpRvrBsin,wrpRvrBsinDto);
+            list.add(wrpRvrBsinDto);
+        }
+        return list;
+    }
+
+    /**
+     * 获取水文模型的模型列表
+     * @return
+     */
+    @Override
+    public List<YwkModelDto> getModelInfos() {
+        List<YwkModelDto> list = new ArrayList<>();
+        List<YwkModel> swyblist = ywkModelDao.getYwkModelByModelType("SWYB");
+        for (YwkModel ywkModel:swyblist) {
+            YwkModelDto ywkModelDto = new YwkModelDto();
+            BeanUtils.copyProperties(ywkModel,ywkModelDto);
+            list.add(ywkModelDto);
+        }
+        return list;
     }
 }

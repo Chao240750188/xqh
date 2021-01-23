@@ -1,51 +1,35 @@
-package com.essence.business.xqh.dao.entity.fhybdd;
+package com.essence.business.xqh.api.fhybdd.dto;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import java.sql.Timestamp;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
 import java.util.Date;
 
-@Entity
-@Table(name = "WRP_RVR_BSIN", schema = "XQH", catalog = "")
-public class WrpRvrBsin {
-    @Id
-    @Column(name = "RVCD")
+public class WrpRvrBsinDto implements Serializable {
     private String rvcd;
-    @Column(name = "RVNM")
     private String rvnm;
-    @Column(name = "ALIAS")
     private String alias;
-    @Column(name = "RVTP")
     private String rvtp;
-    @Column(name = "DWWT")
     private String dwwt;
-    @Column(name = "DWWTCD")
     private String dwwtcd;
-    @Column(name = "HWPS")
     private String hwps;
-    @Column(name = "HWEL")
     private Double hwel;
-    @Column(name = "ESPS")
     private String esps;
-    @Column(name = "ESEL")
     private Double esel;
-    @Column(name = "DTPL")
     private String dtpl;
-    @Column(name = "RVLEN")
     private Double rvlen;
-    @Column(name = "AVGG")
     private Double avgg;
-    @Column(name = "AVANRAM")
     private Double ctar;
-    @Column(name = "ANRNSTDV")
     private Double avanram;
-    @Column(name = "CTAR")
     private Double anrnstdv;
-    @Column(name = "RVOV")
     private String rvov;
-    @Column(name = "DTUPDT")
+
+    /**
+     * 开始时间
+     */
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date dtupdt;
 
 

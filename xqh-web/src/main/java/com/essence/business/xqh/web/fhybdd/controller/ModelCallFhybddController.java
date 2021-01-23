@@ -1,17 +1,22 @@
 package com.essence.business.xqh.web.fhybdd.controller;
 
 import com.essence.business.xqh.api.fhybdd.dto.ModelCallBySWDDVo;
+import com.essence.business.xqh.api.fhybdd.dto.WrpRvrBsinDto;
+import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
 import com.essence.business.xqh.api.fhybdd.service.ModelCallFhybddService;
 import com.essence.business.xqh.api.task.fhybdd.ReservoirModelCallTask;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
+import com.essence.business.xqh.dao.entity.fhybdd.WrpRvrBsin;
+import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
-@RequestMapping("/ffybddModelCall")
+@RequestMapping("/modelCallFhybdd")
 public class ModelCallFhybddController {
 
 
@@ -24,7 +29,7 @@ public class ModelCallFhybddController {
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage modelCall(@PathVariable  String planId) {
         try {
-            List<Map<String,Object>> results = modelCallFhybddService.callMode(planId);
+            Map<String,List<String>> results = modelCallFhybddService.callMode(planId);
             return SystemSecurityMessage.getSuccessMsg("调用防洪与报警水文调度模型成功！",results);
         }catch (Exception e){
             e.printStackTrace();
@@ -79,9 +84,9 @@ public class ModelCallFhybddController {
     @RequestMapping(value = "/test",method = RequestMethod.GET)
     public SystemSecurityMessage test()throws Exception{
 
-//        CompletableFuture<String> order1 = reservoirModelCallTask.reservoirModelCall("测试order1");
-//        CompletableFuture<String> order2 = reservoirModelCallTask.reservoirModelCall("测试order2");
-//        CompletableFuture<String> order3 = reservoirModelCallTask.reservoirModelCall("测试order3");
+        CompletableFuture<String> order1 = reservoirModelCallTask.text("测试order1",1);
+        CompletableFuture<String> order2 = reservoirModelCallTask.text("测试order2",2);
+       CompletableFuture<String> order3 = reservoirModelCallTask.text("测试order3",0);
 
 //        List<CompletableFuture<String>> list = new ArrayList<>();
 //        for (int i =0 ;i<3;i++){
@@ -94,10 +99,35 @@ public class ModelCallFhybddController {
 //        }
 //        // 等待所有任务都执行完
 //        // 获取每个任务的返回结果
-//        CompletableFuture.allOf(result);
-//        //String result = objects[0].get() + objects[1].get() + objects[2].get();
-//        System.out.println("result="+result[0].get()+result[1].get()+result[2].get());
+       CompletableFuture.allOf(order1,order2,order3);
+        String result = order1.get() + order2.get() + order3.get();
+        System.out.println("result="+result);
      return SystemSecurityMessage.getSuccessMsg("根据方案获取雨量信息成功");
+
+    }
+
+
+    /**
+     * 获取河流列表信息
+     * @return
+     */
+    @RequestMapping(value = "/getRiverInfos",method = RequestMethod.GET)
+    public SystemSecurityMessage getRiverInfos(){
+
+        List<WrpRvrBsinDto> riverInfos = modelCallFhybddService.getRiverInfos();
+        return SystemSecurityMessage.getSuccessMsg("获取河流列表信息成功",riverInfos);
+
+    }
+
+    /**
+     * 获取模型列表信息
+     * @return
+     */
+    @RequestMapping(value = "/getModelInfos",method = RequestMethod.GET)
+    public SystemSecurityMessage getModelInfos(){
+
+        List<YwkModelDto> modelInfos = modelCallFhybddService.getModelInfos();
+        return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",modelInfos);
 
     }
 

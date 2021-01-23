@@ -13,8 +13,17 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class ReservoirModelCallTaskImpl implements ReservoirModelCallTask {
 
+    @Async
+    @Override
+    public CompletableFuture<String> text(String name,int i) {
+        System.out.println(Thread.currentThread());
+        System.out.println(2/0);
+        return CompletableFuture.completedFuture("true"+name);
 
-//    @Async
+    }
+
+
+    //    @Async
 //    @Override
 //    public CompletableFuture<String> reservoirModelCall(String name) throws Exception {
 //
@@ -28,10 +37,10 @@ public class ReservoirModelCallTaskImpl implements ReservoirModelCallTask {
 
     @Async
     @Override
-    public CompletableFuture<Integer> reservoirModelCall(String skdd_run, String skdd_model_template_input, String skdd_model_template_output,Long step, List<String> rkll,String swyb_model_template_input,String swyb_model_template) {
+    public CompletableFuture<Integer> reservoirModelCall(String skdd_run,String skdd_model_template, String skdd_model_template_input, String skdd_model_template_output,Long step, List<String> rkll,String swyb_model_template) {
 
         //初始输入
-        writeDataToInputCSSR(skdd_model_template_input,step,rkll);
+        writeDataToInputCSSR(skdd_model_template,skdd_model_template_input,step,rkll);
         //编写水库调度，config文件
         writeDataToSKDDConfig(skdd_run,skdd_model_template_input,skdd_model_template_output);
         //调用水库调度文件
@@ -55,13 +64,17 @@ public class ReservoirModelCallTaskImpl implements ReservoirModelCallTask {
             String line = null;
             br = new BufferedReader(new InputStreamReader(p.getInputStream()));
             brError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+            System.out.println("======水库调度路径"+modelRunPath);
             // while ((line = br.readLine()) != null || (line = brError.readLine()) != null)
             // {
             while ((line = brError.readLine()) != null) {
                 // 输出exe输出的信息以及错误信息
-                System.out.println(line);
+                System.out.println("==="+line);
             }
+            System.out.println("水库模型调用成功！"+modelRunPath);
+
         } catch (Exception e) {
+            System.out.println("水库模型调用失败！"+modelRunPath);
             e.printStackTrace();
         } finally {
             if (br != null) {
@@ -72,7 +85,6 @@ public class ReservoirModelCallTaskImpl implements ReservoirModelCallTask {
                 }
             }
         }
-        System.out.println("模型调用成功！");
     }
 
     /**
@@ -97,17 +109,25 @@ public class ReservoirModelCallTaskImpl implements ReservoirModelCallTask {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        result.set(0, inputCSSRUrl);
-        result.set(1, outputUrl);
+        result.set(2, inputCSSRUrl);
+        result.set(3, outputUrl);
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, false)); // 附加
             // 添加新的数据行
-            for (String s : result) {
-                bw.write(s);
-                bw.newLine();
+//            for (String s : result) {
+//                bw.write(s);
+//                bw.newLine();
+//            }
+            for (int i=0;i<result.size();i++){
+                String s = result.get(i);
+                if (i==result.size()-1){
+                    bw.write(s);
+                }else {
+                    bw.write(s);
+                    bw.newLine();
+                }
             }
             bw.close();
-            System.out.println("");
         } catch (FileNotFoundException e) {
             // File对象的创建过程中的异常捕获
             e.printStackTrace();
@@ -124,24 +144,47 @@ public class ReservoirModelCallTaskImpl implements ReservoirModelCallTask {
      * @param step
      * @param rkll
      */
-    private void writeDataToInputCSSR(String skdd_model_template_input, Long step , List<String> rkll) {
+    private void writeDataToInputCSSR(String skdd_model_template,String skdd_model_template_input, Long step , List<String> rkll) {
         String chushishuju = skdd_model_template_input+ File.separator+"chushishuju.txt";
+        String chushishujuTemplate = skdd_model_template+File.separator+"chushishuju.txt";
+
+        List<String> result = new ArrayList<>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(chushishujuTemplate));//构造一个BufferedReader类来读取文件
+            String s = null;
+            while ((s = br.readLine()) != null) {//使用readLine方法，一次读一行
+                result.add(s);
+            }
+            br.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         BufferedWriter bw = null;
         try {
             bw = new BufferedWriter(new FileWriter(new File(chushishuju)));
             bw.write(step+"");//步数
             bw.newLine();
-            bw.write("70。00");//来流初始水位  TODO 写死
+            bw.write(result.get(1));//来流初始水位  TODO 写死
             bw.newLine();
-            bw.write("0.00");//初始下泄流量 TODO 写死
+            bw.write(result.get(2));//初始下泄流量 TODO 写死
             bw.newLine();
-            for (String s : rkll) {
-                bw.write(s);
-                bw.newLine();
+//            for (String s : rkll) {
+//                bw.write(s);
+//                bw.newLine();
+//            }
+            for (int i=0;i<rkll.size();i++){
+                String s = rkll.get(i);
+                if (i==rkll.size()-1){
+                    bw.write(s);
+                }else {
+                    bw.write(s);
+                    bw.newLine();
+                }
             }
         } catch (Exception e) {
-            System.err.println("read errors :" + e);
+            e.printStackTrace();
+            System.err.println("read errors :" +e.getMessage() );
         } finally {
             try {
                 bw.close();

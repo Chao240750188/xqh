@@ -55,7 +55,16 @@ public class WrpRsrBsin {
     private String rsov;
     @Column(name = "DTUPDT")
     private Timestamp dtupdt;
+    @Column(name = "RVCRCRSCCD")
+    private String rvcrcrsccd;
 
+    public String getRvcrcrsccd() {
+        return rvcrcrsccd;
+    }
+
+    public void setRvcrcrsccd(String rvcrcrsccd) {
+        this.rvcrcrsccd = rvcrcrsccd;
+    }
 
     public String getRscd() {
         return rscd;

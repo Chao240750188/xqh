@@ -1,9 +1,6 @@
 package com.essence.business.xqh.dao.entity.fhybdd;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -53,6 +50,17 @@ public class YwkPlaninfo {
     private Double nDeriveplantorder;
     @Column(name = "N_CREATETIME")
     private Timestamp nCreatetime;
+
+    @Transient
+   private  String riverId;
+
+    public String getRiverId() {
+        return riverId;
+    }
+
+    public void setRiverId(String riverId) {
+        this.riverId = riverId;
+    }
 
     public String getnPlanid() {
         return nPlanid;
