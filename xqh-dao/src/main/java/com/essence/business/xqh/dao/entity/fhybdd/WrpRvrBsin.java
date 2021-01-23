@@ -5,6 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.sql.Timestamp;
+import java.util.Date;
 
 @Entity
 @Table(name = "WRP_RVR_BSIN", schema = "XQH", catalog = "")
@@ -45,7 +46,7 @@ public class WrpRvrBsin {
     @Column(name = "RVOV")
     private String rvov;
     @Column(name = "DTUPDT")
-    private Timestamp dtupdt;
+    private Date dtupdt;
 
 
     public String getRvcd() {
@@ -184,11 +185,11 @@ public class WrpRvrBsin {
         this.rvov = rvov;
     }
 
-    public Timestamp getDtupdt() {
+    public Date getDtupdt() {
         return dtupdt;
     }
 
-    public void setDtupdt(Timestamp dtupdt) {
+    public void setDtupdt(Date dtupdt) {
         this.dtupdt = dtupdt;
     }
 }
