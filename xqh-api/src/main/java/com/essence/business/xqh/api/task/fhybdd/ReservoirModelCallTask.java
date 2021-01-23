@@ -12,8 +12,10 @@ public interface ReservoirModelCallTask {
      * @return
      * @throws InterruptedException
      */
-    CompletableFuture<Integer> reservoirModelCall(String skdd_run, String skdd_model_template_input, String skdd_model_template_output,Long step, List<String> rkll,String swyb_model_template_input,String SWYB_MODEL_TEMPLATE);
+    CompletableFuture<Integer> reservoirModelCall(String skdd_run, String skdd_model_template,String skdd_model_template_input, String skdd_model_template_output,Long step, List<String> rkll,String SWYB_MODEL_TEMPLATE);
+
+    CompletableFuture<String> text(String name,int i);
 
 
-     //CompletableFuture<String> reservoirModelCall(String name) throws Exception ;
+    //CompletableFuture<String> reservoirModelCall(String name) throws Exception ;
 }
