@@ -1,6 +1,8 @@
 package com.essence.business.xqh.web.fhybdd.controller;
 
 import com.essence.business.xqh.api.fhybdd.dto.ModelCallBySWDDVo;
+import com.essence.business.xqh.api.fhybdd.dto.WrpRvrBsinDto;
+import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
 import com.essence.business.xqh.api.fhybdd.service.ModelCallFhybddService;
 import com.essence.business.xqh.api.task.fhybdd.ReservoirModelCallTask;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
@@ -112,7 +114,7 @@ public class ModelCallFhybddController {
     @RequestMapping(value = "/getRiverInfos",method = RequestMethod.GET)
     public SystemSecurityMessage getRiverInfos(){
 
-        List<WrpRvrBsin> riverInfos = modelCallFhybddService.getRiverInfos();
+        List<WrpRvrBsinDto> riverInfos = modelCallFhybddService.getRiverInfos();
         return SystemSecurityMessage.getSuccessMsg("获取河流列表信息成功",riverInfos);
 
     }
@@ -124,7 +126,7 @@ public class ModelCallFhybddController {
     @RequestMapping(value = "/getModelInfos",method = RequestMethod.GET)
     public SystemSecurityMessage getModelInfos(){
 
-        List<YwkModel> modelInfos = modelCallFhybddService.getModelInfos();
+        List<YwkModelDto> modelInfos = modelCallFhybddService.getModelInfos();
         return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",modelInfos);
 
     }
