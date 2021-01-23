@@ -17,6 +17,7 @@ public class TaskExceptionHandler implements AsyncUncaughtExceptionHandler {
 
 	@Override
 	public void handleUncaughtException(Throwable t, Method m, Object... params) {
+		System.out.println("task handler exception :{}"+t.getMessage());
 		log.error("task handler exception :{}", t.getMessage());
 	}
 }

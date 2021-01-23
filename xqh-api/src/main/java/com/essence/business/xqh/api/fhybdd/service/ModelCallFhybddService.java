@@ -1,6 +1,8 @@
 package com.essence.business.xqh.api.fhybdd.service;
 
 import com.essence.business.xqh.api.fhybdd.dto.ModelCallBySWDDVo;
+import com.essence.business.xqh.api.fhybdd.dto.WrpRvrBsinDto;
+import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
 
 import java.util.List;
 import java.util.Map;
@@ -11,7 +13,7 @@ public interface ModelCallFhybddService {
      * 获取某段时间的降雨量，然后调用水文调度模型
      * @param planId
      */
-    List<Map<String,Object>> callMode(String planId);
+    Map<String,List<String>> callMode(String planId);
 
     /**
      * 方案计划存入到缓存里
@@ -39,4 +41,17 @@ public interface ModelCallFhybddService {
      * @param planId
      */
     void makeSwModelToSkdd(String planId);
+
+    /**
+     * 获取河系列表信息
+     * @return
+     */
+    List<WrpRvrBsinDto> getRiverInfos();
+
+
+    /**
+     * 获取模型列表信息
+     * @return
+     */
+    List<YwkModelDto> getModelInfos();
 }
