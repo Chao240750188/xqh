@@ -1,6 +1,7 @@
 package com.essence.business.xqh.web.realtimemonitor.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.essence.business.xqh.api.realtimemonitor.dto.RainDataParamDto;
 import com.essence.business.xqh.api.realtimemonitor.dto.ReturnPictureDto;
 import com.essence.business.xqh.api.realtimemonitor.dto.ReturnWeatherForecastDto;
 import com.essence.business.xqh.api.realtimemonitor.service.RealTimeMonitorService;
@@ -12,9 +13,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,6 +44,25 @@ public class RealTimeMonitorController {
 
     @Autowired
     private RealTimeMonitorService realTimeMonitorService;
+
+
+    /**
+     * 根據時間步長和站點編號獲取降雨信息
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/getRainDataByStepTimeAndID", method = RequestMethod.POST)
+    public SystemSecurityMessage getRainDataByStepTimeAndID(@RequestBody RainDataParamDto rainDataParamDto) {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.getRainDataByStepTimeAndID(rainDataParamDto));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
 
     /**
      * 获取站点信息
