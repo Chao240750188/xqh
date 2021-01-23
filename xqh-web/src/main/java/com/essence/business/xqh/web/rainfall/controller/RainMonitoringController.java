@@ -47,7 +47,7 @@ public class RainMonitoringController {
     }
 
     /**
-     * 测站信息
+     * 单个测站信息
      *
      * @param stcd
      * @return
@@ -61,4 +61,71 @@ public class RainMonitoringController {
         }
     }
 
+
+    /**
+     * 实时监测-水情监测-闸坝
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getSluiceList")
+    public SystemSecurityMessage getSluiceList(@RequestBody QueryParamDto dto) {
+        return new SystemSecurityMessage("ok", "查询成功");
+    }
+
+    /**
+     * 实时监视-水情监视-站点查询-站点信息-闸坝
+     *
+     * @param stcd
+     * @return
+     */
+    @GetMapping(value = "/getSluiceInfo/{stcd}")
+    public SystemSecurityMessage getSluiceInfo(@PathVariable(name = "stcd") String stcd) {
+        return new SystemSecurityMessage("ok", "查询成功");
+    }
+
+    /**
+     * 实时监视-水情监视-站点查询-水位流量过程线-闸坝
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getSluiceTendency")
+    public SystemSecurityMessage getSluiceTendency(@RequestBody QueryParamDto dto) {
+        return new SystemSecurityMessage("ok", "查询成功");
+    }
+
+
+    /**
+     * 实时监测-水情监测-潮位
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getTideList")
+    public SystemSecurityMessage getTideList(@RequestBody QueryParamDto dto) {
+        return new SystemSecurityMessage("", "");
+    }
+
+    /**
+     * 实时监视-水情监视-站点查询-站点信息-潮位
+     *
+     * @param stcd
+     * @return
+     */
+    @GetMapping(value = "/getTideInfo/{stcd}")
+    public SystemSecurityMessage getTideInfo(@PathVariable(name = "stcd") String stcd) {
+        return new SystemSecurityMessage("", "");
+    }
+
+    /**
+     * 实时监视-水情监视-站点查询-水位流量过程线-潮位
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getTideTendency")
+    public SystemSecurityMessage getTideTendency(@RequestBody QueryParamDto dto) {
+        return new SystemSecurityMessage("", "");
+    }
 }
