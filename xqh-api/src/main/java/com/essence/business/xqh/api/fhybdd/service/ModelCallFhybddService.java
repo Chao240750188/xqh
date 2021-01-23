@@ -1,8 +1,8 @@
 package com.essence.business.xqh.api.fhybdd.service;
 
 import com.essence.business.xqh.api.fhybdd.dto.ModelCallBySWDDVo;
-import com.essence.business.xqh.dao.entity.fhybdd.WrpRvrBsin;
-import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
+import com.essence.business.xqh.api.fhybdd.dto.WrpRvrBsinDto;
+import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
 
 import java.util.List;
 import java.util.Map;
@@ -46,12 +46,12 @@ public interface ModelCallFhybddService {
      * 获取河系列表信息
      * @return
      */
-    List<WrpRvrBsin> getRiverInfos();
+    List<WrpRvrBsinDto> getRiverInfos();
 
 
     /**
      * 获取模型列表信息
      * @return
      */
-    List<YwkModel> getModelInfos();
+    List<YwkModelDto> getModelInfos();
 }

@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
-@RequestMapping("/ffybddModelCall")
+@RequestMapping("/modelCallFhybdd")
 public class ModelCallFhybddController {
 
 

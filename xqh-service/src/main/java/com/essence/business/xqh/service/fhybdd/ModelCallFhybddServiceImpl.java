@@ -1,8 +1,6 @@
 package com.essence.business.xqh.service.fhybdd;
 
-import com.essence.business.xqh.api.fhybdd.dto.ModelCallBySWDDVo;
-import com.essence.business.xqh.api.fhybdd.dto.ModelProperties;
-import com.essence.business.xqh.api.fhybdd.dto.SkProperties;
+import com.essence.business.xqh.api.fhybdd.dto.*;
 import com.essence.business.xqh.api.fhybdd.service.ModelCallFhybddService;
 import com.essence.business.xqh.api.task.fhybdd.ReservoirModelCallTask;
 import com.essence.business.xqh.common.util.CacheUtil;
@@ -13,6 +11,7 @@ import com.essence.business.xqh.dao.dao.fhybdd.*;
 import com.essence.business.xqh.dao.entity.fhybdd.*;
 import com.essence.euauth.common.util.UuidUtil;
 import com.essence.framework.util.StrUtil;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -616,8 +615,15 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
      * @return
      */
     @Override
-    public List<WrpRvrBsin> getRiverInfos() {
-       return wrpRvrBsinDao.findAll();
+    public List<WrpRvrBsinDto> getRiverInfos() {
+        List<WrpRvrBsinDto> list = new ArrayList<>();
+        List<WrpRvrBsin> wrpRvrBsinList = wrpRvrBsinDao.findAll();
+        for (WrpRvrBsin wrpRvrBsin:wrpRvrBsinList) {
+            WrpRvrBsinDto wrpRvrBsinDto = new WrpRvrBsinDto();
+            BeanUtils.copyProperties(wrpRvrBsin,wrpRvrBsinDto);
+            list.add(wrpRvrBsinDto);
+        }
+        return list;
     }
 
     /**
@@ -625,9 +631,14 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
      * @return
      */
     @Override
-    public List<YwkModel> getModelInfos() {
-
-        List<YwkModel> swyb = ywkModelDao.getYwkModelByModelType("SWYB");
-        return swyb;
+    public List<YwkModelDto> getModelInfos() {
+        List<YwkModelDto> list = new ArrayList<>();
+        List<YwkModel> swyblist = ywkModelDao.getYwkModelByModelType("SWYB");
+        for (YwkModel ywkModel:swyblist) {
+            YwkModelDto ywkModelDto = new YwkModelDto();
+            BeanUtils.copyProperties(ywkModel,ywkModelDto);
+            list.add(ywkModelDto);
+        }
+        return list;
     }
 }
