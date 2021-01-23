@@ -38,6 +38,20 @@ public class ModelCallBySWDDVo {
      */
     private String modelId;
 
+    /**
+     * 河流id
+     */
+    private String riverId;
+
+
+    public String getRiverId() {
+        return riverId;
+    }
+
+    public void setRiverId(String riverId) {
+        this.riverId = riverId;
+    }
+
     public String getModelId() {
         return modelId;
     }
