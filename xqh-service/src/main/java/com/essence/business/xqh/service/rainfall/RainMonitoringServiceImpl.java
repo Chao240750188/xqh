@@ -9,10 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author fengpp
@@ -45,16 +42,21 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
 
         //todo sql可优化
         List<Map<String, Object>> rainSituation = stStbprpBDao.getRainSituation(dto.getStartTime(), dto.getEndTime());
-
-        String stnm = "";
-        BigDecimal drp = new BigDecimal(0);
+        Map<String, Integer> rainDistributionMap = new LinkedHashMap<>();
+        rainDistributionMap.put("0-10", 0);
+        rainDistributionMap.put("10-25", 0);
+        rainDistributionMap.put("25-50", 0);
+        rainDistributionMap.put("50-100", 0);
+        rainDistributionMap.put("100-250", 0);
+        rainDistributionMap.put("≥250", 0);
         Map<String, Boolean> booleanMap = new HashMap<>();
-        Map<String, Integer> rainDistributionMap = new HashMap<>();
+        String max = null;
         if (rainSituation != null && rainSituation.size() > 0) {
+            String stnm = "";
+            BigDecimal drp = new BigDecimal(0);
             Map<String, Object> map = rainSituation.get(0);
             stnm = map.get("STNM").toString();
-            drp = new BigDecimal(map.get("DRP").toString());
-
+            drp = new BigDecimal(map.get("DRP") == null ? "0" : map.get("DRP").toString());
             for (Map<String, Object> tempMap : rainSituation) {
                 String stcd = tempMap.get("STCD").toString();
                 if (!booleanMap.containsKey(stcd)) {
@@ -62,12 +64,16 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
                 }
                 BigDecimal decimal = new BigDecimal(tempMap.get("DRP") == null ? "0" : tempMap.get("DRP").toString());
                 String section = getRainSection(decimal);
-                Integer integer = rainDistributionMap.get(section) == null ? 0 : rainDistributionMap.get(section);
+                Integer integer = rainDistributionMap.get(section);
                 integer++;
                 rainDistributionMap.put(section, integer);
             }
+            max = "最大值为" + drp + "（ " + stnm + " ）";
         }
-        String rainfall = "当前发生降雨的站点共有" + booleanMap.size() + "个，最大值为" + drp + "（" + stnm + "）";
+        String rainfall = "当前发生降雨的站点共有" + booleanMap.size() + "个。";
+        if (max != null && !"".equals(max)) {
+            rainfall = rainfall + max;
+        }
 
         List<Map<String, Object>> arrayList = new ArrayList<>();
         int size = rainSituation.size();
@@ -77,7 +83,11 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             Map<String, Object> hashMap = new HashMap<>();
             hashMap.put("section", key);//区间
             hashMap.put("count", value);
-            hashMap.put("percent", new BigDecimal(value / size).setScale(2).doubleValue());
+            double percent = 0;
+            if (size > 0) {
+                percent = 100.00 * value / size;
+            }
+            hashMap.put("percent", new BigDecimal(percent).setScale(2).doubleValue());
             arrayList.add(hashMap);
         }
         Map<String, Object> resultMap = new HashMap<>();
@@ -90,17 +100,17 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
     //获取降雨区间
     private String getRainSection(BigDecimal rain) {
         if (rain.compareTo(new BigDecimal(10)) == -1) {
-            return "10";
+            return "0-10";
         } else if (rain.compareTo(new BigDecimal(25)) == -1) {
-            return "25";
+            return "10-25";
         } else if (rain.compareTo(new BigDecimal(50)) == -1) {
-            return "50";
+            return "25-50";
         } else if (rain.compareTo(new BigDecimal(100)) == -1) {
-            return "100";
+            return "50-100";
         } else if (rain.compareTo(new BigDecimal(250)) == -1) {
-            return "250";
+            return "100-250";
         } else {
-            return "more";
+            return "≥250";
         }
     }
 
@@ -120,7 +130,8 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         map.put("rvnm", byStcd.getRvnm());
         map.put("stlc", byStcd.getStlc());
         map.put("admauth", byStcd.getAdmauth());
-        map.put("lgtdAndLttd", byStcd.getLgtd() + "," + byStcd.getLttd());
+        map.put("lgtd", byStcd.getLgtd().toString());
+        map.put("lttd", byStcd.getLttd().toString());
         map.put("esstym", byStcd.getEsstym());
         return map;
     }
