@@ -47,6 +47,42 @@ public class RealTimeMonitorController {
 
 
     /**
+     * 获取实时河道情况
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/geRiverWayDataOnTime", method = RequestMethod.GET)
+    public SystemSecurityMessage geRiverWayDataOnTime() {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.geRiverWayDataOnTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
+
+    /**
+     * 获取实时水情概况
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/getWaterRegimenMessage", method = RequestMethod.GET)
+    public SystemSecurityMessage getWaterRegimenMessage() {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.getWaterRegimenMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
+
+    /**
      * 根據時間步長和站點編號獲取降雨信息
      *
      * @return com.essence.hdfxdp.util.SystemSecurityMessage
