@@ -28,9 +28,59 @@ public interface RainMonitoringService {
     List<Map<String, Object>> getRainDistributionList(QueryParamDto dto);
 
     /**
-     * 测站信息
+     * 单个测站信息
+     *
      * @param stcd
      * @return
      */
     Map<String, String> getInfo(String stcd);
+
+
+    /**
+     * 实时监测-水情监测-闸坝
+     *
+     * @return
+     */
+    List getSluiceList();
+
+    /**
+     * 实时监视-水情监视-站点查询-站点信息-闸坝
+     *
+     * @param stcd
+     * @return
+     */
+    List getSluiceInfo(String stcd);
+
+    /**
+     * 实时监视-水情监视-站点查询-水位流量过程线-闸坝
+     *
+     * @param dto
+     * @return
+     */
+    List getSluiceTendency(QueryParamDto dto);
+
+
+    /**
+     * 实时监测-水情监测-潮位
+     *
+     * @return
+     */
+    List getTideList();
+
+    /**
+     * 实时监视-水情监视-站点查询-站点信息-潮位
+     *
+     * @param stcd
+     * @return
+     */
+    List getTideInfo(String stcd);
+
+    /**
+     * 实时监视-水情监视-站点查询-水位流量过程线-潮位
+     *
+     * @param dto
+     * @return
+     */
+    List getTideTendency(QueryParamDto dto);
+
 }

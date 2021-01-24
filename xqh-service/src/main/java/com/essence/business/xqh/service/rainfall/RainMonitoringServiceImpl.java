@@ -87,7 +87,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             if (size > 0) {
                 percent = 100.00 * value / size;
             }
-            hashMap.put("percent", new BigDecimal(percent).setScale(2).doubleValue());
+            hashMap.put("percent", new BigDecimal(percent).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
             arrayList.add(hashMap);
         }
         Map<String, Object> resultMap = new HashMap<>();
@@ -117,7 +117,19 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
     @Override
     public List<Map<String, Object>> getRainDistributionList(QueryParamDto dto) {
         List<Map<String, Object>> rainDistributionList = stStbprpBDao.getRainDistributionList(dto.getStartTime(), dto.getEndTime());
-        return rainDistributionList;
+        List<Map<String, Object>> list = new ArrayList<>();
+        //Oracle默认大写改为小写返回
+        for (Map<String, Object> map : rainDistributionList) {
+            Map<String, Object> hashMap = new HashMap<>();
+            hashMap.put("stcd", map.get("STCD"));
+            hashMap.put("stnm", map.get("STNM"));
+            hashMap.put("rvnm", map.get("RVNM"));
+            hashMap.put("total", map.get("TOTAL"));
+            hashMap.put("lgtd", map.get("LGTD"));
+            hashMap.put("lttd", map.get("LTTD"));
+            list.add(hashMap);
+        }
+        return list;
     }
 
     @Override
@@ -134,6 +146,44 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         map.put("lttd", byStcd.getLttd().toString());
         map.put("esstym", byStcd.getEsstym());
         return map;
+    }
+
+    //实时监测-水情监测-闸坝
+    @Override
+    public List getSluiceList() {
+
+
+        return null;
+    }
+
+    //实时监视-水情监视-站点查询-站点信息-闸坝
+    @Override
+    public List getSluiceInfo(String stcd) {
+        return null;
+    }
+
+    //实时监视-水情监视-站点查询-水位流量过程线-闸坝
+    @Override
+    public List getSluiceTendency(QueryParamDto dto) {
+        return null;
+    }
+
+    //实时监测-水情监测-潮位
+    @Override
+    public List getTideList() {
+        return null;
+    }
+
+    //实时监视-水情监视-站点查询-站点信息-潮位
+    @Override
+    public List getTideInfo(String stcd) {
+        return null;
+    }
+
+    //实时监视-水情监视-站点查询-水位流量过程线-潮位
+    @Override
+    public List getTideTendency(QueryParamDto dto) {
+        return null;
     }
 
 }
