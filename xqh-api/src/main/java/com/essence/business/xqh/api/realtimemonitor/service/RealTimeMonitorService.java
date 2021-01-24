@@ -10,4 +10,8 @@ public interface RealTimeMonitorService {
     Object getStationMessage();
 
     Object getRainDataByStepTimeAndID(RainDataParamDto rainDataParamDto);
+
+    Object getWaterRegimenMessage();
+
+    Object geRiverWayDataOnTime();
 }
