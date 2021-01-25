@@ -13,4 +13,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TRvfcchBDao extends EssenceJpaRepository<TRvfcchB, String> {
 
+    TRvfcchB findByStcd(String stcd);
 }

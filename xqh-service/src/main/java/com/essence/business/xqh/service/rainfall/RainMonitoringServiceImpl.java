@@ -1,10 +1,18 @@
 package com.essence.business.xqh.service.rainfall;
 
 import com.essence.business.xqh.api.rainfall.STTPEnum;
+import com.essence.business.xqh.api.rainfall.dto.SluiceDto;
 import com.essence.business.xqh.api.rainfall.service.RainMonitoringService;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
+import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
+import com.essence.business.xqh.dao.dao.realtimemonitor.TRvfcchBDao;
+import com.essence.business.xqh.dao.dao.realtimemonitor.TTideRDao;
+import com.essence.business.xqh.dao.dao.realtimemonitor.TWasRDao;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
+import com.essence.business.xqh.dao.entity.realtimemonitor.TRvfcchB;
+import com.essence.business.xqh.dao.entity.realtimemonitor.TTideR;
+import com.essence.business.xqh.dao.entity.realtimemonitor.TWasR;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +28,12 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
 
     @Autowired
     StStbprpBDao stStbprpBDao;
+    @Autowired
+    TRvfcchBDao tRvfcchBDao;
+    @Autowired
+    TWasRDao wasRDao;
+    @Autowired
+    TTideRDao tideRDao;
 
 
     @Override
@@ -150,40 +164,184 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
 
     //实时监测-水情监测-闸坝
     @Override
-    public List getSluiceList() {
+    public List<SluiceDto> getSluiceList() {
+        List<Map<String, Object>> list = stStbprpBDao.getSluiceList();
+        List<SluiceDto> resultList = new ArrayList<>();
+        for (Map<String, Object> map : list) {
+            SluiceDto dto = new SluiceDto();
+            dto.setStcd(map.get("STCD") == null ? "" : map.get("STCD").toString());
+            dto.setStnm(map.get("STNM") == null ? "" : map.get("STNM").toString());
+            dto.setRvnm(map.get("RVNM") == null ? "" : map.get("RVNM").toString());
+            dto.setLgtd(new BigDecimal(map.get("LGTD") == null ? "0" : map.get("LGTD").toString()));
+            dto.setLttd(new BigDecimal(map.get("LTTD") == null ? "0" : map.get("LTTD").toString()));
+            BigDecimal upz = new BigDecimal(map.get("UPZ") == null ? "0" : map.get("UPZ").toString());
+            dto.setUpz(upz);
+            dto.setDwz(new BigDecimal(map.get("DWZ") == null ? "0" : map.get("DWZ").toString()));
+            dto.setTgtq(new BigDecimal(map.get("TGTQ") == null ? "0" : map.get("TGTQ").toString()));
+            BigDecimal wrz = new BigDecimal(map.get("WRZ") == null ? "0" : map.get("WRZ").toString());
+            dto.setWrz(wrz);
 
-
-        return null;
+            BigDecimal grz = new BigDecimal(map.get("GRZ") == null ? "0" : map.get("GRZ").toString());//保证水位
+            BigDecimal obhtz = new BigDecimal(map.get("OBHTZ") == null ? "0" : map.get("OBHTZ").toString());//最高水位
+            String color = "black";
+            if (upz.compareTo(wrz) == 1) {
+                color = "red";
+            } else if (upz.compareTo(grz) == 1) {
+                color = "brown";
+            } else if (upz.compareTo(obhtz) == 1) {
+                color = "blue";
+            }
+            dto.setColor(color);
+            resultList.add(dto);
+        }
+        return resultList;
     }
 
     //实时监视-水情监视-站点查询-站点信息-闸坝
     @Override
-    public List getSluiceInfo(String stcd) {
-        return null;
+    public Map<String, Object> getSluiceInfo(String stcd) {
+
+        StStbprpB stbprpB = stStbprpBDao.findByStcd(stcd);
+        TRvfcchB tRvfcchB = tRvfcchBDao.findByStcd(stcd);
+        Map<String, Object> map = new HashMap<>();
+        map.put("stnm", stbprpB.getStnm());
+        map.put("stcd", stbprpB.getStcd());
+        map.put("sttp", STTPEnum.getDesc(stbprpB.getSttp()));
+        map.put("rvnm", stbprpB.getRvnm());
+        map.put("admauth", stbprpB.getAdmauth());
+        map.put("stlc", stbprpB.getStlc());
+        map.put("lgtd", stbprpB.getLgtd());
+        map.put("lttd", stbprpB.getLttd());
+        map.put("esstym", stbprpB.getEsstym());
+        map.put("ldkel", tRvfcchB.getLdkel());
+        map.put("rdkel", tRvfcchB.getRdkel());
+        map.put("wrz", tRvfcchB.getWrz());
+        map.put("grz", tRvfcchB.getGrz());
+        map.put("wrq", tRvfcchB.getWrq());
+        map.put("grq", tRvfcchB.getGrq());
+        return map;
     }
 
     //实时监视-水情监视-站点查询-水位流量过程线-闸坝
     @Override
-    public List getSluiceTendency(QueryParamDto dto) {
-        return null;
+    public List<Map<String, Object>> getSluiceTendency(QueryParamDto dto) {
+        List<TWasR> wasRList = wasRDao.findByStcdAndTmBetweenAndOrderByTmDesc(dto.getStcd(), dto.getStartTime(), dto.getEndTime());
+        TRvfcchB tRvfcchB = tRvfcchBDao.findByStcd(dto.getStcd());
+        BigDecimal wrz = new BigDecimal(tRvfcchB.getWrz() == null ? "0" : tRvfcchB.getWrz());//警戒水位
+
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (TWasR wasR : wasRList) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("showTm", DateUtil.dateToStringNormal(wasR.getTm()));
+            map.put("tm", wasR.getTm());
+            map.put("tgtq", wasR.getTgtq());
+            String upz = wasR.getUpz();
+            map.put("upz", upz);
+            map.put("dwz", wasR.getDwz());
+            map.put("supwptn", wasR.getSupwptn());
+            map.put("wrz", wrz);
+            BigDecimal warning = null;
+            if (upz != null) {
+                warning = new BigDecimal(upz).subtract(wrz);
+            }
+            map.put("warning", warning);
+            list.add(map);
+        }
+        return list;
     }
 
     //实时监测-水情监测-潮位
     @Override
-    public List getTideList() {
-        return null;
+    public List<Map<String,Object>> getTideList() {
+
+        List<Map<String, Object>> tideList = stStbprpBDao.getTideList();
+
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Map<String, Object> map : tideList) {
+            Map<String, Object> hashMap = new HashMap<>();
+            String stcd = map.get("STCD") == null ? "" : map.get("STCD").toString();
+            String stnm = map.get("STNM") == null ? "" : map.get("STNM").toString();
+            BigDecimal lgtd = new BigDecimal(map.get("LGTD") == null ? "" : map.get("LGTD").toString());
+            BigDecimal lttd = new BigDecimal(map.get("LTTD") == null ? "" : map.get("LTTD").toString());
+            BigDecimal tdz = new BigDecimal(map.get("TDZ") == null ? "" : map.get("TDZ").toString());
+            BigDecimal airp = new BigDecimal(map.get("AIRP") == null ? "" : map.get("AIRP").toString());
+            BigDecimal wrz = new BigDecimal(map.get("WRZ") == null ? "" : map.get("WRZ").toString());
+            BigDecimal grz = new BigDecimal(map.get("GRZ") == null ? "" : map.get("GRZ").toString());
+            BigDecimal obhtz = new BigDecimal(map.get("OBHTZ") == null ? "" : map.get("OBHTZ").toString());
+
+            String color="black";
+
+            if (tdz.compareTo(wrz) == 1) {
+                color = "red";
+            } else if (tdz.compareTo(grz) == 1) {
+                color = "brown";
+            } else if (tdz.compareTo(obhtz) == 1) {
+                color = "blue";
+            }
+
+            map.put("stcd",stcd);
+            map.put("stnm",stnm);
+            map.put("lgtd",lgtd);
+            map.put("lttd",lttd);
+            map.put("tdz",tdz);
+            map.put("airp",airp);
+            map.put("color",color);
+            list.add(map);
+        }
+        return list;
     }
 
     //实时监视-水情监视-站点查询-站点信息-潮位
     @Override
-    public List getTideInfo(String stcd) {
-        return null;
+    public Map<String, Object> getTideInfo(String stcd) {
+        StStbprpB stbprpB = stStbprpBDao.findByStcd(stcd);
+        TRvfcchB tRvfcchB = tRvfcchBDao.findByStcd(stcd);
+        Map<String, Object> map = new HashMap<>();
+        map.put("stnm", stbprpB.getStnm());
+        map.put("stcd", stbprpB.getStcd());
+        map.put("sttp", STTPEnum.getDesc(stbprpB.getSttp()));
+        map.put("bsnm", stbprpB.getBsnm());
+        map.put("admauth", stbprpB.getAdmauth());
+        map.put("stlc", stbprpB.getStlc());
+        map.put("lgtd", stbprpB.getLgtd());
+        map.put("lttd", stbprpB.getLttd());
+        map.put("esstym", stbprpB.getEsstym());
+        map.put("wrz", tRvfcchB.getWrz());
+        map.put("grz", tRvfcchB.getGrz());
+        return map;
     }
 
     //实时监视-水情监视-站点查询-水位流量过程线-潮位
     @Override
-    public List getTideTendency(QueryParamDto dto) {
-        return null;
+    public List<Map<String, Object>> getTideTendency(QueryParamDto dto) {
+
+        TRvfcchB tRvfcchB = tRvfcchBDao.findByStcd(dto.getStcd());
+        BigDecimal wrz = new BigDecimal(tRvfcchB.getWrz() == null ? "0" : tRvfcchB.getWrz());//警戒水位
+        BigDecimal grz = new BigDecimal(tRvfcchB.getGrz() == null ? "0" : tRvfcchB.getGrz());//保证水位
+        BigDecimal obhtz = new BigDecimal(tRvfcchB.getObhtz() == null ? "0" : tRvfcchB.getObhtz());//最高水位
+        BigDecimal hlz = new BigDecimal(tRvfcchB.getHlz() == null ? "0" : tRvfcchB.getHlz());//最低水位
+
+        List<TTideR> tideRList = tideRDao.findByStcdAndTmBetweenAndOrderByTmDesc(dto.getStcd(), dto.getStartTime(), dto.getEndTime());
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (TTideR tTideR : tideRList) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("tm", tTideR.getTm());
+            map.put("showTm", DateUtil.dateToStringNormal(tTideR.getTm()));
+            String tdz = tTideR.getTdz();
+            map.put("tdz", tdz);
+            map.put("tdptn", tTideR.getTdptn());
+            BigDecimal warning = null;
+            if (tdz != null) {
+                warning = new BigDecimal(tdz).subtract(wrz);
+            }
+            map.put("warning", warning);
+            map.put("wrz", wrz);
+            map.put("grz", grz);
+            map.put("obhtz", obhtz);
+            map.put("hlz", hlz);
+            list.add(map);
+        }
+        return list;
     }
 
 }
