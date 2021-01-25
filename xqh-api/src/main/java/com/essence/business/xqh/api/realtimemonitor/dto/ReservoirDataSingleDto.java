@@ -2,7 +2,6 @@ package com.essence.business.xqh.api.realtimemonitor.dto;
 
 import lombok.Data;
 
-import javax.persistence.Column;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -168,5 +167,13 @@ public class ReservoirDataSingleDto implements Serializable {
      */
     private String sfq;
 
+    /**
+     * 防洪高水位
+     */
+    private String fhzgsw;
 
+    /**
+     * 历史最大蓄水量
+     */
+    private String hmxwtm;
 }

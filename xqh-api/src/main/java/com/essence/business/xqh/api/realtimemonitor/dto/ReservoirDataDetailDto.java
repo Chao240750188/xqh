@@ -40,11 +40,6 @@ public class ReservoirDataDetailDto implements Serializable {
          */
         private Double waterStorage;
 
-//        /**
-//         * 水势 0是平 -1落 1涨
-//         */
-//        private Integer situation;
-
         /**
          * 水势
          */
