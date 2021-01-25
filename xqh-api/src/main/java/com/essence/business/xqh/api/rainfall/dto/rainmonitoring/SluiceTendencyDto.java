@@ -1,88 +1,46 @@
 package com.essence.business.xqh.api.rainfall.dto.rainmonitoring;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.format.annotation.DateTimeFormat;
-
-import java.math.BigDecimal;
-import java.util.Date;
+import java.util.List;
 
 /**
  * @author fengpp
- * 2021/1/25 18:34
+ * 2021/1/25 20:20
  */
 public class SluiceTendencyDto {
-    private String showTm;
-    @DateTimeFormat(pattern = "yyyy/MM/dd HH:mm:ss")
-    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss", timezone = "GMT+8")
-    private Date tm;
-    private String tgtq;
-    private String upz;
-    private String dwz;
-    private String supwptn;
-    private BigDecimal wrz;
-    private BigDecimal warning;
+    private double high;
+    private double low;
+    private List<SluiceTendency> list;
 
-    public String getShowTm() {
-        return showTm;
+    public SluiceTendencyDto() {
     }
 
-    public void setShowTm(String showTm) {
-        this.showTm = showTm;
+    public SluiceTendencyDto(double high, double low, List<SluiceTendency> list) {
+        this.high = high;
+        this.low = low;
+        this.list = list;
     }
 
-    public Date getTm() {
-        return tm;
+    public double getHigh() {
+        return high;
     }
 
-    public void setTm(Date tm) {
-        this.tm = tm;
+    public void setHigh(double high) {
+        this.high = high;
     }
 
-    public String getTgtq() {
-        return tgtq;
+    public double getLow() {
+        return low;
     }
 
-    public void setTgtq(String tgtq) {
-        this.tgtq = tgtq;
+    public void setLow(double low) {
+        this.low = low;
     }
 
-    public String getUpz() {
-        return upz;
+    public List<SluiceTendency> getList() {
+        return list;
     }
 
-    public void setUpz(String upz) {
-        this.upz = upz;
-    }
-
-    public String getDwz() {
-        return dwz;
-    }
-
-    public void setDwz(String dwz) {
-        this.dwz = dwz;
-    }
-
-    public String getSupwptn() {
-        return supwptn;
-    }
-
-    public void setSupwptn(String supwptn) {
-        this.supwptn = supwptn;
-    }
-
-    public BigDecimal getWrz() {
-        return wrz;
-    }
-
-    public void setWrz(BigDecimal wrz) {
-        this.wrz = wrz;
-    }
-
-    public BigDecimal getWarning() {
-        return warning;
-    }
-
-    public void setWarning(BigDecimal warning) {
-        this.warning = warning;
+    public void setList(List<SluiceTendency> list) {
+        this.list = list;
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author fengpp
@@ -224,20 +225,24 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
 
     //实时监视-水情监视-站点查询-水位流量过程线-闸坝
     @Override
-    public List<SluiceTendencyDto> getSluiceTendency(QueryParamDto paramDto) {
+    public SluiceTendencyDto getSluiceTendency(QueryParamDto paramDto) {
         List<TWasR> wasRList = wasRDao.findByStcdAndTmBetweenAndOrderByTmDesc(paramDto.getStcd(), paramDto.getStartTime(), paramDto.getEndTime());
         TRvfcchB tRvfcchB = tRvfcchBDao.findByStcd(paramDto.getStcd());
         BigDecimal wrz = new BigDecimal(tRvfcchB.getWrz() == null ? "0" : tRvfcchB.getWrz());//警戒水位
-
-        List<SluiceTendencyDto> list = new ArrayList<>();
+        TreeSet<BigDecimal> sortSet = new TreeSet<>();
+        sortSet.add(wrz);
+        List<SluiceTendency> list = new ArrayList<>();
         for (TWasR wasR : wasRList) {
-            SluiceTendencyDto dto = new SluiceTendencyDto();
+            SluiceTendency dto = new SluiceTendency();
             dto.setShowTm(DateUtil.dateToStringNormal(wasR.getTm()));
             dto.setTm(wasR.getTm());
             dto.setTgtq(wasR.getTgtq());
+            sortSet.add(new BigDecimal(wasR.getTgtq() == null ? "0" : wasR.getTgtq()));
             String upz = wasR.getUpz();
             dto.setUpz(upz);
+            sortSet.add(new BigDecimal(upz == null ? "0" : upz));
             dto.setDwz(wasR.getDwz());
+            sortSet.add(new BigDecimal(wasR.getDwz() == null ? "0" : wasR.getDwz()));
             dto.setSupwptn(wasR.getSupwptn());
             dto.setWrz(wrz);
             BigDecimal warning = null;
@@ -247,7 +252,14 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             dto.setWarning(warning);
             list.add(dto);
         }
-        return list;
+        double low = 0;
+        double high = 0;
+        if (sortSet.size() > 0) {
+            low = sortSet.first().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+            high = sortSet.last().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+        }
+        SluiceTendencyDto dto = new SluiceTendencyDto(Math.ceil(high), Math.floor(low), list);
+        return dto;
     }
 
     //实时监测-水情监测-潮位
@@ -302,21 +314,28 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
 
     //实时监视-水情监视-站点查询-水位流量过程线-潮位
     @Override
-    public List<TideTendencyDto> getTideTendency(QueryParamDto paramDto) {
+    public TideTendencyDto getTideTendency(QueryParamDto paramDto) {
 
         TRvfcchB tRvfcchB = tRvfcchBDao.findByStcd(paramDto.getStcd());
+        TreeSet<BigDecimal> sortSet = new TreeSet<>();
         BigDecimal wrz = new BigDecimal(tRvfcchB.getWrz() == null ? "0" : tRvfcchB.getWrz());//警戒水位
+        sortSet.add(wrz);
         BigDecimal grz = new BigDecimal(tRvfcchB.getGrz() == null ? "0" : tRvfcchB.getGrz());//保证水位
+        sortSet.add(grz);
         BigDecimal obhtz = new BigDecimal(tRvfcchB.getObhtz() == null ? "0" : tRvfcchB.getObhtz());//最高水位
+        sortSet.add(obhtz);
         BigDecimal hlz = new BigDecimal(tRvfcchB.getHlz() == null ? "0" : tRvfcchB.getHlz());//最低水位
+        sortSet.add(hlz);
+
         List<Map<String, Object>> tideRList = tideRDao.findDataByStcdAndTime(paramDto.getStcd(), paramDto.getStartTime(), paramDto.getEndTime());
-        List<TideTendencyDto> list = new ArrayList<>();
+        List<TideTendency> list = new ArrayList<>();
         for (Map<String, Object> tempMap : tideRList) {
-            TideTendencyDto dto = new TideTendencyDto();
+            TideTendency dto = new TideTendency();
             dto.setTm((Date) tempMap.get("TM"));
             dto.setShowTm(DateUtil.dateToStringNormal((Date) tempMap.get("TM")));
-            String tdz = tempMap.get("TDZ") == null ? "" : tempMap.get("TDZ").toString();
+            String tdz = tempMap.get("TDZ") == null ? "0" : tempMap.get("TDZ").toString();
             dto.setTdz(tdz);
+            sortSet.add(new BigDecimal(tdz));
             dto.setTdptn(tempMap.get("TDPTN") == null ? "" : tempMap.get("TDPTN").toString());
             BigDecimal warning = null;
             if (tdz != null) {
@@ -329,6 +348,16 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             dto.setHlz(hlz);
             list.add(dto);
         }
-        return list;
+
+        double low = 0;
+        double high = 0;
+        if (sortSet.size() > 0) {
+            low = sortSet.first().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+            high = sortSet.last().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+        }
+        TideTendency maxTime = list.stream().sorted(Comparator.comparing(TideTendency::getObhtz).reversed()).collect(Collectors.toList()).get(0);
+        TideTendency minTm = list.stream().sorted(Comparator.comparing(TideTendency::getHlz)).collect(Collectors.toList()).get(0);
+        TideTendencyDto dto = new TideTendencyDto(high, low, maxTime.getObhtz(), minTm.getHlz(), maxTime.getShowTm(), minTm.getShowTm(), list);
+        return dto;
     }
 }

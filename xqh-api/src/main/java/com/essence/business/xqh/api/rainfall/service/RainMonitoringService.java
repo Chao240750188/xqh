@@ -58,7 +58,7 @@ public interface RainMonitoringService {
      * @param dto
      * @return
      */
-    List<SluiceTendencyDto> getSluiceTendency(QueryParamDto dto);
+    SluiceTendencyDto getSluiceTendency(QueryParamDto dto);
 
 
     /**
@@ -82,6 +82,6 @@ public interface RainMonitoringService {
      * @param dto
      * @return
      */
-    List<TideTendencyDto> getTideTendency(QueryParamDto dto);
+    TideTendencyDto getTideTendency(QueryParamDto dto);
 
 }
