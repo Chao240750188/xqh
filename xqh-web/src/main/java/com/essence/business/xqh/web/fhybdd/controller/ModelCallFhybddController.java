@@ -4,9 +4,12 @@ import com.essence.business.xqh.api.fhybdd.dto.ModelCallBySWDDVo;
 import com.essence.business.xqh.api.fhybdd.dto.WrpRcsBsinDto;
 import com.essence.business.xqh.api.fhybdd.dto.WrpRvrBsinDto;
 import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
+import com.essence.business.xqh.api.fhybdd.service.ModelCallFhybdd2Service;
 import com.essence.business.xqh.api.fhybdd.service.ModelCallFhybddService;
 import com.essence.business.xqh.api.task.fhybdd.ReservoirModelCallTask;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
+import com.essence.business.xqh.common.util.CacheUtil;
+import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +24,10 @@ public class ModelCallFhybddController {
 
     @Autowired
     ModelCallFhybddService modelCallFhybddService;
+    @Autowired
+    ModelCallFhybdd2Service modelCallFhybdd2Service;
+
+
     /**
      * 水文调度模型计算执行
      * @return
@@ -37,6 +44,26 @@ public class ModelCallFhybddController {
         }
     }
 
+    /**
+     * 水文调度模型计算执行
+     * @return
+     */
+    @RequestMapping(value = "/modelCall2/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage modelCall2(@PathVariable  String planId) {
+        YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);//方案基本信息
+        try {
+            Long ret = modelCallFhybdd2Service.callMode(planId);
+            planInfo.setnPlanstatus(ret);
+            CacheUtil.saveOrUpdate("planInfo",planId,planInfo);
+            return SystemSecurityMessage.getSuccessMsg("调用防洪与报警水文调度模型成功！",ret);
+        }catch (Exception e){
+            planInfo.setnPlanstatus(-1L);
+            CacheUtil.saveOrUpdate("planInfo",planId,planInfo);
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("调用防洪与报警水文调度模型失败！",-1);
+
+        }
+    }
 
     /**
      * 方案计划存入缓存 TODO 已测试
