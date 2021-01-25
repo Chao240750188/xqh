@@ -203,6 +203,10 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
 
         StStbprpB stbprpB = stStbprpBDao.findByStcd(stcd);
         TRvfcchB tRvfcchB = tRvfcchBDao.findByStcd(stcd);
+        if (tRvfcchB == null) {
+            tRvfcchB = new TRvfcchB();
+        }
+
         Map<String, Object> map = new HashMap<>();
         map.put("stnm", stbprpB.getStnm());
         map.put("stcd", stbprpB.getStcd());
@@ -213,12 +217,12 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         map.put("lgtd", stbprpB.getLgtd());
         map.put("lttd", stbprpB.getLttd());
         map.put("esstym", stbprpB.getEsstym());
-        map.put("ldkel", tRvfcchB.getLdkel());
-        map.put("rdkel", tRvfcchB.getRdkel());
-        map.put("wrz", tRvfcchB.getWrz());
-        map.put("grz", tRvfcchB.getGrz());
-        map.put("wrq", tRvfcchB.getWrq());
-        map.put("grq", tRvfcchB.getGrq());
+        map.put("ldkel", tRvfcchB.getLdkel() == null ? "" : tRvfcchB.getLdkel());
+        map.put("rdkel", tRvfcchB.getRdkel() == null ? "" : tRvfcchB.getRdkel());
+        map.put("wrz", tRvfcchB.getWrz() == null ? "" : tRvfcchB.getWrz());
+        map.put("grz", tRvfcchB.getGrz() == null ? "" : tRvfcchB.getGrz());
+        map.put("wrq", tRvfcchB.getWrq() == null ? "" : tRvfcchB.getWrq());
+        map.put("grq", tRvfcchB.getGrq() == null ? "" : tRvfcchB.getGrq());
         return map;
     }
 
@@ -252,13 +256,12 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
 
     //实时监测-水情监测-潮位
     @Override
-    public List<Map<String,Object>> getTideList() {
+    public List<Map<String, Object>> getTideList() {
 
         List<Map<String, Object>> tideList = stStbprpBDao.getTideList();
 
         List<Map<String, Object>> list = new ArrayList<>();
         for (Map<String, Object> map : tideList) {
-            Map<String, Object> hashMap = new HashMap<>();
             String stcd = map.get("STCD") == null ? "" : map.get("STCD").toString();
             String stnm = map.get("STNM") == null ? "" : map.get("STNM").toString();
             BigDecimal lgtd = new BigDecimal(map.get("LGTD") == null ? "" : map.get("LGTD").toString());
@@ -269,7 +272,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             BigDecimal grz = new BigDecimal(map.get("GRZ") == null ? "" : map.get("GRZ").toString());
             BigDecimal obhtz = new BigDecimal(map.get("OBHTZ") == null ? "" : map.get("OBHTZ").toString());
 
-            String color="black";
+            String color = "black";
 
             if (tdz.compareTo(wrz) == 1) {
                 color = "red";
@@ -279,13 +282,14 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
                 color = "blue";
             }
 
-            map.put("stcd",stcd);
-            map.put("stnm",stnm);
-            map.put("lgtd",lgtd);
-            map.put("lttd",lttd);
-            map.put("tdz",tdz);
-            map.put("airp",airp);
-            map.put("color",color);
+            Map<String, Object> hashMap = new HashMap<>();
+            hashMap.put("stcd", stcd);
+            hashMap.put("stnm", stnm);
+            hashMap.put("lgtd", lgtd);
+            hashMap.put("lttd", lttd);
+            hashMap.put("tdz", tdz);
+            hashMap.put("airp", airp);
+            hashMap.put("color", color);
             list.add(map);
         }
         return list;
@@ -321,15 +325,15 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         BigDecimal obhtz = new BigDecimal(tRvfcchB.getObhtz() == null ? "0" : tRvfcchB.getObhtz());//最高水位
         BigDecimal hlz = new BigDecimal(tRvfcchB.getHlz() == null ? "0" : tRvfcchB.getHlz());//最低水位
 
-        List<TTideR> tideRList = tideRDao.findByStcdAndTmBetweenAndOrderByTmDesc(dto.getStcd(), dto.getStartTime(), dto.getEndTime());
+        List<Map<String, Object>> tideRList = tideRDao.findDataByStcdAndTime(dto.getStcd(), dto.getStartTime(), dto.getEndTime());
         List<Map<String, Object>> list = new ArrayList<>();
-        for (TTideR tTideR : tideRList) {
+        for (Map<String, Object> tempMap : tideRList) {
             Map<String, Object> map = new HashMap<>();
-            map.put("tm", tTideR.getTm());
-            map.put("showTm", DateUtil.dateToStringNormal(tTideR.getTm()));
-            String tdz = tTideR.getTdz();
+            map.put("tm", tempMap.get("TM"));
+            map.put("showTm", DateUtil.dateToStringNormal((Date) tempMap.get("TM")));
+            String tdz = tempMap.get("TDZ") == null ? "" : tempMap.get("TDZ").toString();
             map.put("tdz", tdz);
-            map.put("tdptn", tTideR.getTdptn());
+            map.put("tdptn", tempMap.get("TDPTN") == null ? "" : tempMap.get("TDPTN").toString());
             BigDecimal warning = null;
             if (tdz != null) {
                 warning = new BigDecimal(tdz).subtract(wrz);

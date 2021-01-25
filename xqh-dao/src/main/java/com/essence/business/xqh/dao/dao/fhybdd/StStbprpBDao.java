@@ -114,10 +114,10 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
      *
      * @return
      */
-    @Query(value = "SELECT T.* FROM (SELECT B.STCD,B.STNM,B.RVNM,B.LGTD,B.LTTD,R.WRZ,R.GRZ,R.OBHTZ,A.UPZ,A.DWZ,A.TGTQ " +
-            "FROM ST_STBPRP_B B LEFT JOIN ST_RVFCCH_B R ON B.STCD = R.STCD INNER JOIN (" +
-            " SELECT * FROM ( SELECT * FROM ST_WAS_R t ORDER BY TM DESC ) WHERE ROWNUM < 2 ) a ON b.stcd = a.stcd " +
-            "WHERE b.STTP = 'DD' AND B.USFL = '1' ) T ORDER BY T.UPZ DESC", nativeQuery = true)
+    @Query(value = "SELECT T.* FROM (SELECT B.STCD,B.STNM,B.RVNM,B.LGTD,B.LTTD,R.WRZ,R.GRZ,R.OBHTZ,c.UPZ,c.DWZ,c.TGTQ FROM " +
+            "ST_STBPRP_B B LEFT JOIN ST_RVFCCH_B R ON B.STCD = R.STCD INNER JOIN ( SELECT a.* from (" +
+            "SELECT t.*,row_number() over(partition by STCD order by tm DESC) row_number from ST_WAS_R t )a " +
+            "where a.ROW_NUMBER<2 ) c ON B.stcd =c.stcd WHERE B.STTP = 'DD' AND B.USFL = '1' ) T ORDER BY T.UPZ DESC", nativeQuery = true)
     List<Map<String, Object>> getSluiceList();
 
     /**
