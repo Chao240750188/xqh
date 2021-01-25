@@ -6,6 +6,7 @@ import com.essence.framework.jpa.EssenceJpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -23,4 +24,5 @@ public interface TRsvrRDao extends EssenceJpaRepository<TRsvrR, String> {
             " where rn = 1  order by stcd desc ",nativeQuery = true)
     List<Map<String,Object>> getRsvrLastData();
 
+    List<TRsvrR> findByStcdAndTmBetweenOrderByTmDesc(String stcd, Date startDate, Date endDate);
 }
