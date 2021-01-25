@@ -16,6 +16,7 @@ public interface ReservoirModelCallTask {
 
     CompletableFuture<String> text(String name,int i);
 
+    void haha();
 
     //CompletableFuture<String> reservoirModelCall(String name) throws Exception ;
 }

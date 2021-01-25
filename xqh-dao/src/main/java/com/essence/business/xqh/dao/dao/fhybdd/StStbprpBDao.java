@@ -108,4 +108,27 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
             "GROUP BY a.STCD ) D ON ST.STCD = D.STCD ORDER BY D.TOTAL DESC", nativeQuery = true)
     List<Map<String, Object>> getRainDistributionList(Date startTime, Date endTime);
 
+
+    /**
+     * 实时监测-水情监测-闸坝
+     *
+     * @return
+     */
+    @Query(value = "SELECT T.* FROM (SELECT B.STCD,B.STNM,B.RVNM,B.LGTD,B.LTTD,R.WRZ,R.GRZ,R.OBHTZ,c.UPZ,c.DWZ,c.TGTQ FROM " +
+            "ST_STBPRP_B B LEFT JOIN ST_RVFCCH_B R ON B.STCD = R.STCD INNER JOIN ( SELECT a.* from (" +
+            "SELECT t.*,row_number() over(partition by STCD order by tm DESC) row_number from ST_WAS_R t )a " +
+            "where a.ROW_NUMBER<2 ) c ON B.stcd =c.stcd WHERE B.STTP = 'DD' AND B.USFL = '1' ) T ORDER BY T.UPZ DESC", nativeQuery = true)
+    List<Map<String, Object>> getSluiceList();
+
+    /**
+     * 实时监测-水情监测-潮位
+     *
+     * @return
+     */
+    @Query(value = "SELECT T.* FROM (SELECT B.STCD,B.STNM,B.LGTD,B.LTTD,R.WRZ,R.GRZ,R.OBHTZ,c.TDZ,c.AIRP FROM " +
+            "ST_STBPRP_B B LEFT JOIN ST_RVFCCH_B R ON B.STCD = R.STCD INNER JOIN (SELECT a.* FROM (" +
+            "SELECT r.*, row_number() over(partition by STCD ORDER BY TM DESC) row_number FROM ST_TIDE_R r )a " +
+            "WHERE a.ROW_NUMBER<2) c ON B.stcd =c.stcd WHERE B.STTP = 'TT' AND B.USFL = '1' ) T ORDER BY T.TDZ DESC", nativeQuery = true)
+    List<Map<String, Object>> getTideList();
+
 }
