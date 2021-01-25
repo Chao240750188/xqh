@@ -7,7 +7,15 @@ public class YwkModelDto implements Serializable {
     private String idmodelId;
     private String idmodelName;
     private String describe;
+    private String modelType;
 
+    public String getModelType() {
+        return modelType;
+    }
+
+    public void setModelType(String modelType) {
+        this.modelType = modelType;
+    }
 
     public String getIdmodelId() {
         return idmodelId;

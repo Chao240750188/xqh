@@ -21,6 +21,15 @@
            overflowToDisk="false"
            memoryStoreEvictionPolicy="FIFO"
     />
+    <!--水文模型运算次数 -->
+    <cache name="modelRunTimes"
+           maxElementsInMemory="10000"
+           eternal="false"
+           timeToIdleSeconds="1800"
+           timeToLiveSeconds="1800"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="FIFO"
+    />
 
 
     <!--降雨量 -->

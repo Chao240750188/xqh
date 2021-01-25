@@ -95,22 +95,28 @@ public class ReservoirModelCallTaskImpl implements ReservoirModelCallTask {
      */
     private void writeDataToSKDDConfig(String skdd_run, String skdd_model_template_input, String skdd_model_template_output) {
         String configUrl = skdd_run + File.separator + "config.txt";
+        String shuiwei = "shuiwei&&"+skdd_model_template_input+File.separator+"shuiwei.txt";
+        String kurong = "kurong&&"+skdd_model_template_input+File.separator+"kurong.txt";
         String inputCSSRUrl = "chushishuju&&" + skdd_model_template_input + File.separator + "chushishuju.txt";
         String outputUrl = "result&&" + skdd_model_template_output + File.separator + "result.txt";
 
         List<String> result = new ArrayList<String>();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(configUrl));//构造一个BufferedReader类来读取文件
-            String s = null;
-            while ((s = br.readLine()) != null) {//使用readLine方法，一次读一行
-                result.add(s);
-            }
-            br.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        result.set(2, inputCSSRUrl);
-        result.set(3, outputUrl);
+        result.add(shuiwei);
+        result.add(kurong);
+        result.add(inputCSSRUrl);
+        result.add(outputUrl);
+//        try {
+//            BufferedReader br = new BufferedReader(new FileReader(configUrl));//构造一个BufferedReader类来读取文件
+//            String s = null;
+//            while ((s = br.readLine()) != null) {//使用readLine方法，一次读一行
+//                result.add(s);
+//            }
+//            br.close();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        result.set(2, inputCSSRUrl);
+//        result.set(3, outputUrl);
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, false)); // 附加
             // 添加新的数据行
