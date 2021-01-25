@@ -553,6 +553,17 @@ public class DateUtil {
 		SimpleDateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		return df.format(date);
 	}
+
+	/**
+	 * 将日期类型转换为日期字符串,无格式，默认：yyyy/MM/dd HH:mm:ss
+	 * @param date Date类型
+	 * @return String类型，日期字符串
+	 */
+	public static String dateToStringNormal3(Date date){
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		return df.format(date);
+	}
+
 	/**
 	 * 将日期类型转换为日期字符串,无格式，默认：yyyy/MM/dd HH:mm:ss
 	 * @param date Date类型

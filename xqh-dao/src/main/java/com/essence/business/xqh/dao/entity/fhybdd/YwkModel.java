@@ -13,7 +13,16 @@ public class YwkModel {
     private String idmodelName;
     @Column(name = "DESCRIBE")
     private String describe;
+    @Column(name = "MODEL_TYPE")
+    private String modelType;
 
+    public String getModelType() {
+        return modelType;
+    }
+
+    public void setModelType(String modelType) {
+        this.modelType = modelType;
+    }
 
     public String getIdmodelId() {
         return idmodelId;

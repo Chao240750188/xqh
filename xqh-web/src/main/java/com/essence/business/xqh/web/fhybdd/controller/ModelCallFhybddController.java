@@ -1,6 +1,7 @@
 package com.essence.business.xqh.web.fhybdd.controller;
 
 import com.essence.business.xqh.api.fhybdd.dto.ModelCallBySWDDVo;
+import com.essence.business.xqh.api.fhybdd.dto.WrpRcsBsinDto;
 import com.essence.business.xqh.api.fhybdd.dto.WrpRvrBsinDto;
 import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
 import com.essence.business.xqh.api.fhybdd.service.ModelCallFhybddService;
@@ -27,7 +28,7 @@ public class ModelCallFhybddController {
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage modelCall(@PathVariable  String planId) {
         try {
-            Map<String,List<String>> results = modelCallFhybddService.callMode(planId);
+            Object results = modelCallFhybddService.callMode(planId);
             return SystemSecurityMessage.getSuccessMsg("调用防洪与报警水文调度模型成功！",results);
         }catch (Exception e){
             e.printStackTrace();
@@ -120,6 +121,18 @@ public class ModelCallFhybddController {
     }
 
     /**
+     * 获取河流对应的断面信息
+     * @return
+     */
+    @RequestMapping(value = "/getRcsByRiver/{rvcd}",method = RequestMethod.GET)
+    public SystemSecurityMessage getRcsByRiver(@PathVariable String rvcd){
+
+        List<WrpRcsBsinDto> rcsList = modelCallFhybddService.getRcsByRiver(rvcd);
+        return SystemSecurityMessage.getSuccessMsg("获取河流断面列表信息成功",rcsList);
+
+    }
+
+    /**
      * 获取模型列表信息
      * @return
      */
@@ -131,5 +144,28 @@ public class ModelCallFhybddController {
 
     }
 
+    /**
+     * 获取模型运行状态
+     * @return
+     */
+    @RequestMapping(value = "/getModelRunStatus/{planId}",method = RequestMethod.GET)
+    public SystemSecurityMessage getModelRunStatus(@PathVariable String planId){
+
+        String status = modelCallFhybddService.getModelRunStatus(planId);
+        return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",status);
+
+    }
+
+    /**
+     * 获取模型运行输出结果
+     * @return
+     */
+    @RequestMapping(value = "/getModelResultQ/{planId}",method = RequestMethod.GET)
+    public SystemSecurityMessage getModelResultQ(@PathVariable String planId){
+
+        Object results = modelCallFhybddService.getModelResultQ(planId);
+        return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",results);
+
+    }
 
 }
