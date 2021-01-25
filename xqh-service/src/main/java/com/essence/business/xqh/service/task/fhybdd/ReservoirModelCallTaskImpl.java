@@ -13,11 +13,20 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class ReservoirModelCallTaskImpl implements ReservoirModelCallTask {
 
+
+    @Async
+    @Override
+    public void haha() {
+
+        System.out.println(2/0);
+
+    }
+
     @Async
     @Override
     public CompletableFuture<String> text(String name,int i) {
         System.out.println(Thread.currentThread());
-        System.out.println(2/0);
+        System.out.println(2/i);
         return CompletableFuture.completedFuture("true"+name);
 
     }

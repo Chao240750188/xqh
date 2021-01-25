@@ -6,8 +6,6 @@ import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
 import com.essence.business.xqh.api.fhybdd.service.ModelCallFhybddService;
 import com.essence.business.xqh.api.task.fhybdd.ReservoirModelCallTask;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
-import com.essence.business.xqh.dao.entity.fhybdd.WrpRvrBsin;
-import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -84,6 +82,7 @@ public class ModelCallFhybddController {
     @RequestMapping(value = "/test",method = RequestMethod.GET)
     public SystemSecurityMessage test()throws Exception{
 
+        reservoirModelCallTask.haha();
         CompletableFuture<String> order1 = reservoirModelCallTask.text("测试order1",1);
         CompletableFuture<String> order2 = reservoirModelCallTask.text("测试order2",2);
        CompletableFuture<String> order3 = reservoirModelCallTask.text("测试order3",0);
@@ -99,9 +98,10 @@ public class ModelCallFhybddController {
 //        }
 //        // 等待所有任务都执行完
 //        // 获取每个任务的返回结果
-       CompletableFuture.allOf(order1,order2,order3);
-        String result = order1.get() + order2.get() + order3.get();
+       //CompletableFuture.allOf(order1,order2,order3);
+        String result = order1.get() + order2.get();
         System.out.println("result="+result);
+        System.out.println("order3="+order3.get());
      return SystemSecurityMessage.getSuccessMsg("根据方案获取雨量信息成功");
 
     }
