@@ -22,4 +22,5 @@ public interface TRsvrfsrBDao extends EssenceJpaRepository<TRsvrfsrB, String> {
      */
     List<TRsvrfsrB> findByFstp(String fstp);
 
+    TRsvrfsrB findByStcdAndFstp(String stcd, String fstp);
 }

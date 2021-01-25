@@ -8,6 +8,10 @@ import java.util.Date;
 public class ModelCallBySWDDVo {
 
     /**
+     * 方案名称
+     */
+    private String cPlanname;
+    /**
      * 开始时间
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -41,15 +45,14 @@ public class ModelCallBySWDDVo {
     /**
      * 河流id
      */
-    private String riverId;
+    private String rvcd;
 
-
-    public String getRiverId() {
-        return riverId;
+    public String getcPlanname() {
+        return cPlanname;
     }
 
-    public void setRiverId(String riverId) {
-        this.riverId = riverId;
+    public void setcPlanname(String cPlanname) {
+        this.cPlanname = cPlanname;
     }
 
     public String getModelId() {
@@ -90,5 +93,13 @@ public class ModelCallBySWDDVo {
 
     public void setPeriodEndTime(Date periodEndTime) {
         this.periodEndTime = periodEndTime;
+    }
+
+    public String getRvcd() {
+        return rvcd;
+    }
+
+    public void setRvcd(String rvcd) {
+        this.rvcd = rvcd;
     }
 }

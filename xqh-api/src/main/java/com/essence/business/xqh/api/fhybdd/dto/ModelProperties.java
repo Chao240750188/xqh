@@ -12,13 +12,13 @@ import java.util.Map;
 @PropertySource("classpath:filePath.properties")
 public class ModelProperties {
 
-    private Map<String,String> modelMap;
+    private Map<String,String> model;
 
-    public Map<String, String> getModelMap() {
-        return modelMap;
+    public Map<String, String> getModel() {
+        return model;
     }
 
-    public void setModelMap(Map<String, String> modelMap) {
-        this.modelMap = modelMap;
+    public void setModel(Map<String, String> model) {
+        this.model = model;
     }
 }

@@ -47,13 +47,107 @@ public class RealTimeMonitorController {
 
 
     /**
+     * 获取单个水库站水位信息通过时间段
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/getReservoirWaterLevelByTime", method = RequestMethod.GET)
+    public SystemSecurityMessage getReservoirWaterLevelByTime(@RequestParam(value = "stcd")String stcd,
+                                                             @RequestParam(value = "startTime")String startTime,
+                                                             @RequestParam(value = "endTime")String endTime) {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.getReservoirWaterLevelByTime(stcd,startTime,endTime));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
+
+    /**
+     * 获取单个水库站基本信息
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/getReservoirDataSingle/{stcd}", method = RequestMethod.GET)
+    public SystemSecurityMessage getReservoirDataSingle(@PathVariable(value = "stcd")String stcd) {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.getReservoirDataSingle(stcd));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
+
+    /**
+     * 获取实时水库情况
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/getReservoirDataOnTime", method = RequestMethod.GET)
+    public SystemSecurityMessage getReservoirDataOnTime() {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.getReservoirDataOnTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
+
+    /**
+     * 获取单个河道站水位信息通过时间段
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/getRiverWayWaterLevelByTime", method = RequestMethod.GET)
+    public SystemSecurityMessage getRiverWayWaterLevelByTime(@RequestParam(value = "stcd")String stcd,
+                                                             @RequestParam(value = "startTime")String startTime,
+                                                             @RequestParam(value = "endTime")String endTime) {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.getRiverWayWaterLevelByTime(stcd,startTime,endTime));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
+
+    /**
+     * 获取单个河道站基本信息
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/getRiverWayDataSingle/{stcd}", method = RequestMethod.GET)
+    public SystemSecurityMessage geRiverWayDataSingle(@PathVariable(value = "stcd")String stcd) {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.geRiverWayDataSingle(stcd));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
+
+    /**
      * 获取实时河道情况
      *
      * @return com.essence.hdfxdp.util.SystemSecurityMessage
      * @Date 14:10 2020/8/4
      * @Param []
      **/
-    @RequestMapping(value = "/geRiverWayDataOnTime", method = RequestMethod.GET)
+    @RequestMapping(value = "/getRiverWayDataOnTime", method = RequestMethod.GET)
     public SystemSecurityMessage geRiverWayDataOnTime() {
         try {
             return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.geRiverWayDataOnTime());
