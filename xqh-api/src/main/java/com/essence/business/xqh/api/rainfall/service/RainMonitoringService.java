@@ -1,6 +1,6 @@
 package com.essence.business.xqh.api.rainfall.service;
 
-import com.essence.business.xqh.api.rainfall.dto.SluiceDto;
+import com.essence.business.xqh.api.rainfall.dto.rainmonitoring.*;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
 
 import java.util.List;
@@ -50,7 +50,7 @@ public interface RainMonitoringService {
      * @param stcd
      * @return
      */
-    Map<String, Object> getSluiceInfo(String stcd);
+    SluiceInfoDto getSluiceInfo(String stcd);
 
     /**
      * 实时监视-水情监视-站点查询-水位流量过程线-闸坝
@@ -58,7 +58,7 @@ public interface RainMonitoringService {
      * @param dto
      * @return
      */
-    List<Map<String, Object>> getSluiceTendency(QueryParamDto dto);
+    List<SluiceTendencyDto> getSluiceTendency(QueryParamDto dto);
 
 
     /**
@@ -66,7 +66,7 @@ public interface RainMonitoringService {
      *
      * @return
      */
-    List<Map<String,Object>> getTideList();
+    List<TideListDto> getTideList();
 
     /**
      * 实时监视-水情监视-站点查询-站点信息-潮位
@@ -74,7 +74,7 @@ public interface RainMonitoringService {
      * @param stcd
      * @return
      */
-    Map<String, Object> getTideInfo(String stcd);
+    TideInfoDto getTideInfo(String stcd);
 
     /**
      * 实时监视-水情监视-站点查询-水位流量过程线-潮位
@@ -82,6 +82,6 @@ public interface RainMonitoringService {
      * @param dto
      * @return
      */
-    List<Map<String,Object>> getTideTendency(QueryParamDto dto);
+    List<TideTendencyDto> getTideTendency(QueryParamDto dto);
 
 }
