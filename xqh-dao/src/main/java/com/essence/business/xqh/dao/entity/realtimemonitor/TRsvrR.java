@@ -1,9 +1,6 @@
 package com.essence.business.xqh.dao.entity.realtimemonitor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,9 +18,11 @@ import java.util.Date;
 @ToString
 @Entity
 @Table ( name ="ST_RSVR_R" )
+@IdClass(TRsvrRPK.class)
 public class TRsvrR  implements Serializable {
 
 	private static final long serialVersionUID =  1915903753984016932L;
+
 
 	/**
 	 * 测站编码：本表指报送水库水情信息代表站的测站编码。
@@ -35,6 +34,7 @@ public class TRsvrR  implements Serializable {
 	/**
 	 * 时间：水情发生的时间。
 	 */
+	@Id
    	@Column(name = "TM" )
 	private Date tm;
 

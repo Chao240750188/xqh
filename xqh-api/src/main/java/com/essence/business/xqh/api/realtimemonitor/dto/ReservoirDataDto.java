@@ -40,5 +40,10 @@ public class ReservoirDataDto implements Serializable {
      */
     private Double lttd;
 
+    /**
+     * 蓄水量
+     */
+    private Double waterStorage;
+
 
 }

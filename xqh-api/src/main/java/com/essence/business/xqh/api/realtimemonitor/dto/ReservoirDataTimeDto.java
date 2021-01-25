@@ -29,9 +29,16 @@ public class ReservoirDataTimeDto implements Serializable {
     /**
      * 最大入库流量
      */
-    private Double maxFlow;
+    private Double maxInFlow;
 
-    private Double minFlow;
+    private Double minInFlow;
+
+    /**
+     * 最大出库流量
+     */
+    private Double maxOutFlow;
+
+    private Double minOutFlow;
 
     /**
      * 最高水位时间
@@ -43,10 +50,16 @@ public class ReservoirDataTimeDto implements Serializable {
     private Date minWaterLevelTm;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date maxFlowTm;
+    private Date maxInFlowTm;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date minFlowTm;
+    private Date minInFlowTm;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date maxOutFlowTm;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date minOutFlowTm;
 
     /**
      * 最低值取整

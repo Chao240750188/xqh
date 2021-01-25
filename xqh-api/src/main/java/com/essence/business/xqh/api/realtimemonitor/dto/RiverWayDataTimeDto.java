@@ -3,7 +3,6 @@ package com.essence.business.xqh.api.realtimemonitor.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
-import javax.persistence.Column;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
