@@ -31,8 +31,14 @@ public interface StPptnRDao extends EssenceJpaRepository<StPptnR,String > {
 //    List<StPptnR> findByStcdAndTmBetweenOrderByTm(@Param("stcd") String stcd, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
     List<StPptnR> findByStcdAndTmBetweenOrderByTm(String stcd, Date startTime, Date endTime);
 
-    @Query(value = "select * from ST_PPTN_R where STCD = :stcd and (TM BETWEEN  :startTime and :endTime ) ", nativeQuery = true)
-    List<StPptnR> findByStcdAndTmBetween(@Param("stcd") String stcd, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+//    @Query(value = "select * from ST_PPTN_R where STCD = :stcd and (TM BETWEEN  :startTime and :endTime ) ", nativeQuery = true)
+//    List<StPptnR> findByStcdAndTmBetween(@Param("stcd") String stcd, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
+
+    @Query(value = "select * from ST_PPTN_R where STCD = :stcd and (TM BETWEEN  to_date ( :startTime , 'YYYY-MM-DD HH24:MI:SS' ) and   to_date ( :endTime , 'YYYY-MM-DD HH24:MI:SS' ) ) ", nativeQuery = true)
+    List<StPptnR> getRainFallByTimeAndID(@Param("stcd") String stcd, @Param("startTime") String startTime, @Param("endTime") String endTime);
+
+    List<StPptnR> findByStcdAndTmBetween(String stcd, Date startTime,  Date endTime);
 
     StPptnR findByStcdAndTm(String stcd, Date tm);
 
