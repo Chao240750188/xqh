@@ -2,7 +2,6 @@ package com.essence.business.xqh.api.realtimemonitor.dto;
 
 import lombok.Data;
 
-import javax.persistence.Column;
 import java.io.Serializable;
 
 /**

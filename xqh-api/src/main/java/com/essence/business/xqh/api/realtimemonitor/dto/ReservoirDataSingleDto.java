@@ -167,5 +167,13 @@ public class ReservoirDataSingleDto implements Serializable {
      */
     private String sfq;
 
+    /**
+     * 防洪高水位
+     */
+    private String fhzgsw;
 
+    /**
+     * 历史最大蓄水量
+     */
+    private String hmxwtm;
 }

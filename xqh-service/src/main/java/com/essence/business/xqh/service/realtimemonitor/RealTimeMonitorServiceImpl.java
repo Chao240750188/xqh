@@ -480,75 +480,90 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
         Date startDate = sdf.parse(startTime);
         Date endDate = sdf.parse(endTime);
         List<TRsvrR> tRsvrRS = tRsvrRDao.findByStcdAndTmBetweenOrderByTmDesc(stcd, startDate, endDate);
-        List<RiverWayDataDetailDto> dataDetailDtos = new ArrayList<>();
-//        //河道站防洪指标表
-//        TRvfcchB tRvfcchB = tRvfcchBDao.findByStcd(stcd);
-//        for (TRiverR riverR : riverRS) {
-//            RiverWayDataDetailDto dto = new RiverWayDataDetailDto();
-//            BeanUtils.copyProperties(tRvfcchB,dto);
-//            if(riverR.getQ()!=null){
-//                double flow = Double.parseDouble(riverR.getQ());
-//                dto.setFlow(flow);
-//            }
-//            if(riverR.getZ()!=null){
-//                double waterLevel = Double.parseDouble(riverR.getZ());
-//                dto.setWaterLevel(waterLevel);
-//            }
-//            //获取警戒水位
-//            String wrz = tRvfcchB.getWrz();
-//            //距警戒
-//            if(wrz!=null && riverR.getZ()!=null){
-//                dto.setDistance(Double.parseDouble(riverR.getZ())-Double.parseDouble(wrz));
-//            }
-//            dto.setTm(riverR.getTm());
-//            dto.setWptn(riverR.getWptn());
-//            dataDetailDtos.add(dto);
-//        }
-//        //获取最大流量和最小流量
-//        List<TRiverR> collectQ = riverRS.stream().filter(t -> t.getQ() != null).sorted(new Comparator<TRiverR>() {
-//            @Override
-//            public int compare(TRiverR o1, TRiverR o2) {
-//                double v1 = Double.parseDouble(o1.getQ());
-//                double v2 = Double.parseDouble(o2.getQ());
-//                return Double.compare(v1, v2);
-//            }
-//        }).collect(Collectors.toList());
-//        //获取最大水位和最小水位
-//        List<TRiverR> collectZ = riverRS.stream().filter(t -> t.getZ() != null).sorted(new Comparator<TRiverR>() {
-//            @Override
-//            public int compare(TRiverR o1, TRiverR o2) {
-//                double v1 = Double.parseDouble(o1.getZ());
-//                double v2 = Double.parseDouble(o2.getZ());
-//                return Double.compare(v1, v2);
-//            }
-//        }).collect(Collectors.toList());
-//        if(!CollectionUtils.isEmpty(collectQ)){
-//            double max = Double.parseDouble(collectQ.get(collectQ.size() - 1).getQ());
-//            double min = Double.parseDouble(collectQ.get(0).getQ());
-//            result.setMaxFlow(max);
-//            result.setMinFlow(min);
-//            result.setMaxFlowTm(collectQ.get(collectQ.size()-1).getTm());
-//            result.setMinFlowTm(collectQ.get(0).getTm());
-//            high = max;
-//            low = min;
-//        }
-//        if(!CollectionUtils.isEmpty(collectZ)){
-//            double max = Double.parseDouble(collectZ.get(collectZ.size() - 1).getZ());
-//            double min = Double.parseDouble(collectZ.get(0).getZ());
-//            result.setMaxWaterLevel(max);
-//            result.setMinWaterLevel(min);
-//            result.setMaxWaterLevelTm(collectZ.get(collectZ.size()-1).getTm());
-//            result.setMinWaterLevelTm(collectZ.get(0).getTm());
-//            high = max > high ? max : high;
-//            low = min < low ? min : low;
-//        }
-//        result.setHigh(Math.ceil(high));
-//        result.setLow(Math.floor(low));
-//        result.setRiverWayDataDetailDtos(dataDetailDtos);
-//        result.setStcd(stcd);
-//        return result;
-
-        return null;
+        List<ReservoirDataDetailDto> dataDetailDtos = new ArrayList<>();
+        for (TRsvrR tRsvrR : tRsvrRS) {
+            ReservoirDataDetailDto dto = new ReservoirDataDetailDto();
+            //水位
+            if(tRsvrR.getRz()!=null){
+                double waterLevel = Double.parseDouble(tRsvrR.getRz());
+                dto.setWaterLevel(waterLevel);
+            }
+            //入库流量
+            if(tRsvrR.getInq()!=null){
+                double inFlow = Double.parseDouble(tRsvrR.getInq());
+                dto.setInFlow(inFlow);
+            }
+            //出库流量
+            if(tRsvrR.getOtq()!=null){
+                double outFlow = Double.parseDouble(tRsvrR.getOtq());
+                dto.setOutFlow(outFlow);
+            }
+            dto.setWptn(tRsvrR.getRwptn());
+            dto.setTm(tRsvrR.getTm());
+            dataDetailDtos.add(dto);
+        }
+        //获取最大水位和最小水位
+        List<TRsvrR> collectRZ = tRsvrRS.stream().filter(t -> t.getRz() != null).sorted(new Comparator<TRsvrR>() {
+            @Override
+            public int compare(TRsvrR o1, TRsvrR o2) {
+                double v1 = Double.parseDouble(o1.getRz());
+                double v2 = Double.parseDouble(o2.getRz());
+                return Double.compare(v1, v2);
+            }
+        }).collect(Collectors.toList());
+        //获取最大入库流量和最小入库流量
+        List<TRsvrR> collectIQ = tRsvrRS.stream().filter(t -> t.getInq() != null).sorted(new Comparator<TRsvrR>() {
+            @Override
+            public int compare(TRsvrR o1, TRsvrR o2) {
+                double v1 = Double.parseDouble(o1.getInq());
+                double v2 = Double.parseDouble(o2.getInq());
+                return Double.compare(v1, v2);
+            }
+        }).collect(Collectors.toList());
+        //获取最大出库流量和最出库流量
+        List<TRsvrR> collectOQ = tRsvrRS.stream().filter(t -> t.getInq() != null).sorted(new Comparator<TRsvrR>() {
+            @Override
+            public int compare(TRsvrR o1, TRsvrR o2) {
+                double v1 = Double.parseDouble(o1.getOtq());
+                double v2 = Double.parseDouble(o2.getOtq());
+                return Double.compare(v1, v2);
+            }
+        }).collect(Collectors.toList());
+        if(!CollectionUtils.isEmpty(collectIQ)){
+            double max = Double.parseDouble(collectIQ.get(collectIQ.size() - 1).getInq());
+            double min = Double.parseDouble(collectIQ.get(0).getInq());
+            result.setMaxInFlow(max);
+            result.setMinInFlow(min);
+            result.setMaxInFlowTm(collectIQ.get(collectIQ.size()-1).getTm());
+            result.setMinInFlowTm(collectIQ.get(0).getTm());
+            high = max;
+            low = min;
+        }
+        if(!CollectionUtils.isEmpty(collectRZ)){
+            double max = Double.parseDouble(collectRZ.get(collectRZ.size() - 1).getRz());
+            double min = Double.parseDouble(collectRZ.get(0).getRz());
+            result.setMaxWaterLevel(max);
+            result.setMinWaterLevel(min);
+            result.setMaxWaterLevelTm(collectRZ.get(collectRZ.size()-1).getTm());
+            result.setMinWaterLevelTm(collectRZ.get(0).getTm());
+            high = max > high ? max : high;
+            low = min < low ? min : low;
+        }
+        if(!CollectionUtils.isEmpty(collectOQ)){
+            double max = Double.parseDouble(collectOQ.get(collectOQ.size() - 1).getOtq());
+            double min = Double.parseDouble(collectOQ.get(0).getOtq());
+            result.setMaxOutFlow(max);
+            result.setMinOutFlow(min);
+            result.setMaxOutFlowTm(collectOQ.get(collectOQ.size()-1).getTm());
+            result.setMinOutFlowTm(collectOQ.get(0).getTm());
+            high = max > high ? max : high;
+            low = min < low ? min : low;
+        }
+        result.setHigh(Math.ceil(high));
+        result.setLow(Math.floor(low));
+        result.setReservoirDataDetailDtos(dataDetailDtos);
+        result.setStcd(stcd);
+        return result;
     }
 
 
