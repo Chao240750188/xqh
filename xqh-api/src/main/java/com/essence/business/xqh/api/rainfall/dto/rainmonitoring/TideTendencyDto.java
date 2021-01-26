@@ -11,22 +11,22 @@ public class TideTendencyDto {
 
     private double high;
     private double low;
-    private BigDecimal obhtz;//最高水位
-    private BigDecimal hlz;//最低水位
-    private String maxTm;//最高水位时间
-    private String minTm;//最低水位时间
+    private BigDecimal maxWaterLevel;//最高水位
+    private BigDecimal minWaterLevel;//最低水位
+    private String maxWaterLevelTm;//最高水位时间
+    private String minWaterLevelTm;//最低水位时间
     private List<TideTendency> list;
 
     public TideTendencyDto() {
     }
 
-    public TideTendencyDto(double high, double low, BigDecimal obhtz, BigDecimal hlz, String maxTm, String minTm, List<TideTendency> list) {
+    public TideTendencyDto(double high, double low, BigDecimal maxWaterLevel, BigDecimal minWaterLevel, String maxWaterLevelTm, String minWaterLevelTm, List<TideTendency> list) {
         this.high = high;
         this.low = low;
-        this.obhtz = obhtz;
-        this.hlz = hlz;
-        this.maxTm = maxTm;
-        this.minTm = minTm;
+        this.maxWaterLevel = maxWaterLevel;
+        this.minWaterLevel = minWaterLevel;
+        this.maxWaterLevelTm = maxWaterLevelTm;
+        this.minWaterLevelTm = minWaterLevelTm;
         this.list = list;
     }
 
@@ -46,36 +46,36 @@ public class TideTendencyDto {
         this.low = low;
     }
 
-    public BigDecimal getObhtz() {
-        return obhtz;
+    public BigDecimal getMaxWaterLevel() {
+        return maxWaterLevel;
     }
 
-    public void setObhtz(BigDecimal obhtz) {
-        this.obhtz = obhtz;
+    public void setMaxWaterLevel(BigDecimal maxWaterLevel) {
+        this.maxWaterLevel = maxWaterLevel;
     }
 
-    public BigDecimal getHlz() {
-        return hlz;
+    public BigDecimal getMinWaterLevel() {
+        return minWaterLevel;
     }
 
-    public void setHlz(BigDecimal hlz) {
-        this.hlz = hlz;
+    public void setMinWaterLevel(BigDecimal minWaterLevel) {
+        this.minWaterLevel = minWaterLevel;
     }
 
-    public String getMaxTm() {
-        return maxTm;
+    public String getMaxWaterLevelTm() {
+        return maxWaterLevelTm;
     }
 
-    public void setMaxTm(String maxTm) {
-        this.maxTm = maxTm;
+    public void setMaxWaterLevelTm(String maxWaterLevelTm) {
+        this.maxWaterLevelTm = maxWaterLevelTm;
     }
 
-    public String getMinTm() {
-        return minTm;
+    public String getMinWaterLevelTm() {
+        return minWaterLevelTm;
     }
 
-    public void setMinTm(String minTm) {
-        this.minTm = minTm;
+    public void setMinWaterLevelTm(String minWaterLevelTm) {
+        this.minWaterLevelTm = minWaterLevelTm;
     }
 
     public List<TideTendency> getList() {
