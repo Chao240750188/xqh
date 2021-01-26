@@ -227,6 +227,9 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
     @Override
     public SluiceTendencyDto getSluiceTendency(QueryParamDto paramDto) {
         List<TWasR> wasRList = wasRDao.findByStcdAndTmBetweenAndOrderByTmDesc(paramDto.getStcd(), paramDto.getStartTime(), paramDto.getEndTime());
+        if (wasRList.size() == 0) {
+            return new SluiceTendencyDto();
+        }
         TRvfcchB tRvfcchB = tRvfcchBDao.findByStcd(paramDto.getStcd());
         BigDecimal wrz = new BigDecimal(tRvfcchB.getWrz() == null ? "0" : tRvfcchB.getWrz());//警戒水位
         TreeSet<BigDecimal> sortSet = new TreeSet<>();
@@ -252,12 +255,8 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             dto.setWarning(warning);
             list.add(dto);
         }
-        double low = 0;
-        double high = 0;
-        if (sortSet.size() > 0) {
-            low = sortSet.first().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-            high = sortSet.last().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-        }
+        double low = sortSet.first().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+        double high = sortSet.last().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         SluiceTendencyDto dto = new SluiceTendencyDto(Math.ceil(high), Math.floor(low), list);
         return dto;
     }
@@ -315,6 +314,10 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
     //实时监视-水情监视-站点查询-水位流量过程线-潮位
     @Override
     public TideTendencyDto getTideTendency(QueryParamDto paramDto) {
+        List<Map<String, Object>> tideRList = tideRDao.findDataByStcdAndTime(paramDto.getStcd(), paramDto.getStartTime(), paramDto.getEndTime());
+        if (tideRList.size() == 0) {
+            return new TideTendencyDto();
+        }
 
         TRvfcchB tRvfcchB = tRvfcchBDao.findByStcd(paramDto.getStcd());
         TreeSet<BigDecimal> sortSet = new TreeSet<>();
@@ -327,7 +330,6 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         BigDecimal hlz = new BigDecimal(tRvfcchB.getHlz() == null ? "0" : tRvfcchB.getHlz());//最低水位
         sortSet.add(hlz);
 
-        List<Map<String, Object>> tideRList = tideRDao.findDataByStcdAndTime(paramDto.getStcd(), paramDto.getStartTime(), paramDto.getEndTime());
         List<TideTendency> list = new ArrayList<>();
         for (Map<String, Object> tempMap : tideRList) {
             TideTendency dto = new TideTendency();
@@ -348,13 +350,8 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             dto.setHlz(hlz);
             list.add(dto);
         }
-
-        double low = 0;
-        double high = 0;
-        if (sortSet.size() > 0) {
-            low = sortSet.first().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-            high = sortSet.last().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-        }
+        double low = sortSet.first().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+        double high = sortSet.last().setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         TideTendency maxTime = list.stream().sorted(Comparator.comparing(TideTendency::getObhtz).reversed()).collect(Collectors.toList()).get(0);
         TideTendency minTm = list.stream().sorted(Comparator.comparing(TideTendency::getHlz)).collect(Collectors.toList()).get(0);
         TideTendencyDto dto = new TideTendencyDto(high, low, maxTime.getObhtz(), minTm.getHlz(), maxTime.getShowTm(), minTm.getShowTm(), list);
