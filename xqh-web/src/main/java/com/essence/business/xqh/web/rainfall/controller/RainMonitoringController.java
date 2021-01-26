@@ -32,7 +32,7 @@ public class RainMonitoringController {
     }
 
     /**
-     * 降雨分布列表
+     * 实时监测-雨情监测-降雨分布列表
      *
      * @param dto
      * @return
@@ -47,7 +47,7 @@ public class RainMonitoringController {
     }
 
     /**
-     * 单个测站信息
+     * 实时监测-雨情监测-单个测站信息
      *
      * @param stcd
      * @return

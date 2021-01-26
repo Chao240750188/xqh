@@ -130,7 +130,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
 
     @Override
     public List<Map<String, Object>> getRainDistributionList(QueryParamDto dto) {
-        List<Map<String, Object>> rainDistributionList = stStbprpBDao.getRainDistributionList(dto.getStartTime(), dto.getEndTime());
+        List<Map<String, Object>> rainDistributionList = stStbprpBDao.getRainDistributionList(dto.getStartTime(), dto.getEndTime(), dto.getName());
         List<Map<String, Object>> list = new ArrayList<>();
         //Oracle默认大写改为小写返回
         for (Map<String, Object> map : rainDistributionList) {
