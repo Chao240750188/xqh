@@ -137,7 +137,7 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
      * @return
      */
     @Query(value="SELECT b.STCD,b.STNM,b.LGTD,b.LTTD,b.RVNM,B.HNNM,r.WRZ,r.GRZ,r.OBHTZ FROM ST_STBPRP_B b " +
-            "LEFT JOIN ST_RVFCCH_B r ON b.STCD = r.STCD WHERE b.STTP = ?1 AND b.USFL = '1';",nativeQuery=true)
+            "LEFT JOIN ST_RVFCCH_B r ON b.STCD = r.STCD WHERE b.STTP = ?1 AND b.USFL = '1'",nativeQuery=true)
     List<Map<String,Object>> getFloodWarningInfo(String sttp);
 
 }

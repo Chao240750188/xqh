@@ -132,7 +132,7 @@ public class FloodWarningListDto {
                 this.beyondWrz = maxWaterLevel;
             }
         } else if (wrz != null) {
-            this.beyondWrz = new BigDecimal(0).subtract(maxWaterLevel);
+            this.beyondWrz = new BigDecimal(0).subtract(wrz);
         }
         return beyondWrz;
     }
@@ -157,7 +157,7 @@ public class FloodWarningListDto {
                 this.beyondGrz = maxWaterLevel;
             }
         } else if (grz != null) {
-            this.beyondGrz = new BigDecimal(0).subtract(maxWaterLevel);
+            this.beyondGrz = new BigDecimal(0).subtract(grz);
         }
         return beyondGrz;
     }
@@ -182,7 +182,7 @@ public class FloodWarningListDto {
                 this.beyondHistory = maxWaterLevel;
             }
         } else if (history != null) {
-            this.beyondHistory = new BigDecimal(0).subtract(maxWaterLevel);
+            this.beyondHistory = new BigDecimal(0).subtract(history);
         }
 
         return beyondHistory;

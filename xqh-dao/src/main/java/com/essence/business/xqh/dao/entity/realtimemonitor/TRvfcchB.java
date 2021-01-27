@@ -11,16 +11,16 @@ import lombok.ToString;
 import java.util.Date;
 
 /**
- * @Description  
+ * @Description
  * @Author  Hunter
- * @Date 2021-01-23 
+ * @Date 2021-01-23
  */
 
 @Setter
 @Getter
 @ToString
 @Entity
-@Table ( name ="ST_RVFCCH_B" )
+@Table ( name ="ST_RVFCCH_B", schema = "XQH", catalog = "" )
 public class TRvfcchB  implements Serializable {
 
 	private static final long serialVersionUID =  4789897971254904029L;

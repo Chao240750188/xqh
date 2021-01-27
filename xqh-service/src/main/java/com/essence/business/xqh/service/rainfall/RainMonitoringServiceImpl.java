@@ -431,7 +431,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
     @Override
     public Map<String, List<FloodWarningDto>> getTideFloodWarning(QueryParamDto paramDto) {
         Date nextHour = DateUtil.getNextHour(paramDto.getEndTime(), -24);
-        List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("DD");
+        List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("TT");
         List<String> stcdList = new ArrayList<>();
         for (Map<String, Object> map : list) {
             stcdList.add(map.get("STCD").toString());
@@ -502,7 +502,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         List<FloodWarningListDto> resultList = new ArrayList<>();
         Date hour = DateUtil.getNextHour(DateUtil.getThisDay(), 8);
         for (Map<String, Object> tempMap : list) {
-            String stcd = map.get("STCD") == null ? "" : map.get("STCD").toString();
+            String stcd = tempMap.get("STCD") == null ? "" : tempMap.get("STCD").toString();
             FloodWarningListDto dto = new FloodWarningListDto(stcd,tempMap);
             if (map.containsKey(stcd)) {
                 List<TWasR> values = map.get(stcd);
@@ -530,7 +530,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
      */
     @Override
     public List<FloodWarningListDto> getTideFloodWarningList(QueryParamDto paramDto) {
-        List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("DD");
+        List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("TT");
         List<String> stcdList = new ArrayList<>();
         for (Map<String, Object> map : list) {
             stcdList.add(map.get("STCD").toString());
@@ -541,7 +541,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         List<FloodWarningListDto> resultList = new ArrayList<>();
         Date hour = DateUtil.getNextHour(DateUtil.getThisDay(), 8);
         for (Map<String, Object> tempMap : list) {
-            String stcd = map.get("STCD") == null ? "" : map.get("STCD").toString();
+            String stcd = tempMap.get("STCD") == null ? "" : tempMap.get("STCD").toString();
             FloodWarningListDto dto = new FloodWarningListDto(stcd, tempMap);
             if (map.containsKey(stcd)) {
                 List<TTideR> values = map.get(stcd);
