@@ -1,97 +1,88 @@
 package com.essence.business.xqh.api.rainfall.dto.rainmonitoring;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.format.annotation.DateTimeFormat;
-
 import java.math.BigDecimal;
-import java.util.Date;
+import java.util.List;
 
 /**
  * @author fengpp
  * 2021/1/25 18:57
  */
 public class TideTendencyDto {
-    private String showTm;
-    @DateTimeFormat(pattern = "yyyy/MM/dd HH:mm:ss")
-    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss", timezone = "GMT+8")
-    private Date tm;
-    private String tdz;
-    private String tdptn;
-    private BigDecimal warning;
-    private BigDecimal wrz;
-    private BigDecimal grz;
-    private BigDecimal obhtz;
-    private BigDecimal hlz;
 
-    public String getShowTm() {
-        return showTm;
+    private double high;
+    private double low;
+    private BigDecimal maxWaterLevel;//最高水位
+    private BigDecimal minWaterLevel;//最低水位
+    private String maxWaterLevelTm;//最高水位时间
+    private String minWaterLevelTm;//最低水位时间
+    private List<TideTendency> list;
+
+    public TideTendencyDto() {
     }
 
-    public void setShowTm(String showTm) {
-        this.showTm = showTm;
+    public TideTendencyDto(double high, double low, BigDecimal maxWaterLevel, BigDecimal minWaterLevel, String maxWaterLevelTm, String minWaterLevelTm, List<TideTendency> list) {
+        this.high = high;
+        this.low = low;
+        this.maxWaterLevel = maxWaterLevel;
+        this.minWaterLevel = minWaterLevel;
+        this.maxWaterLevelTm = maxWaterLevelTm;
+        this.minWaterLevelTm = minWaterLevelTm;
+        this.list = list;
     }
 
-    public Date getTm() {
-        return tm;
+    public double getHigh() {
+        return high;
     }
 
-    public void setTm(Date tm) {
-        this.tm = tm;
+    public void setHigh(double high) {
+        this.high = high;
     }
 
-    public String getTdz() {
-        return tdz;
+    public double getLow() {
+        return low;
     }
 
-    public void setTdz(String tdz) {
-        this.tdz = tdz;
+    public void setLow(double low) {
+        this.low = low;
     }
 
-    public String getTdptn() {
-        return tdptn;
+    public BigDecimal getMaxWaterLevel() {
+        return maxWaterLevel;
     }
 
-    public void setTdptn(String tdptn) {
-        this.tdptn = tdptn;
+    public void setMaxWaterLevel(BigDecimal maxWaterLevel) {
+        this.maxWaterLevel = maxWaterLevel;
     }
 
-    public BigDecimal getWarning() {
-        return warning;
+    public BigDecimal getMinWaterLevel() {
+        return minWaterLevel;
     }
 
-    public void setWarning(BigDecimal warning) {
-        this.warning = warning;
+    public void setMinWaterLevel(BigDecimal minWaterLevel) {
+        this.minWaterLevel = minWaterLevel;
     }
 
-    public BigDecimal getWrz() {
-        return wrz;
+    public String getMaxWaterLevelTm() {
+        return maxWaterLevelTm;
     }
 
-    public void setWrz(BigDecimal wrz) {
-        this.wrz = wrz;
+    public void setMaxWaterLevelTm(String maxWaterLevelTm) {
+        this.maxWaterLevelTm = maxWaterLevelTm;
     }
 
-    public BigDecimal getGrz() {
-        return grz;
+    public String getMinWaterLevelTm() {
+        return minWaterLevelTm;
     }
 
-    public void setGrz(BigDecimal grz) {
-        this.grz = grz;
+    public void setMinWaterLevelTm(String minWaterLevelTm) {
+        this.minWaterLevelTm = minWaterLevelTm;
     }
 
-    public BigDecimal getObhtz() {
-        return obhtz;
+    public List<TideTendency> getList() {
+        return list;
     }
 
-    public void setObhtz(BigDecimal obhtz) {
-        this.obhtz = obhtz;
-    }
-
-    public BigDecimal getHlz() {
-        return hlz;
-    }
-
-    public void setHlz(BigDecimal hlz) {
-        this.hlz = hlz;
+    public void setList(List<TideTendency> list) {
+        this.list = list;
     }
 }
