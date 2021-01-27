@@ -42,7 +42,6 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         ywkPlaninfo.setnModelid(vo.getModelId());
         ywkPlaninfo.setdRainstarttime(startTime);
         ywkPlaninfo.setdRainendtime(endTIme);
-        ywkPlaninfo.setRiverId(vo.getRvcd());
         YwkPlaninfo saveDbo = ywkPlaninfoDao.save(ywkPlaninfo);
         return saveDbo.getnPlanid();
     }

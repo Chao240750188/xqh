@@ -43,14 +43,10 @@ public class PlanInfoHsfxtkVo {
     private Date periodEndTime;
 
     /**
-     * 模型id  1是SCS模型，2是DWX
+     * 模型id
      */
     private String modelId;
 
-    /**
-     * 河流id
-     */
-    private String rvcd;
 
     public String getnPlanid() {
         return nPlanid;
@@ -108,11 +104,4 @@ public class PlanInfoHsfxtkVo {
         this.modelId = modelId;
     }
 
-    public String getRvcd() {
-        return rvcd;
-    }
-
-    public void setRvcd(String rvcd) {
-        this.rvcd = rvcd;
-    }
 }
