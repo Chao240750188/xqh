@@ -24,4 +24,5 @@ public interface TRiverRODao extends EssenceJpaRepository<TRiverR, String> {
 
     List<TRiverR> findByStcdAndTmBetweenOrderByTmDesc(String stcd, Date startTime, Date endTime);
 
+    List<TRiverR> findByStcdInAndTmBetweenOrderByTmDesc(List<String> stcdList, Date startTime, Date endTime);
 }

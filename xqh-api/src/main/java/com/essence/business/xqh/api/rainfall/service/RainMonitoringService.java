@@ -116,4 +116,29 @@ public interface RainMonitoringService {
      */
     List<FloodWarningListDto> getTideFloodWarningList(QueryParamDto dto);
 
+
+    /**
+     * 水情服务-水情简报表
+     *
+     * @param dto
+     * @return
+     */
+    List getList(QueryParamDto dto);
+
+    /**
+     * 水情服务-河道水情表
+     *
+     * @param dto
+     * @return
+     */
+    List getRiverList(QueryParamDto dto);
+
+    /**
+     * 水情服务-水库水情表
+     *
+     * @param dto
+     * @return
+     */
+    List<ReservoirListDto> getReservoirList(QueryParamDto dto);
+
 }

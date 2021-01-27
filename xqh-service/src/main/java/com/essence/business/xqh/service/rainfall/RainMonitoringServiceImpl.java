@@ -6,10 +6,9 @@ import com.essence.business.xqh.api.rainfall.service.RainMonitoringService;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
 import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
-import com.essence.business.xqh.dao.dao.realtimemonitor.TRvfcchBDao;
-import com.essence.business.xqh.dao.dao.realtimemonitor.TTideRDao;
-import com.essence.business.xqh.dao.dao.realtimemonitor.TWasRDao;
+import com.essence.business.xqh.dao.dao.realtimemonitor.*;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
+import com.essence.business.xqh.dao.entity.realtimemonitor.TRiverR;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRvfcchB;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TTideR;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TWasR;
@@ -35,7 +34,14 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
     TWasRDao wasRDao;
     @Autowired
     TTideRDao tideRDao;
-
+    @Autowired
+    TRiverRODao riverRODao;
+    @Autowired
+    TRsvrfsrBDao rsvrfsrBDao;
+    @Autowired
+    TRsvrfcchBDao rsvrfcchBDao;
+    @Autowired
+    TRsvrRDao rsvrRDao;
 
     @Override
     public Map<String, Object> rainSummary(QueryParamDto dto) {
@@ -503,7 +509,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         Date hour = DateUtil.getNextHour(DateUtil.getThisDay(), 8);
         for (Map<String, Object> tempMap : list) {
             String stcd = tempMap.get("STCD") == null ? "" : tempMap.get("STCD").toString();
-            FloodWarningListDto dto = new FloodWarningListDto(stcd,tempMap);
+            FloodWarningListDto dto = new FloodWarningListDto(stcd, tempMap);
             if (map.containsKey(stcd)) {
                 List<TWasR> values = map.get(stcd);
                 Map<Date, TWasR> tmMap = values.stream().collect(Collectors.toMap(TWasR::getTm, tWasR -> tWasR, (oldValue, newValue) -> oldValue));
@@ -556,5 +562,104 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             resultList.add(dto);
         }
         return resultList;
+    }
+
+    /**
+     * 水情服务-水情简报表
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public List getList(QueryParamDto dto) {
+        return null;
+    }
+
+    /**
+     * 水情服务-河道水情表
+     *
+     * @param paramDto
+     * @return
+     */
+    @Override
+    public List<RiverListDto> getRiverList(QueryParamDto paramDto) {
+        List<String> sttpList = new ArrayList<>();
+        sttpList.add("ZZ");
+        sttpList.add("ZQ");
+        List<StStbprpB> stbprpBList = stStbprpBDao.findBySttpInAndUsfl(sttpList, "1");
+        List<RiverListDto> list = new ArrayList<>();
+        if (stbprpBList != null && stbprpBList.size() > 0) {
+            List<String> stcdList = new ArrayList<>();
+            stbprpBList.forEach(it -> {
+                stcdList.add(it.getStcd());
+            });
+            List<TRiverR> riverRList = riverRODao.findByStcdInAndTmBetweenOrderByTmDesc(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
+            Map<String, List<TRiverR>> map = riverRList.stream().collect(Collectors.groupingBy(TRiverR::getStcd));
+            for (StStbprpB stStbprpB : stbprpBList) {
+                RiverListDto dto = new RiverListDto();
+                dto.setStcd(stStbprpB.getStcd());
+                dto.setStnm(stStbprpB.getStnm());
+                if (map.containsKey(stStbprpB.getStcd())) {
+                    List<TRiverR> values = map.get(stStbprpB.getStcd());
+                    List<TRiverR> collect = values.stream().sorted(Comparator.comparing(TRiverR::getTm)).collect(Collectors.toList());
+                    TRiverR last = collect.get(collect.size() - 1);
+                    TRiverR first = collect.get(0);
+
+                    BigDecimal lastWaterLevel = null;
+                    BigDecimal firstWaterLevel = null;
+                    if (last.getZ() != null) {
+                        lastWaterLevel = new BigDecimal(last.getZ());
+                    }
+                    if (first.getZ() != null) {
+                        firstWaterLevel = new BigDecimal(first.getZ());
+                    }
+                    dto.setWaterLevel(lastWaterLevel);
+                    dto.setWaterLevelChange(getChange(lastWaterLevel, firstWaterLevel));
+
+                    BigDecimal lastFlow = null;
+                    BigDecimal firstFlow = null;
+                    if (last.getQ() != null) {
+                        lastFlow = new BigDecimal(last.getQ());
+                    }
+                    if (first.getQ() != null) {
+                        firstFlow = new BigDecimal(first.getQ());
+                    }
+                    dto.setFlow(lastFlow);
+                    dto.setFlowChange(getChange(lastFlow, firstFlow));
+                }
+                list.add(dto);
+            }
+        }
+        return list;
+    }
+
+    private BigDecimal getChange(BigDecimal last, BigDecimal first) {
+        BigDecimal change = null;
+        if (last != null) {
+            if (first != null) {
+                change = last.subtract(first);
+            } else {
+                change = last;
+            }
+        } else if (first != null) {
+            change = new BigDecimal(0).subtract(first);
+        }
+        return change;
+    }
+
+
+    /**
+     * 水情服务-水库水情表
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<ReservoirListDto> getReservoirList(QueryParamDto dto) {
+
+        List<Map<String, Object>> stStbprpBDaoFloodWarningInfo = stStbprpBDao.getFloodWarningInfo("RR");
+
+
+        return null;
     }
 }

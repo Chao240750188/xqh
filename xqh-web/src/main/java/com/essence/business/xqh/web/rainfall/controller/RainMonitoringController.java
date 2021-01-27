@@ -210,4 +210,49 @@ public class RainMonitoringController {
             return new SystemSecurityMessage("error", "查询失败");
         }
     }
+
+    /**
+     * 水情服务-水情简报表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getList")
+    public SystemSecurityMessage getList(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getList(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水情服务-河道水情表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getRiverList")
+    public SystemSecurityMessage getRiverList(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getRiverList(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水情服务-水库水情表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getReservoirList")
+    public SystemSecurityMessage getReservoirList(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getReservoirList(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
 }
