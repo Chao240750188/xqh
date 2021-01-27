@@ -150,4 +150,64 @@ public class RainMonitoringController {
             return new SystemSecurityMessage("error", "查询失败");
         }
     }
+
+    /**
+     * 水雨情查询-洪水告警-闸坝
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getSluiceFloodWarning")
+    public SystemSecurityMessage getSluiceFloodWarning(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getSluiceFloodWarning(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水雨情查询-洪水告警-潮汐
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getTideFloodWarning")
+    public SystemSecurityMessage getTideFloodWarning(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getTideFloodWarning(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水雨情查询-洪水告警-模态框-闸坝列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getSluiceFloodWarningList")
+    public SystemSecurityMessage getSluiceFloodWarningList(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getSluiceFloodWarningList(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水雨情查询-洪水告警-模态框-潮汐列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getTideFloodWarningList")
+    public SystemSecurityMessage getTideFloodWarningList(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getTideFloodWarningList(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
 }

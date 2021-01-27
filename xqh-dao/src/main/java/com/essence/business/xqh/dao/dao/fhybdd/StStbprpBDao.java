@@ -131,4 +131,13 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
             "WHERE a.ROW_NUMBER<2) c ON B.stcd =c.stcd WHERE B.STTP = 'TT' AND B.USFL = '1' ) T ORDER BY T.TDZ DESC", nativeQuery = true)
     List<Map<String, Object>> getTideList();
 
+    /**
+     * 洪水告警-闸坝、潮汐基本信息
+     * @param sttp
+     * @return
+     */
+    @Query(value="SELECT b.STCD,b.STNM,b.LGTD,b.LTTD,b.RVNM,B.HNNM,r.WRZ,r.GRZ,r.OBHTZ FROM ST_STBPRP_B b " +
+            "LEFT JOIN ST_RVFCCH_B r ON b.STCD = r.STCD WHERE b.STTP = ?1 AND b.USFL = '1';",nativeQuery=true)
+    List<Map<String,Object>> getFloodWarningInfo(String sttp);
+
 }

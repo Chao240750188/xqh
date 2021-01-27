@@ -23,7 +23,7 @@ public interface TWasRDao extends EssenceJpaRepository<TWasR, String> {
     List<Map<String, Object>> getLastData();
 
 
-    @Query(value="select t from TWasR t where t.stcd=?1 and t.tm >=?2 and t.tm <=?3 order by t.tm desc")
-    List<TWasR> findByStcdAndTmBetweenAndOrderByTmDesc(String stcd, Date startTime, Date endTime);
+    @Query(value = "select t from TWasR t where t.stcd in (?1) and t.tm >=?2 and t.tm <=?3 order by t.tm desc")
+    List<TWasR> findByStcdAndTmBetweenAndOrderByTmDesc(List<String> stcdList, Date startTime, Date endTime);
 
 }
