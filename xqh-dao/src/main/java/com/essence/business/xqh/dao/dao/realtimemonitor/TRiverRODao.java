@@ -3,6 +3,7 @@ package com.essence.business.xqh.dao.dao.realtimemonitor;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRiverR;
 import com.essence.framework.jpa.EssenceJpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
@@ -23,5 +24,12 @@ public interface TRiverRODao extends EssenceJpaRepository<TRiverR, String> {
     List<Map<String,Object>> getRiverRLastData();
 
     List<TRiverR> findByStcdAndTmBetweenOrderByTmDesc(String stcd, Date startTime, Date endTime);
+
+    @Query(value = "select stcd ,max(z) as z from ST_RIVER_R where tm between " +
+            " :startTime  and :endTime  group by stcd  \n",nativeQuery = true)
+    List<Map<String,Object>> getWaterLevelMaxByTime(@Param(value = "startTime") Date startTime,@Param(value = "endTime") Date endTime);
+
+
+    List<TRiverR> findByTmBetweenOrderByTmDesc(Date startTime, Date endTime);
 
 }

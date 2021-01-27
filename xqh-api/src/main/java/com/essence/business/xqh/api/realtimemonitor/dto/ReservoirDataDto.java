@@ -45,5 +45,6 @@ public class ReservoirDataDto implements Serializable {
      */
     private Double waterStorage;
 
+    private String sttp;
 
 }
