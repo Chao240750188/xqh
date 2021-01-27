@@ -5,17 +5,18 @@ import com.essence.business.xqh.api.hsfxtk.dto.PlanInfoHsfxtkVo;
 import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
+import com.essence.business.xqh.dao.dao.hsfxtk.YwkPlanOutputGridMaxDao;
 import com.essence.business.xqh.dao.dao.hsfxtk.YwkPlanOutputGridProcessDao;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
+import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlanOutputGridMax;
+import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlanOutputGridMaxPK;
 import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlanOutputGridProcess;
 import com.essence.framework.util.StrUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -26,7 +27,8 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
     private YwkPlaninfoDao ywkPlaninfoDao;
     @Autowired
     YwkPlanOutputGridProcessDao ywkPlanOutputGridProcessDao;
-
+    @Autowired
+    private YwkPlanOutputGridMaxDao ywkPlanOutputGridMaxDao;
 
     @Override
     public String savePlanToDb(PlanInfoHsfxtkVo vo) {
@@ -54,6 +56,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         ywkPlaninfo.setnModelid(vo.getModelId());
         ywkPlaninfo.setdRainstarttime(startTime);
         ywkPlaninfo.setdRainendtime(endTIme);
+        ywkPlaninfo.setdOpensourcestarttime(startTime);
+        ywkPlaninfo.setdOpensourceendtime(endTIme);
+        ywkPlaninfo.setnCreatetime(DateUtil.getCurrentTime());
         YwkPlaninfo saveDbo = ywkPlaninfoDao.save(ywkPlaninfo);
         return saveDbo.getnPlanid();
     }
@@ -94,27 +99,27 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         List<YwkPlanOutputGridProcess> results = new ArrayList<>();
         Date startTime = planinfo.getdCaculatestarttm();//计算开始时间
         Long step = planinfo.getnOutputtm();
-        String grid_process_csv = hsfx_model_template_output+File.separator+"process.csv";
+        String grid_process_csv = hsfx_model_template_output+File.separator+"erwei"+File.separator+"process.csv";
         try {
             BufferedReader reader = new BufferedReader(new FileReader(grid_process_csv));//换成你的文件名
             reader.readLine();//第一行信息，为标题信息，不用，如果需要，注释掉
             String line = null;
             List<List<String>> datas = new ArrayList<>();
             while((line=reader.readLine())!=null){
-                String item[] = line.split("，");//CSV格式文件为逗号分隔符文件，这里根据逗号切分
+                String item[] = line.split(",");//CSV格式文件为逗号分隔符文件，这里根据逗号切分
                 datas.add(Arrays.asList(item));
             }
             for (List<String> data:datas){
                 List<String> newList = data.subList(2,data.size());
                 for(int i=0;i<newList.size();i++){
                     YwkPlanOutputGridProcess ywkPlanOutputGridProcess = new YwkPlanOutputGridProcess();
-                    ywkPlanOutputGridProcess.setnPlanid(planinfo.getnPlanid());
-                    ywkPlanOutputGridProcess.setGridId(Long.parseLong(data.get(0)));
+                    ywkPlanOutputGridProcess.getPk().setnPlanid(planinfo.getnPlanid());
+                    ywkPlanOutputGridProcess.getPk().setGridId(Long.parseLong(data.get(0)));
                     String str = newList.get(i);
                     Long stepNew = step*i;
                     Date newDate = DateUtil.getNextMinute(startTime,stepNew.intValue());
                     ywkPlanOutputGridProcess.setAbsoluteTime(new Timestamp(newDate.getTime()));
-                    ywkPlanOutputGridProcess.setRelativeTime(stepNew);
+                    ywkPlanOutputGridProcess.getPk().setRelativeTime(stepNew);
                     ywkPlanOutputGridProcess.setGridDepth(Double.parseDouble(str));
                     results.add(ywkPlanOutputGridProcess);
                 }
@@ -125,6 +130,92 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         }
         return results;
 
+    }
+
+    /**
+     * 解析最大淹没（二维模型淹没统计结果）数据入库
+     * @param planId
+     * @return
+     */
+    public List<YwkPlanOutputGridMax> saveGridMaxToDb(String planId) throws FileNotFoundException {
+        List<YwkPlanOutputGridMax> list = new ArrayList<>();
+        //查询方案基本信息
+        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+        Date startTime = planInfo.getdCaculatestarttm();
+        Date endTime = planInfo.getdCaculateendtm();
+        Long step = planInfo.getnOutputtm();
+        //读取最大水深文件
+        //输出参数文件
+        String SWYB_PATH = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
+        //解析二维输出最大水深文件
+        String MODEL_OUTPUT_MAX_FILE_PATH = SWYB_PATH + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                + File.separator + planId+File.separator+"erwei/result.csv";//模型输出最大水深文件路径
+        List<String> dataList = null;
+        try{
+            dataList= readCSV(MODEL_OUTPUT_MAX_FILE_PATH);
+        }catch (Exception e){
+            System.out.println("读取结果文件失败");
+        }
+        if(dataList!=null && dataList.size()>0){
+            for (int i = 1; i < dataList.size(); i++) {
+                //每行每列数据
+                String[] dataArray = dataList.get(i).split(",");
+                YwkPlanOutputGridMax gridMaxDto = new YwkPlanOutputGridMax();
+                list.add(gridMaxDto);
+                YwkPlanOutputGridMaxPK pk = new YwkPlanOutputGridMaxPK(planId,Long.parseLong(dataArray[0]));
+                gridMaxDto.setIdCLass(pk);
+                gridMaxDto.setGridSurfaceElevation(Double.parseDouble(dataArray[1]));//网格表面高程
+                gridMaxDto.setMaxWaterDepth(Double.parseDouble(dataArray[2]));//最大水深
+                gridMaxDto.setAbsoluteTime(Long.parseLong(dataArray[3]));//最大水深相对时间
+                gridMaxDto.setRelativeTime(DateUtil.getNextMinute(startTime,Integer.parseInt(dataArray[3])));//最大水深绝对时间
+            }
+        }
+        if(list.size()>0){
+            List<YwkPlanOutputGridMax> returnList = ywkPlanOutputGridMaxDao.saveAll(list);
+            return returnList;
+        }
+        return list;
+    }
+
+    /**
+     * 读取csv文件内容
+     * @param filePath
+     * @return
+     * @throws IOException
+     */
+    private List<String> readCSV(String filePath) throws IOException {
+        List dataList = new ArrayList();
+        BufferedReader br = null;
+        InputStreamReader isr = null;
+        try {
+            File file = new File(filePath);
+            if (file.isFile() && file.exists()) {
+                isr = new InputStreamReader(new FileInputStream(file), "utf-8");
+                br = new BufferedReader(isr);
+                String lineTxt = null;
+                while ((lineTxt = br.readLine()) != null) {
+                    dataList.add(lineTxt);
+                }
+                return dataList;
+            } else {
+                System.out.println("文件不存在");
+            }
+        } catch (Exception e) {
+            System.out.println("文件错误");
+        } finally {
+            if (br != null) {
+                br.close();
+            }
+            if (isr != null) {
+                isr.close();
+            }
+        }
+        return dataList;
+    }
+
+    @Override
+    public void test(String planId) throws Exception {
+        saveGridProcessToDb(planId);
     }
 
 }

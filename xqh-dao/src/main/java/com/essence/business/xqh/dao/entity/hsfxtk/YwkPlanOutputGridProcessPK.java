@@ -1,16 +1,19 @@
 package com.essence.business.xqh.dao.entity.hsfxtk;
 
 import javax.persistence.Column;
+import javax.persistence.Embeddable;
 import javax.persistence.Id;
 import java.io.Serializable;
-
+@Embeddable
 public class YwkPlanOutputGridProcessPK implements Serializable {
-    private String nPlanid;
-    private Long gridId;
-    private Long absoluteTime;
-
     @Column(name = "N_PLANID")
-    @Id
+    private String nPlanid;
+    @Column(name = "GRID_ID")
+    private Long gridId;
+    @Column(name = "RELATIVE_TIME")
+    private Long relativeTime;
+
+
     public String getnPlanid() {
         return nPlanid;
     }
@@ -19,8 +22,6 @@ public class YwkPlanOutputGridProcessPK implements Serializable {
         this.nPlanid = nPlanid;
     }
 
-    @Column(name = "GRID_ID")
-    @Id
     public Long getGridId() {
         return gridId;
     }
@@ -29,15 +30,15 @@ public class YwkPlanOutputGridProcessPK implements Serializable {
         this.gridId = gridId;
     }
 
-    @Column(name = "ABSOLUTE_TIME")
-    @Id
-    public Long getAbsoluteTime() {
-        return absoluteTime;
+    public void setGridId(Long gridId) {
+        this.gridId = gridId;
     }
 
-    public void setAbsoluteTime(long absoluteTime) {
-        this.absoluteTime = absoluteTime;
+    public Long getRelativeTime() {
+        return relativeTime;
     }
 
-
+    public void setRelativeTime(Long relativeTime) {
+        this.relativeTime = relativeTime;
+    }
 }

@@ -1,18 +1,14 @@
 package com.essence.business.xqh.dao.entity.hsfxtk;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
+import java.util.Date;
 
 @Entity
 @Table(name = "YWK_PLAN_OUTPUT_GRID_MAX", schema = "XQH", catalog = "")
-@IdClass(YwkPlanOutputGridMaxPK.class)
 public class YwkPlanOutputGridMax {
-    @Id
-    @Column(name = "N_PLANID")
-    private String nPlanid;
-    @Id
-    @Column(name = "GRID_ID")
-    private Long gridId;
+    @EmbeddedId
+    private YwkPlanOutputGridMaxPK idCLass;
+
     @Column(name = "GRID_SURFACE_ELEVATION")
     private Double gridSurfaceElevation;
     @Column(name = "MAX_Z")
@@ -28,23 +24,15 @@ public class YwkPlanOutputGridMax {
     @Column(name = "ABSOLUTE_TIME")
     private Long absoluteTime;
     @Column(name = "RELATIVE_TIME")
-    private Timestamp relativeTime;
+    private Date relativeTime;
 
 
-    public String getnPlanid() {
-        return nPlanid;
+    public YwkPlanOutputGridMaxPK getIdCLass() {
+        return idCLass;
     }
 
-    public void setnPlanid(String nPlanid) {
-        this.nPlanid = nPlanid;
-    }
-
-    public Long getGridId() {
-        return gridId;
-    }
-
-    public void setGridId(Long gridId) {
-        this.gridId = gridId;
+    public void setIdCLass(YwkPlanOutputGridMaxPK idCLass) {
+        this.idCLass = idCLass;
     }
 
     public Double getGridSurfaceElevation() {
@@ -103,11 +91,11 @@ public class YwkPlanOutputGridMax {
         this.absoluteTime = absoluteTime;
     }
 
-    public Timestamp getRelativeTime() {
+    public Date getRelativeTime() {
         return relativeTime;
     }
 
-    public void setRelativeTime(Timestamp relativeTime) {
+    public void setRelativeTime(Date relativeTime) {
         this.relativeTime = relativeTime;
     }
 }
