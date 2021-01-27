@@ -7,6 +7,10 @@ import java.util.Date;
 
 public class PlanInfoHsfxtkVo {
 
+    /**
+     * 方案id
+     */
+    private String nPlanid;
 
     /**
      * 方案名称
@@ -29,7 +33,7 @@ public class PlanInfoHsfxtkVo {
     /**
      * 步长
      */
-    private int step;
+    private Long step;
 
     /**
      * 预见期
@@ -48,20 +52,20 @@ public class PlanInfoHsfxtkVo {
      */
     private String rvcd;
 
+    public String getnPlanid() {
+        return nPlanid;
+    }
+
+    public void setnPlanid(String nPlanid) {
+        this.nPlanid = nPlanid;
+    }
+
     public String getcPlanname() {
         return cPlanname;
     }
 
     public void setcPlanname(String cPlanname) {
         this.cPlanname = cPlanname;
-    }
-
-    public String getModelId() {
-        return modelId;
-    }
-
-    public void setModelId(String modelId) {
-        this.modelId = modelId;
     }
 
     public Date getStartTime() {
@@ -80,11 +84,11 @@ public class PlanInfoHsfxtkVo {
         this.endTime = endTime;
     }
 
-    public int getStep() {
+    public Long getStep() {
         return step;
     }
 
-    public void setStep(int step) {
+    public void setStep(Long step) {
         this.step = step;
     }
 
@@ -94,6 +98,14 @@ public class PlanInfoHsfxtkVo {
 
     public void setPeriodEndTime(Date periodEndTime) {
         this.periodEndTime = periodEndTime;
+    }
+
+    public String getModelId() {
+        return modelId;
+    }
+
+    public void setModelId(String modelId) {
+        this.modelId = modelId;
     }
 
     public String getRvcd() {
