@@ -42,6 +42,9 @@ public enum STTPEnum {
     }
 
     public static String getDesc(String sttp) {
+        if (sttp == null || "".equals(sttp)) {
+            return null;
+        }
         STTPEnum[] values = values();
         for (STTPEnum sttpEnum : values) {
             if (sttp.equals(sttpEnum.sttp)) {

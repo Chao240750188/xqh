@@ -34,9 +34,15 @@ public class ModelCallFhybddController {
      */
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage modelCall(@PathVariable  String planId) {
+        YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);//方案基本信息
         try {
-            Object results = modelCallFhybddService.callMode(planId);
-            return SystemSecurityMessage.getSuccessMsg("调用防洪与报警水文调度模型成功！",results);
+//            Object results = modelCallFhybddService.callMode(planId);
+//            return SystemSecurityMessage.getSuccessMsg("调用防洪与报警水文调度模型成功！",results);
+            Long ret = modelCallFhybdd2Service.callMode(planId);
+            planInfo.setnPlanstatus(ret);
+            CacheUtil.saveOrUpdate("planInfo",planId,planInfo);
+            return SystemSecurityMessage.getSuccessMsg("调用防洪与报警水文调度模型成功！",ret);
+
         }catch (Exception e){
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("调用防洪与报警水文调度模型失败！");
@@ -178,7 +184,7 @@ public class ModelCallFhybddController {
     @RequestMapping(value = "/getModelRunStatus/{planId}",method = RequestMethod.GET)
     public SystemSecurityMessage getModelRunStatus(@PathVariable String planId){
 
-        String status = modelCallFhybddService.getModelRunStatus(planId);
+        String status = modelCallFhybdd2Service.getModelRunStatus(planId);
         return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",status);
 
     }
@@ -190,7 +196,19 @@ public class ModelCallFhybddController {
     @RequestMapping(value = "/getModelResultQ/{planId}",method = RequestMethod.GET)
     public SystemSecurityMessage getModelResultQ(@PathVariable String planId){
 
-        Object results = modelCallFhybddService.getModelResultQ(planId);
+        Object results = modelCallFhybdd2Service.getModelResultQ(planId);
+        return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",results);
+
+    }
+
+    /**
+     * 方案结果保存入库
+     * @return
+     */
+    @RequestMapping(value = "/saveModelData",method = RequestMethod.GET)
+    public SystemSecurityMessage saveModelData(@PathVariable String planId){
+
+        Object results = modelCallFhybdd2Service.saveModelData(planId);
         return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",results);
 
     }

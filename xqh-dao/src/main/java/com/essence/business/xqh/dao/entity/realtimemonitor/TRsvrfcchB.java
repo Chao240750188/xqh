@@ -11,16 +11,16 @@ import lombok.ToString;
 import java.util.Date;
 
 /**
- * @Description  
+ * @Description
  * @Author  Hunter
- * @Date 2021-01-25 
+ * @Date 2021-01-25
  */
 
 @Setter
 @Getter
 @ToString
 @Entity
-@Table ( name ="ST_RSVRFCCH_B" )
+@Table ( name ="ST_RSVRFCCH_B", schema = "XQH", catalog = "" )
 public class TRsvrfcchB  implements Serializable {
 
 	private static final long serialVersionUID =  2323483149286684724L;
@@ -111,7 +111,7 @@ public class TRsvrfcchB  implements Serializable {
 	private String hmxw;
 
 	/**
-	 * 历史最高库水位（蓄水量）时间：建库以来发生历史最高库水位（蓄水量）的时间。   
+	 * 历史最高库水位（蓄水量）时间：建库以来发生历史最高库水位（蓄水量）的时间。
 	 */
    	@Column(name = "HHRZTM" )
 	private Date hhrztm;
@@ -129,7 +129,7 @@ public class TRsvrfcchB  implements Serializable {
 	private String rstdr;
 
 	/**
-	 * 历史最大入流出现时间：出现历史最大入流的时间。  
+	 * 历史最大入流出现时间：出现历史最大入流的时间。
 	 */
    	@Column(name = "HMXINQTM" )
 	private Date hmxinqtm;

@@ -5,6 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.sql.Timestamp;
+import java.util.Date;
 
 @Entity
 @Table(name = "YWK_PLANIN_RAINFALL", schema = "XQH", catalog = "")
@@ -17,7 +18,7 @@ public class YwkPlaninRainfall {
     @Column(name = "N_DRP")
     private Double nDrp;
     @Column(name = "D_TIME")
-    private Timestamp dTime;
+    private Date dTime;
     @Column(name = "N_PLANID")
     private String nPlanid;
 
@@ -38,12 +39,6 @@ public class YwkPlaninRainfall {
         this.cStcd = cStcd;
     }
 
-
-
-    public Timestamp getdTime() {
-        return dTime;
-    }
-
     public Double getnDrp() {
         return nDrp;
     }
@@ -52,15 +47,30 @@ public class YwkPlaninRainfall {
         this.nDrp = nDrp;
     }
 
-    public void setdTime(Timestamp dTime) {
-        this.dTime = dTime;
-    }
-
     public String getnPlanid() {
         return nPlanid;
     }
 
     public void setnPlanid(String nPlanid) {
+        this.nPlanid = nPlanid;
+    }
+
+    public Date getdTime() {
+        return dTime;
+    }
+
+    public void setdTime(Date dTime) {
+        this.dTime = dTime;
+    }
+
+    public YwkPlaninRainfall() {
+    }
+
+    public YwkPlaninRainfall(String cId, String cStcd, Double nDrp, Date dTime, String nPlanid) {
+        this.cId = cId;
+        this.cStcd = cStcd;
+        this.nDrp = nDrp;
+        this.dTime = dTime;
         this.nPlanid = nPlanid;
     }
 }

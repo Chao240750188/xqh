@@ -104,17 +104,17 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         inputPath.mkdir();
         outPath.mkdir();
         //写入到csv入参里 雨量
-       int result0 = writeDataToInputPcpCsv(SWYB_MODEL_TEMPLATE_INPUT, results);
-       if (result0 == 0 ){
-           System.out.println("水文模型写入雨量pcp.Csv失败");
-           return new HashMap<>();
-       }
+        int result0 = writeDataToInputPcpCsv(SWYB_MODEL_TEMPLATE_INPUT, results);
+        if (result0 == 0 ){
+            System.out.println("水文模型写入雨量pcp.Csv失败");
+            return new HashMap<>();
+        }
         //写入河流的数据
-       int result1 = writeDataToInputModelSelectCsv(SWYB_MODEL_TEMPLATE_INPUT, allParentIdIsNull, modelPyId);
-       if (result1 == 0){
-           System.out.println("水文模型写入河流的数据model_select失败");
-           return new HashMap<>();
-       }
+        int result1 = writeDataToInputModelSelectCsv(SWYB_MODEL_TEMPLATE_INPUT, allParentIdIsNull, modelPyId);
+        if (result1 == 0){
+            System.out.println("水文模型写入河流的数据model_select失败");
+            return new HashMap<>();
+        }
         //修改config文件里
         int result2 = writeDataToConfig(MODEL_RUN, SWYB_MODEL_TEMPLATE_INPUT, SWYB_MODEL_TEMPLATE_OUTPUT);
         if (result2 == 0){
@@ -157,7 +157,7 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
             String name = entry.getValue();
             String SKDD_MODEL_TEMPLATE_INPUT = SKDD_PATH+File.separator+name+
                     File.separator+PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE")
-            +File.separator+"INPUT"+File.separator+planId;
+                    +File.separator+"INPUT"+File.separator+planId;
             String SKDD_MODEL_TEMPLATE = SKDD_PATH+File.separator+name+
                     File.separator+PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
 
@@ -463,7 +463,7 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
 
 
     /**
-     * 模型计算结果解析入库
+     * 模型计算结果解析放入缓存给模型调用
      *
      * @param planId
      * @return

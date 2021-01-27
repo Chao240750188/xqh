@@ -11,16 +11,16 @@ import lombok.ToString;
 import java.util.Date;
 
 /**
- * @Description  
+ * @Description
  * @Author  Hunter
- * @Date 2021-01-23 
+ * @Date 2021-01-23
  */
 
 @Setter
 @Getter
 @ToString
 @Entity
-@Table ( name ="ST_TIDE_R" )
+@Table ( name ="ST_TIDE_R", schema = "XQH", catalog = "" )
 public class TTideR  implements Serializable {
 
 	private static final long serialVersionUID =  8515103603190854459L;

@@ -106,8 +106,40 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
     @Query(value = "SELECT ST.STCD,ST.STNM,ST.RVNM,D.TOTAL,ST.LGTD,ST.LTTD FROM ST_STBPRP_B ST INNER JOIN " +
             "(SELECT a.STCD, SUM( a.DRP ) total FROM (SELECT B.STCD, R.DRP FROM ST_STBPRP_B B INNER JOIN ( " +
             "SELECT STCD FROM ST_STSMTASK_B WHERE PFL = 1 ) M ON B.STCD = M.STCD LEFT JOIN ( " +
-            "SELECT STCD, DRP FROM ST_PPTN_R WHERE TM >= ?1 AND TM <= ?2 ) R ON R.STCD = B.STCD ) a " +
+            "SELECT STCD, DRP FROM ST_PPTN_R WHERE TM >= ?1 AND TM <= ?2 ) R ON R.STCD = B.STCD WHERE B.STCD LIKE %?3% OR B.STNM LIKE %?3% ) a " +
             "GROUP BY a.STCD ) D ON ST.STCD = D.STCD ORDER BY D.TOTAL DESC", nativeQuery = true)
-    List<Map<String, Object>> getRainDistributionList(Date startTime, Date endTime);
+    List<Map<String, Object>> getRainDistributionList(Date startTime, Date endTime,String name);
+
+
+    /**
+     * 实时监测-水情监测-闸坝
+     *
+     * @return
+     */
+    @Query(value = "SELECT T.* FROM (SELECT B.STCD,B.STNM,B.RVNM,B.LGTD,B.LTTD,R.WRZ,R.GRZ,R.OBHTZ,c.UPZ,c.DWZ,c.TGTQ FROM " +
+            "ST_STBPRP_B B LEFT JOIN ST_RVFCCH_B R ON B.STCD = R.STCD INNER JOIN ( SELECT a.* from (" +
+            "SELECT t.*,row_number() over(partition by STCD order by tm DESC) row_number from ST_WAS_R t )a " +
+            "where a.ROW_NUMBER<2 ) c ON B.stcd =c.stcd WHERE B.STTP = 'DD' AND B.USFL = '1' ) T ORDER BY T.UPZ DESC", nativeQuery = true)
+    List<Map<String, Object>> getSluiceList();
+
+    /**
+     * 实时监测-水情监测-潮位
+     *
+     * @return
+     */
+    @Query(value = "SELECT T.* FROM (SELECT B.STCD,B.STNM,B.LGTD,B.LTTD,R.WRZ,R.GRZ,R.OBHTZ,c.TDZ,c.AIRP FROM " +
+            "ST_STBPRP_B B LEFT JOIN ST_RVFCCH_B R ON B.STCD = R.STCD INNER JOIN (SELECT a.* FROM (" +
+            "SELECT r.*, row_number() over(partition by STCD ORDER BY TM DESC) row_number FROM ST_TIDE_R r )a " +
+            "WHERE a.ROW_NUMBER<2) c ON B.stcd =c.stcd WHERE B.STTP = 'TT' AND B.USFL = '1' ) T ORDER BY T.TDZ DESC", nativeQuery = true)
+    List<Map<String, Object>> getTideList();
+
+    /**
+     * 洪水告警-闸坝、潮汐基本信息
+     * @param sttp
+     * @return
+     */
+    @Query(value="SELECT b.STCD,b.STNM,b.LGTD,b.LTTD,b.RVNM,B.HNNM,r.WRZ,r.GRZ,r.OBHTZ FROM ST_STBPRP_B b " +
+            "LEFT JOIN ST_RVFCCH_B r ON b.STCD = r.STCD WHERE b.STTP = ?1 AND b.USFL = '1'",nativeQuery=true)
+    List<Map<String,Object>> getFloodWarningInfo(String sttp);
 
 }
