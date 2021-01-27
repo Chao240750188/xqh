@@ -1,13 +1,20 @@
 package com.essence.business.xqh.service.fhybdd;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.essence.business.xqh.api.fhybdd.dto.ModelProperties;
 import com.essence.business.xqh.api.fhybdd.service.ModelCallFhybdd2Service;
 import com.essence.business.xqh.common.util.CacheUtil;
+import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
-import com.essence.business.xqh.dao.dao.fhybdd.WrpRvrBsinDao;
-import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
+import com.essence.business.xqh.dao.dao.fhybdd.*;
+import com.essence.business.xqh.dao.entity.fhybdd.WrpRcsBsin;
 import com.essence.business.xqh.dao.entity.fhybdd.WrpRvrBsin;
+import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninRainfall;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
+import com.essence.framework.util.FileUtil;
+import com.essence.framework.util.StrUtil;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,6 +22,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
@@ -31,14 +39,23 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
     @Autowired
     YwkModelDao ywkModelDao;//水文模型
 
+    @Autowired
+    WrpRcsBsinDao wrpRcsBsinDao;
 
+    @Autowired
+    YwkPlaninfoDao ywkPlaninfoDao;
+    @Autowired
+    StPptnRDao stPptnRDao;
+
+    @Autowired
+    YwkPlaninRainfallDao ywkPlaninRainfallDao;
 
     @Value("#{'${SWYB_SANRUHAI}'.split(',')}")
     List<String> SANRUHAI;
     @Value("#{'${SWYB_XIAOQINGHE}'.split(',')}")
     List<String> XIAOQINGHE;
-    @Value("#{'${SWYB_ZHIMALHE}'.split(',')}")
-    List<String> ZHIMALHE;
+    @Value("#{'${SWYB_ZHIMAIHE}'.split(',')}")
+    List<String> ZHIMAIHE;
 
     @Override
     public Long callMode(String planId) {
@@ -69,8 +86,8 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
             riverModelPath = "SANRUHAI";
         }else if(XIAOQINGHE.contains(riverId)){
             riverModelPath = "XIAOQINGHE";
-        }else if (ZHIMALHE.contains(riverId)){
-            riverModelPath = "ZHIMALHE";
+        }else if (ZHIMAIHE.contains(riverId)){
+            riverModelPath = "ZHIMAIHE";
         }else {
             System.out.println("河流信息错误 无法计算，无法计算");
             return -1L;
@@ -97,7 +114,7 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
            return -1L;
        }
         //写入河流的数据
-       int result1 = writeDataToInputModelSelectCsv(SWYB_MODEL_TEMPLATE_INPUT, allParentIdIsNull, modelPyId);
+       int result1 = writeDataToInputModelSelectCsv(SWYB_MODEL_TEMPLATE_INPUT, allParentIdIsNull, modelPyId,riverId);
        if (result1 == 0){
            System.out.println("水文模型写入河流的数据model_select失败");
            return -1L;
@@ -114,7 +131,7 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
         runModelExe(MODEL_RUN + File.separator + "startUp.bat");
         System.out.println("调用水文模型结束");
         //获取输入结果,57个断面也包含水库
-        Map<String, List<String>> model_result = getModelResult(SWYB_MODEL_TEMPLATE_OUTPUT);
+        Map<String, List<String>> model_result = getModelResult(SWYB_MODEL_TEMPLATE_OUTPUT+"/result.txt");
         if (model_result.size()<=0){
             System.out.println("水文模型调用结果result文件失败");
             return -1L;
@@ -123,6 +140,7 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
 
         return 2L;
     }
+
 
 
 
@@ -138,8 +156,7 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
         /* 读取数据 */
         BufferedReader br = null;
         try {
-            String resultFilePath = model_template_output + "/result.txt";
-            br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(resultFilePath)), "UTF-8"));
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(model_template_output)), "UTF-8"));
             String lineTxt = null;
             while ((lineTxt = br.readLine()) != null) {
                 datas.add(lineTxt);
@@ -198,10 +215,11 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
                     finals.add(outputUrl);
                 }else if ("shuiku_result".equals(split[0])){
                     finals.add(shuikuUrl);
-                }else if("errorUrl".equals(split[0])){
+                }else if("error".equals(split[0])){
                     finals.add(errorUrl);
+                }else{
+                    finals.add(url);
                 }
-                finals.add(url);
             }
             BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, false)); // 附加
             // 添加新的数据行
@@ -233,9 +251,9 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
 
 
     //写入河流数据到model_select里面
-    private int writeDataToInputModelSelectCsv(String model_template_input, List<WrpRvrBsin> allParentIdIsNull, String modelId) {
+    private int writeDataToInputModelSelectCsv(String model_template_input, List<WrpRvrBsin> allParentIdIsNull, String modelId,String riverIds) {
+        String modelPyId = modelProperties.getModel().get("MODEL_SCS");
         String modelSelectInputUrl = model_template_input + File.separator + "model_selection.csv";
-
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(modelSelectInputUrl, false)); // 附加
             // 添加新的数据行
@@ -243,7 +261,12 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
             String modelSelect = "";
             for (WrpRvrBsin wrpRvrBsin : allParentIdIsNull) {
                 riverId = riverId + wrpRvrBsin.getRvcd() + ",";
-                modelSelect = modelSelect + modelId + ",";
+                if(wrpRvrBsin.getRvcd().equals(riverIds)){
+                    modelSelect = modelSelect + modelId + ",";
+                }else{//默认SCS模型
+                    modelSelect = modelSelect + modelPyId + ",";
+                }
+
             }
             riverId = riverId.substring(0, riverId.length() - 1);
             modelSelect = modelSelect.substring(0, modelSelect.length() - 1);
@@ -341,11 +364,137 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
 
 
 
+    @Override
+    public String getModelRunStatus(String planId) {
+        //创建方案时设置水文模型运行次数为2
+        YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);
+        Long aLong = planInfo.getnPlanstatus();
 
+        if(aLong.intValue()!=2)
+            return "0";
+        //创建入参、出参
+        String riverId = planInfo.getRiverId();
+        String riverModelPath = "";
 
+        if (SANRUHAI.contains(riverId)){
+            riverModelPath = "SANRUHAI";
+        }else if(XIAOQINGHE.contains(riverId)){
+            riverModelPath = "XIAOQINGHE";
+        }else if (ZHIMAIHE.contains(riverId)){
+            riverModelPath = "ZHIMAIHE";
+        }else {
+            System.out.println("河流信息错误 无法计算，无法计算");
+        }
+        //创建入参、出参
+        String SWYB_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_PATH");
 
+        String river_model_base_path = SWYB_PATH + File.separator+riverModelPath;
 
+        String SWYB_MODEL_TEMPLATE_OUTPUT = river_model_base_path + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                + File.separator+ planId +File.separator+"result.txt";//输出的地址
+        File file = new File(SWYB_MODEL_TEMPLATE_OUTPUT);
+        if(file.exists()){
+            return "1";
+        }
+        return "0";
+    }
 
+    @Override
+    public Object getModelResultQ(String planId) {
+        JSONArray list = new JSONArray();
 
+        YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);
+        Long step = planInfo.getnOutputtm() / 60;//步长(小时)
+
+        String riverId = planInfo.getRiverId();
+        String riverModelPath = "";
+
+        if (SANRUHAI.contains(riverId)){
+            riverModelPath = "SANRUHAI";
+        }else if(XIAOQINGHE.contains(riverId)){
+            riverModelPath = "XIAOQINGHE";
+        }else if (ZHIMAIHE.contains(riverId)){
+            riverModelPath = "ZHIMAIHE";
+        }else {
+            System.out.println("河流信息错误 无法计算，无法计算");
+        }
+        //创建入参、出参
+        String SWYB_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_PATH");
+
+        String river_model_base_path = SWYB_PATH + File.separator+riverModelPath;
+
+        String SWYB_MODEL_OUTPUT_RESULT = river_model_base_path + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                + File.separator+ planId +"/result.txt";//输出的地址
+
+        //解析河道断面
+        Map<String, List<String>> finalResult = getModelResult(SWYB_MODEL_OUTPUT_RESULT);
+        //如果时小清河模型则解析水库断面
+        Map<String, List<String>> shuikuResult = new HashMap<>();
+        if(riverModelPath.equals("XIAOQINGHE")){
+            String SWYB_MODEL_OUTPUT_SHUIKU = river_model_base_path + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                    + File.separator+ planId +"/shuiku_result.txt";//输出的地址
+            shuikuResult = getModelResult(SWYB_MODEL_OUTPUT_SHUIKU);
+            finalResult.putAll(shuikuResult);
+        }
+
+        //找到河系关联的断面
+        List<WrpRcsBsin> listByRiverId = wrpRcsBsinDao.findListByRiverId(riverId);
+        List<String> sections = listByRiverId.stream().map(WrpRcsBsin::getRvcrcrsccd).collect(Collectors.toList());
+
+        if(finalResult!=null && finalResult.size()>0){
+            Date startTime = planInfo.getdCaculatestarttm();
+            Date endTime = planInfo.getdCaculateendtm();
+            for(String sectionId : sections){
+                JSONObject valObj = new JSONObject();
+                list.add(valObj);
+                valObj.put("RCS_ID",sectionId);
+                JSONArray valList = new JSONArray();
+                valObj.put("values",valList);
+                List<String> dataList = finalResult.get(sectionId);
+                if(dataList!=null && dataList.size()>0){
+                    int index = 0;
+                    int count = 0;
+                    for (Date time = startTime; time.before(endTime); time = DateUtil.getNextHour(startTime, count)) {
+                        try{
+                            JSONObject dataObj = new JSONObject();
+                            dataObj.put("time",DateUtil.dateToStringNormal3(time));
+                            dataObj.put("q",dataList.get(index));
+                            valList.add(dataObj);
+                            count+=step;
+                            index++;
+                        }catch (Exception e){
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 方案计算相关数据入库
+     * @param planId
+     * @return
+     */
+    @Override
+    public Object saveModelData(String planId) {
+        //保存方案基本信息
+        YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);
+        ywkPlaninfoDao.save(planInfo);
+        //保存方案计算-降雨量条件
+        List<YwkPlaninRainfall> rainfallList = new ArrayList<>();
+        List<Map<String, Object>> stPptnRByStartTimeAndEndTime = stPptnRDao.findStPptnRByStartTimeAndEndTime(null,null);
+        for (Map<String, Object> map : stPptnRByStartTimeAndEndTime) {
+            String tm = map.get("tm") + "";
+            String stcd = map.get("STCD") + "";
+            Double drp = Double.parseDouble(map.get("sum") + "");
+            Date dataTime = DateUtil.getDateWithFormat(tm, "yyyy-MM-dd HH");
+            rainfallList.add(new YwkPlaninRainfall(StrUtil.getUUID(),stcd,drp,dataTime,planId));
+        }
+        //保存方案输出流量结果数据
+        Object modelResultQ = getModelResultQ(planId);
+        return null;
+    }
 
 }
