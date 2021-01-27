@@ -4,6 +4,7 @@ import com.essence.business.xqh.dao.entity.realtimemonitor.TRsvrR;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRvfcchB;
 import com.essence.framework.jpa.EssenceJpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
@@ -25,4 +26,8 @@ public interface TRsvrRDao extends EssenceJpaRepository<TRsvrR, String> {
     List<Map<String,Object>> getRsvrLastData();
 
     List<TRsvrR> findByStcdAndTmBetweenOrderByTmDesc(String stcd, Date startDate, Date endDate);
+
+    @Query(value = "select stcd ,max(RZ) as rz from ST_RSVR_R where tm between " +
+            " :startTime  and :endTime  group by stcd  \n",nativeQuery = true)
+    List<Map<String,Object>> getWaterLevelMaxByTime(@Param(value = "startTime") Date startTime, @Param(value = "endTime") Date endTime);
 }

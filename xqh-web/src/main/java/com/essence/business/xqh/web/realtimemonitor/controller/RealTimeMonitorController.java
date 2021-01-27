@@ -47,6 +47,62 @@ public class RealTimeMonitorController {
 
 
     /**
+     * 水雨情查询-洪水告警-水库
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/getReservoirFloodWarningByTime", method = RequestMethod.GET)
+    public SystemSecurityMessage getReservoirFloodWarningByTime(@RequestParam(value = "startTime")String startTime,
+                                                               @RequestParam(value = "endTime")String endTime) {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.getReservoirFloodWarningByTime(startTime,endTime));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
+
+    /**
+     * 水雨情查询-洪水告警-河道详细信息
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/getWaterWayFloodWarningDetailByTime", method = RequestMethod.GET)
+    public SystemSecurityMessage getWaterWayFloodWarningDetailByTime(@RequestParam(value = "startTime")String startTime,
+                                                               @RequestParam(value = "endTime")String endTime) {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.getWaterWayFloodWarningDetailByTime(startTime,endTime));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
+    /**
+     * 水雨情查询-洪水告警-河道
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/getWaterWayFloodWarningByTime", method = RequestMethod.GET)
+    public SystemSecurityMessage getWaterWayFloodWarningByTime(@RequestParam(value = "startTime")String startTime,
+                                                               @RequestParam(value = "endTime")String endTime) {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.getWaterWayFloodWarningByTime(startTime,endTime));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
+
+    /**
      * 获取单个水库站水位信息通过时间段
      *
      * @return com.essence.hdfxdp.util.SystemSecurityMessage

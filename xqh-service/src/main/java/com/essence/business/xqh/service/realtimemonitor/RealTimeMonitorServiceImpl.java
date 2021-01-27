@@ -566,5 +566,311 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
         return result;
     }
 
+    @Override
+    public Object getWaterWayFloodWarningByTime(String startTime, String endTime) throws ParseException {
+        FloodWarningDto result = new FloodWarningDto();
+        List<RiverWayDataDto> surpassHistory = new ArrayList<>();
+        List<RiverWayDataDto> surpassDesign = new ArrayList<>();
+        List<RiverWayDataDto> surpassFloodLine = new ArrayList<>();
+        List<RiverWayDataDto> surpassSafe = new ArrayList<>();
+        //测站编码表
+        List<StStbprpB> allList = stStbprpBDao.findAll();
+        //获取河道站个数
+        List<StStbprpB> stStbprpBS = allList.stream().filter(t -> "ZQ".equals(t.getSttp()) || "ZZ".equals(t.getSttp())).collect(Collectors.toList());
+        //找到河道站点
+        Map<String, StStbprpB> collectStation = stStbprpBS.stream().collect(Collectors.toMap(StStbprpB::getStcd, Function.identity()));
+        Date startDate = sdf.parse(startTime);
+        Date endDate = sdf.parse(endTime);
+        List<Map<String, Object>> waterLevelMaxByTime = tRiverRDao.getWaterLevelMaxByTime(startDate, endDate);
+        //24小时
+        Date startDate24 = Date.from(LocalDateTime.ofInstant(endDate.toInstant(),ZoneId.systemDefault()).plusHours(-24).atZone(ZoneId.systemDefault()).toInstant());
+        List<Map<String, Object>> waterLevelMaxBy24 = tRiverRDao.getWaterLevelMaxByTime(startDate24, endDate);
+        Map<String, String> collectData = waterLevelMaxByTime.stream().filter(t -> t.get("stcd")!=null&&t.get("z")!=null).collect(Collectors.toMap(t -> t.get("stcd").toString(), t -> t.get("z").toString()));
+        Map<String, String> collectData24 = waterLevelMaxBy24.stream().filter(t -> t.get("stcd")!=null&&t.get("z")!=null).collect(Collectors.toMap(t -> t.get("stcd").toString(), t -> t.get("z").toString()));
+        //河道站防洪指标表
+        List<TRvfcchB> tRvfcchBS = tRvfcchBDao.findAll();
+        //获取河道站警戒信息
+        Map<String, TRvfcchB> collectWarningHD = tRvfcchBS.stream().collect(Collectors.toMap(TRvfcchB::getStcd, Function.identity()));
+        for (String stcd : collectStation.keySet()) {
+            RiverWayDataDto dataDto = new RiverWayDataDto();
+            StStbprpB stStbprpB = collectStation.get(stcd);
+            BeanUtils.copyProperties(stStbprpB,dataDto);
+            if(collectData.get(stcd) == null){
+                //24
+                surpassSafe.add(dataDto);
+                continue;
+            }
+            double waterLevel = Double.parseDouble(collectData.get(stcd));
+            dataDto.setWaterLevel(waterLevel);
+            TRvfcchB tRvfcchB = collectWarningHD.get(stcd);
+            if(tRvfcchB != null){
+                String wrz = tRvfcchB.getWrz();
+                //超过警戒
+                if(wrz!=null&&Double.parseDouble(wrz)<waterLevel){
+                    surpassFloodLine.add(dataDto);
+                }
+                String grz = tRvfcchB.getGrz();
+                //超过保证
+                if(grz!=null&&Double.parseDouble(grz)<waterLevel){
+                    surpassDesign.add(dataDto);
+                }
+                //超历史
+                String obhtz = tRvfcchB.getObhtz();
+                if(obhtz!=null&&Double.parseDouble(obhtz)<waterLevel){
+                    surpassHistory.add(dataDto);
+                }
+            }else {
+                surpassSafe.add(dataDto);
+                continue;
+            }
+            //剩余24
+            if(collectData24.get(stcd) == null){
+                //24
+                surpassSafe.add(dataDto);
+                continue;
+            }
+            double waterLevel24 = Double.parseDouble(collectData24.get(stcd));
+            dataDto.setWaterLevel(waterLevel24);
+            String wrz = tRvfcchB.getWrz();
+            String grz = tRvfcchB.getGrz();
+            String obhtz = tRvfcchB.getObhtz();
+            if(wrz!=null&&Double.parseDouble(wrz)>waterLevel&&grz!=null&&Double.parseDouble(grz)>waterLevel&&obhtz!=null&&Double.parseDouble(obhtz)>waterLevel){
+                surpassSafe.add(dataDto);
+            }
+        }
+        result.setSurpassHistory(surpassHistory);
+        result.setSurpassDesign(surpassDesign);
+        result.setSurpassFloodLine(surpassFloodLine);
+        result.setSurpassSafe(surpassSafe);
+        return result;
+    }
+
+    @Override
+    public Object getWaterWayFloodWarningDetailByTime(String startTime, String endTime) throws ParseException {
+        WaterWayFloodWarningCountDto result = new WaterWayFloodWarningCountDto();
+//        List<WaterWayFloodWarningDetailDto> surpassHistory = new ArrayList<>();
+//        List<WaterWayFloodWarningDetailDto> surpassDesign = new ArrayList<>();
+//        List<WaterWayFloodWarningDetailDto> surpassFloodLine = new ArrayList<>();
+//        List<WaterWayFloodWarningDetailDto> surpassSafe = new ArrayList<>();
+        List<WaterWayFloodWarningDetailDto> surpassList = new ArrayList<>();
+        Integer surpassHistoryCount = 0;
+        Integer surpassDesignCount = 0;
+        Integer surpassFloodLineCount = 0;
+        Integer surpassSafeCount = 0;
+
+        //测站编码表
+        List<StStbprpB> allList = stStbprpBDao.findAll();
+        //获取河道站个数
+        List<StStbprpB> stStbprpBS = allList.stream().filter(t -> "ZQ".equals(t.getSttp()) || "ZZ".equals(t.getSttp())).collect(Collectors.toList());
+        //找到河道站点
+        Map<String, StStbprpB> collectStation = stStbprpBS.stream().collect(Collectors.toMap(StStbprpB::getStcd, Function.identity()));
+        Date startDate = sdf.parse(startTime);
+        Date endDate = sdf.parse(endTime);
+        List<TRiverR> tRiverRS = tRiverRDao.findByTmBetweenOrderByTmDesc(startDate, endDate);
+        //24小时
+        Date startDate24 = Date.from(LocalDateTime.ofInstant(endDate.toInstant(),ZoneId.systemDefault()).plusHours(-24).atZone(ZoneId.systemDefault()).toInstant());
+        List<TRiverR> tRiverRS24 = tRiverRDao.findByTmBetweenOrderByTmDesc(startDate24, endDate);
+        Map<String, List<TRiverR>> collectData = tRiverRS.stream().filter(t->t!=null).filter(t -> t.getStcd() != null && t.getZ() != null).collect(Collectors.groupingBy(TRiverR::getStcd));
+        Map<String, List<TRiverR>> collectData24 = tRiverRS24.stream().filter(t -> t.getStcd() != null && t.getZ() != null).collect(Collectors.groupingBy(TRiverR::getStcd));
+        //河道站防洪指标表
+        List<TRvfcchB> tRvfcchBS = tRvfcchBDao.findAll();
+        //获取河道站警戒信息
+        Map<String, TRvfcchB> collectWarningHD = tRvfcchBS.stream().collect(Collectors.toMap(TRvfcchB::getStcd, Function.identity()));
+        for (String stcd : collectData.keySet()) {
+            WaterWayFloodWarningDetailDto dataDto = new WaterWayFloodWarningDetailDto();
+            StStbprpB stStbprpB = collectStation.get(stcd);
+            BeanUtils.copyProperties(stStbprpB,dataDto);
+            dataDto.setFlag24("0");
+            if(collectData.get(stcd) == null){
+                continue;
+            }
+//            //处理24小时数据
+//            List<TRiverR> list24 = collectData24.get(stcd);
+//            double waterLevel24 =0.0;
+//            if(!CollectionUtils.isEmpty(list24)&&list24.get(0).getZ()!=null){
+//                waterLevel24 = Double.parseDouble(list24.get(0).getZ());
+//                dataDto.setWaterLevelNew(waterLevel24);
+//            }
+            List<TRiverR> tRiverRList = collectData.get(stcd).stream().filter(t -> t.getStcd() != null && t.getZ() != null).sorted(new Comparator<TRiverR>() {
+                @Override
+                public int compare(TRiverR o1, TRiverR o2) {
+                    double v1 = Double.parseDouble(o1.getZ());
+                    double v2 = Double.parseDouble(o2.getZ());
+                    return Double.compare(v2, v1);
+                }
+            }).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(tRiverRList)||tRiverRList.get(0).getZ() == null){
+                continue;
+            }
+            double waterLevel = Double.parseDouble(tRiverRList.get(0).getZ());
+            dataDto.setWaterLevel(waterLevel);
+            dataDto.setWaterLevelTm(tRiverRList.get(0).getTm());
+            dataDto.setFlow(tRiverRList.get(0).getQ());
+            dataDto.setWptn(tRiverRList.get(0).getWptn());
+            TRvfcchB tRvfcchB = collectWarningHD.get(stcd);
+            if(tRvfcchB != null){
+                //超过警戒
+                String wrz = tRvfcchB.getWrz();
+                if(wrz!=null){
+                    double v = Double.parseDouble(wrz);
+                    dataDto.setWaterLevelLine(v);
+                    if(v<waterLevel){
+                        dataDto.setWaterLevelLineDistance(waterLevel-v);
+                        surpassFloodLineCount++;
+                    }
+                }
+                String grz = tRvfcchB.getGrz();
+                //超过保证
+                if(grz!=null){
+                    double v = Double.parseDouble(grz);
+                    dataDto.setWaterLevelDesign(v);
+                    if(v<waterLevel){
+                        dataDto.setWaterLevelDesignDistance(waterLevel-v);
+                        surpassDesignCount++;
+                    }
+                }
+                //超历史
+                String obhtz = tRvfcchB.getObhtz();
+                if(obhtz!=null){
+                    double v = Double.parseDouble(obhtz);
+                    dataDto.setWaterLevelHistory(v);
+                    if(v<waterLevel){
+                        dataDto.setWaterLevelHistoryDistance(waterLevel-v);
+                        surpassHistoryCount++;
+                    }
+                }
+                surpassList.add(dataDto);
+                //24个数
+//                String wrz24 = tRvfcchB.getWrz();
+//                String grz24 = tRvfcchB.getGrz();
+//                String obhtz24 = tRvfcchB.getObhtz();
+//                if(wrz24!=null&&Double.parseDouble(wrz24)>waterLevel&&grz24!=null&&Double.parseDouble(grz24)>waterLevel&&obhtz24!=null&&Double.parseDouble(obhtz24)>waterLevel){
+//                    surpassSafeCount++;
+//                }
+            }else {
+                surpassList.add(dataDto);
+                continue;
+            }
+
+        }
+        Map<String, WaterWayFloodWarningDetailDto> collect = surpassList.stream().collect(Collectors.toMap(WaterWayFloodWarningDetailDto::getStcd, Function.identity()));
+        for (StStbprpB stbprpB : stStbprpBS) {
+            String stcd = stbprpB.getStcd();
+            if(collectData24!=null&&collectData24.get(stcd)!=null){
+                //有数据返回
+                continue;
+            }
+            if(collect.get(stcd)!=null){
+                WaterWayFloodWarningDetailDto waterWayFloodWarningDetailDto = collect.get(stcd);
+                waterWayFloodWarningDetailDto.setFlag24("1");
+            }else {
+                WaterWayFloodWarningDetailDto dataDto = new WaterWayFloodWarningDetailDto();
+                BeanUtils.copyProperties(stbprpB,dataDto);
+                dataDto.setFlag24("1");
+                surpassSafeCount++;
+                surpassList.add(dataDto);
+            }
+
+        }
+        result.setSurpassList(surpassList);
+        result.setSurpassDesignCount(surpassDesignCount);
+        result.setSurpassFloodLineCount(surpassFloodLineCount);
+        result.setSurpassHistoryCount(surpassHistoryCount);
+        result.setSurpassSafeCount(surpassSafeCount);
+        return result;
+    }
+
+    @Override
+    public Object getReservoirFloodWarningByTime(String startTime, String endTime) throws ParseException {
+        FloodWarningDto result = new FloodWarningDto();
+        List<ReservoirDataDto> surpassHistory = new ArrayList<>();
+        List<ReservoirDataDto> surpassDesign = new ArrayList<>();
+        List<ReservoirDataDto> surpassFloodLine = new ArrayList<>();
+        List<ReservoirDataDto> surpassSafe = new ArrayList<>();
+        //测站编码表
+        List<StStbprpB> stStbprpBS = stStbprpBDao.findBySttp("RR");
+        //找到水库站点
+        Map<String, StStbprpB> collectStation = stStbprpBS.stream().collect(Collectors.toMap(StStbprpB::getStcd, Function.identity()));
+        Date startDate = sdf.parse(startTime);
+        Date endDate = sdf.parse(endTime);
+        List<Map<String, Object>> waterLevelMaxByTime = tRsvrRDao.getWaterLevelMaxByTime(startDate, endDate);
+        //24小时
+        Date startDate24 = Date.from(LocalDateTime.ofInstant(endDate.toInstant(),ZoneId.systemDefault()).plusHours(-24).atZone(ZoneId.systemDefault()).toInstant());
+        List<Map<String, Object>> waterLevelMaxBy24 = tRsvrRDao.getWaterLevelMaxByTime(startDate24, endDate);
+        Map<String, String> collectData = waterLevelMaxByTime.stream().filter(t -> t.get("stcd")!=null&&t.get("rz")!=null).collect(Collectors.toMap(t -> t.get("stcd").toString(), t -> t.get("rz").toString()));
+        Map<String, String> collectData24 = waterLevelMaxBy24.stream().filter(t -> t.get("stcd")!=null&&t.get("rz")!=null).collect(Collectors.toMap(t -> t.get("stcd").toString(), t -> t.get("rz").toString()));
+        //水库站防洪指标表
+        List<TRsvrfcchB> tRsvrfcchBS = tRsvrfcchBDao.findAll();
+        //获取水库站警戒信息
+        Map<String, TRsvrfcchB> collectWarningHD = tRsvrfcchBS.stream().collect(Collectors.toMap(TRsvrfcchB::getStcd, Function.identity()));
+        //库（湖）站汛限水位表 查询主汛期为1的
+        List<TRsvrfsrB> tRsvrfsrBS = tRsvrfsrBDao.findByFstp("1");
+        //获取水库警戒信息
+        Map<String, TRsvrfsrB> collectWarningSK = tRsvrfsrBS.stream().collect(Collectors.toMap(TRsvrfsrB::getStcd, Function.identity()));
+
+        for (String stcd : collectStation.keySet()) {
+            ReservoirDataDto dataDto = new ReservoirDataDto();
+            StStbprpB stStbprpB = collectStation.get(stcd);
+            BeanUtils.copyProperties(stStbprpB,dataDto);
+            if(collectData.get(stcd) == null){
+                //24
+                surpassSafe.add(dataDto);
+                continue;
+            }
+            double waterLevel = Double.parseDouble(collectData.get(stcd));
+            dataDto.setWaterLevel(waterLevel);
+            TRsvrfcchB tRvfcchB = collectWarningHD.get(stcd);
+            //找出汛限标准
+            TRsvrfsrB tRsvrfsrB = collectWarningSK.get(stcd);
+            if(tRvfcchB != null){
+                String hhrz = tRvfcchB.getHhrz();
+                //超过历史
+                if(hhrz!=null&&Double.parseDouble(hhrz)<waterLevel){
+                    surpassHistory.add(dataDto);
+                }
+                String dsflz = tRvfcchB.getDsflz();
+                //超过设计
+                if(dsflz!=null&&Double.parseDouble(dsflz)<waterLevel){
+                    surpassDesign.add(dataDto);
+                }
+                if(tRsvrfsrB != null){
+                    //超汛限
+                    String fsltdz = tRsvrfsrB.getFsltdz();
+                    if(fsltdz!=null&&Double.parseDouble(fsltdz)<waterLevel){
+                        surpassFloodLine.add(dataDto);
+                    }
+                }
+            }else if(tRsvrfsrB != null){
+                    //超汛限
+                    String fsltdz = tRsvrfsrB.getFsltdz();
+                    if(fsltdz!=null&&Double.parseDouble(fsltdz)<waterLevel){
+                        surpassFloodLine.add(dataDto);
+                    }
+            }else {
+                surpassSafe.add(dataDto);
+                continue;
+            }
+            //剩余24
+            if(collectData24.get(stcd) == null){
+                //24
+                surpassSafe.add(dataDto);
+                continue;
+            }
+            double waterLevel24 = Double.parseDouble(collectData24.get(stcd));
+            dataDto.setWaterLevel(waterLevel24);
+            String dsflz = tRvfcchB.getDsflz();
+            String fsltdz = tRsvrfsrB.getFsltdz();
+            String hhrz = tRvfcchB.getHhrz();
+            if(dsflz!=null&&Double.parseDouble(dsflz)>waterLevel&&fsltdz!=null&&Double.parseDouble(fsltdz)>waterLevel&&hhrz!=null&&Double.parseDouble(hhrz)>waterLevel){
+                surpassSafe.add(dataDto);
+            }
+        }
+        result.setSurpassHistory(surpassHistory);
+        result.setSurpassDesign(surpassDesign);
+        result.setSurpassFloodLine(surpassFloodLine);
+        result.setSurpassSafe(surpassSafe);
+        return result;
+    }
+
 
 }

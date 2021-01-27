@@ -47,4 +47,6 @@ public class RiverWayDataDto implements Serializable {
     //河流名称
     private String rvnm;
 
+    private String sttp;
+
 }
