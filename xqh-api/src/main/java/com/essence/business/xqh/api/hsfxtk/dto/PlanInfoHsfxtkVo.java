@@ -7,6 +7,7 @@ import java.util.Date;
 
 public class PlanInfoHsfxtkVo {
 
+
     /**
      * 方案名称
      */
