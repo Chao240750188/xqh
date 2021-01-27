@@ -16,6 +16,8 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
     @Query(value = "select t from StStbprpB t where t.sttp=?1 and t.usfl=1")
     public List<StStbprpB> findBySttp(String sttp);
 
+    List<StStbprpB> findBySttpInAndUsflIs(List<String> sttps,Integer usfl);
+
     @Query(value = "select t from StStbprpB t where t.admauth in(?1) and t.usfl=1")
     List<StStbprpB> findByAdmauthIn(List<String> source);
 

@@ -29,4 +29,10 @@ public interface RealTimeMonitorService {
     Object getReservoirDataSingle(String stcd);
 
     Object getReservoirWaterLevelByTime(String stcd, String startTime, String endTime) throws ParseException;
+
+    Object getWaterWayFloodWarningByTime(String startTime, String endTime) throws ParseException;
+
+    Object getWaterWayFloodWarningDetailByTime(String startTime, String endTime) throws ParseException;
+
+    Object getReservoirFloodWarningByTime(String startTime, String endTime) throws ParseException;
 }
