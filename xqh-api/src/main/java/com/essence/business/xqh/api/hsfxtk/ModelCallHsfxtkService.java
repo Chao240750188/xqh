@@ -14,4 +14,11 @@ public interface ModelCallHsfxtkService {
      */
     String savePlanToDb(PlanInfoHsfxtkVo vo);
 
+    /**
+     * 保存网格执行过程入库
+     * @param planId
+     * @return
+     */
+    Integer saveGridProcessToDb(String planId);
+
 }
