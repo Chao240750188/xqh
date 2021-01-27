@@ -84,4 +84,36 @@ public interface RainMonitoringService {
      */
     TideTendencyDto getTideTendency(QueryParamDto dto);
 
+    /**
+     * 水雨情查询-洪水告警-闸坝
+     *
+     * @param dto
+     * @return
+     */
+    Map<String, List<FloodWarningDto>> getSluiceFloodWarning(QueryParamDto dto);
+
+    /**
+     * 水雨情查询-洪水告警-潮汐
+     *
+     * @param dto
+     * @return
+     */
+    Map<String, List<FloodWarningDto>> getTideFloodWarning(QueryParamDto dto);
+
+    /**
+     * 水雨情查询-洪水告警-模态框-闸坝
+     *
+     * @param dto
+     * @return
+     */
+    List<FloodWarningListDto> getSluiceFloodWarningList(QueryParamDto dto);
+
+    /**
+     * 水雨情查询-洪水告警-模态框-潮汐
+     *
+     * @param dto
+     * @return
+     */
+    List<FloodWarningListDto> getTideFloodWarningList(QueryParamDto dto);
+
 }

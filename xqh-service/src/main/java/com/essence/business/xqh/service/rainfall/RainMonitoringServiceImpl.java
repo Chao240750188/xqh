@@ -11,6 +11,7 @@ import com.essence.business.xqh.dao.dao.realtimemonitor.TTideRDao;
 import com.essence.business.xqh.dao.dao.realtimemonitor.TWasRDao;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRvfcchB;
+import com.essence.business.xqh.dao.entity.realtimemonitor.TTideR;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TWasR;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -226,7 +227,9 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
     //实时监视-水情监视-站点查询-水位流量过程线-闸坝
     @Override
     public SluiceTendencyDto getSluiceTendency(QueryParamDto paramDto) {
-        List<TWasR> wasRList = wasRDao.findByStcdAndTmBetweenAndOrderByTmDesc(paramDto.getStcd(), paramDto.getStartTime(), paramDto.getEndTime());
+        List<String> stcdList = new ArrayList<>();
+        stcdList.add(paramDto.getStcd());
+        List<TWasR> wasRList = wasRDao.findByStcdAndTmBetweenAndOrderByTmDesc(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
         if (wasRList.size() == 0) {
             return new SluiceTendencyDto();
         }
@@ -314,7 +317,9 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
     //实时监视-水情监视-站点查询-水位流量过程线-潮位
     @Override
     public TideTendencyDto getTideTendency(QueryParamDto paramDto) {
-        List<Map<String, Object>> tideRList = tideRDao.findDataByStcdAndTime(paramDto.getStcd(), paramDto.getStartTime(), paramDto.getEndTime());
+        List<String> stcdList = new ArrayList<>();
+        stcdList.add(paramDto.getStcd());
+        List<TTideR> tideRList = tideRDao.findDataByStcdAndTime(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
         if (tideRList.size() == 0) {
             return new TideTendencyDto();
         }
@@ -331,14 +336,14 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         sortSet.add(hlz);
 
         List<TideTendency> list = new ArrayList<>();
-        for (Map<String, Object> tempMap : tideRList) {
+        for (TTideR tideR : tideRList) {
             TideTendency dto = new TideTendency();
-            dto.setTm((Date) tempMap.get("TM"));
-            dto.setShowTm(DateUtil.dateToStringNormal((Date) tempMap.get("TM")));
-            String tdz = tempMap.get("TDZ") == null ? "0" : tempMap.get("TDZ").toString();
+            dto.setTm(tideR.getTm());
+            dto.setShowTm(DateUtil.dateToStringNormal(tideR.getTm()));
+            String tdz = tideR.getTdz() == null ? "0" : tideR.getTdz();
             dto.setTdz(tdz);
             sortSet.add(new BigDecimal(tdz));
-            dto.setTdptn(tempMap.get("TDPTN") == null ? "" : tempMap.get("TDPTN").toString());
+            dto.setTdptn(tideR.getTdptn() == null ? "" : tideR.getTdptn());
             BigDecimal warning = null;
             if (tdz != null) {
                 warning = new BigDecimal(tdz).subtract(wrz);
@@ -356,5 +361,200 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         TideTendency minTm = list.stream().sorted(Comparator.comparing(TideTendency::getHlz)).collect(Collectors.toList()).get(0);
         TideTendencyDto dto = new TideTendencyDto(high, low, maxTime.getObhtz(), minTm.getHlz(), maxTime.getShowTm(), minTm.getShowTm(), list);
         return dto;
+    }
+
+    /**
+     * 水雨情查询-洪水告警-闸坝
+     *
+     * @param paramDto
+     * @return
+     */
+    @Override
+    public Map<String, List<FloodWarningDto>> getSluiceFloodWarning(QueryParamDto paramDto) {
+        Date nextHour = DateUtil.getNextHour(paramDto.getEndTime(), -24);
+        List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("DD");
+        List<String> stcdList = new ArrayList<>();
+        for (Map<String, Object> map : list) {
+            stcdList.add(map.get("STCD").toString());
+        }
+        List<TWasR> wasRList = wasRDao.findByStcdAndTmBetweenAndOrderByTmDesc(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
+        Map<String, List<TWasR>> map = wasRList.stream().collect(Collectors.groupingBy(TWasR::getStcd));
+        List<FloodWarningDto> beyondHistoryList = new ArrayList<>();//超历史
+        List<FloodWarningDto> beyondGuaranteeList = new ArrayList<>();//超保证
+        List<FloodWarningDto> beyondWarnList = new ArrayList<>();//超警戒
+        List<FloodWarningDto> beyondHourList = new ArrayList<>();//超24小时无数据
+        for (Map<String, Object> tempMap : list) {
+            String stcd = tempMap.get("STCD").toString();
+            String stnm = tempMap.get("STNM").toString();
+            BigDecimal lgtd = new BigDecimal(tempMap.get("LGTD") == null ? "0" : tempMap.get("LGTD").toString());
+            BigDecimal lttd = new BigDecimal(tempMap.get("LTTD") == null ? "0" : tempMap.get("LTTD").toString());
+            BigDecimal wrz = new BigDecimal(tempMap.get("WRZ") == null ? "0" : tempMap.get("WRZ").toString());
+            BigDecimal grz = new BigDecimal(tempMap.get("GRZ") == null ? "0" : tempMap.get("GRZ").toString());
+            BigDecimal obhtz = new BigDecimal(tempMap.get("OBHTZ") == null ? "0" : tempMap.get("OBHTZ").toString());
+            FloodWarningDto dto = new FloodWarningDto(stcd, stnm, lgtd, lttd, wrz, grz, obhtz);
+            if (map.containsKey(stcd)) {
+                List<TWasR> tWasRList = map.get(stcd);
+                String upzStr = tWasRList.stream().sorted(Comparator.comparing(TWasR::getUpz).reversed()).collect(Collectors.toList()).get(0).getUpz();
+                BigDecimal upz = new BigDecimal(upzStr);
+                dto.setUpz(upz);
+                Date tm = tWasRList.stream().sorted(Comparator.comparing(TWasR::getTm).reversed()).collect(Collectors.toList()).get(0).getTm();
+                if (upz.compareTo(obhtz) == 1) {
+                    beyondHistoryList.add(dto);
+                }
+                if (upz.compareTo(grz) == 1) {
+                    beyondGuaranteeList.add(dto);
+                }
+                if (upz.compareTo(wrz) == 1) {
+                    beyondWarnList.add(dto);
+                }
+                if (tm.before(nextHour)) {
+                    beyondHourList.add(dto);
+                }
+            } else {
+                beyondHourList.add(dto);
+            }
+        }
+        Map<String, List<FloodWarningDto>> resultMap = new HashMap<>();
+        resultMap.put("beyondHistoryList", beyondHistoryList);
+        resultMap.put("beyondGuaranteeList", beyondGuaranteeList);
+        resultMap.put("beyondWarnList", beyondWarnList);
+        resultMap.put("beyondHourList", beyondHourList);
+        return resultMap;
+    }
+
+    /**
+     * 水雨情查询-洪水告警-潮汐
+     *
+     * @param paramDto
+     * @return
+     */
+    @Override
+    public Map<String, List<FloodWarningDto>> getTideFloodWarning(QueryParamDto paramDto) {
+        Date nextHour = DateUtil.getNextHour(paramDto.getEndTime(), -24);
+        List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("DD");
+        List<String> stcdList = new ArrayList<>();
+        for (Map<String, Object> map : list) {
+            stcdList.add(map.get("STCD").toString());
+        }
+        List<TTideR> tideRList = tideRDao.findDataByStcdAndTime(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
+        Map<String, List<TTideR>> map = tideRList.stream().collect(Collectors.groupingBy(TTideR::getStcd));
+
+        List<FloodWarningDto> beyondHistoryList = new ArrayList<>();//超历史
+        List<FloodWarningDto> beyondGuaranteeList = new ArrayList<>();//超保证
+        List<FloodWarningDto> beyondWarnList = new ArrayList<>();//超警戒
+        List<FloodWarningDto> beyondHourList = new ArrayList<>();//超24小时无数据
+
+        for (Map<String, Object> tempMap : list) {
+            String stcd = tempMap.get("STCD").toString();
+            String stnm = tempMap.get("STNM").toString();
+            BigDecimal lgtd = new BigDecimal(tempMap.get("LGTD") == null ? "0" : tempMap.get("LGTD").toString());
+            BigDecimal lttd = new BigDecimal(tempMap.get("LTTD") == null ? "0" : tempMap.get("LTTD").toString());
+            BigDecimal wrz = new BigDecimal(tempMap.get("WRZ") == null ? "0" : tempMap.get("WRZ").toString());
+            BigDecimal grz = new BigDecimal(tempMap.get("GRZ") == null ? "0" : tempMap.get("GRZ").toString());
+            BigDecimal obhtz = new BigDecimal(tempMap.get("OBHTZ") == null ? "0" : tempMap.get("OBHTZ").toString());
+            FloodWarningDto dto = new FloodWarningDto(stcd, stnm, lgtd, lttd, wrz, grz, obhtz);
+            if (map.containsKey(stcd)) {
+                List<TTideR> tTideRList = map.get(stcd);
+                String tdzStr = tTideRList.stream().sorted(Comparator.comparing(TTideR::getTdz).reversed()).collect(Collectors.toList()).get(0).getTdz();
+                BigDecimal tdz = new BigDecimal(tdzStr);
+                dto.setUpz(tdz);
+                Date tm = tTideRList.stream().sorted(Comparator.comparing(TTideR::getTm).reversed()).collect(Collectors.toList()).get(0).getTm();
+                if (tdz.compareTo(obhtz) == 1) {
+                    beyondHistoryList.add(dto);
+                }
+                if (tdz.compareTo(grz) == 1) {
+                    beyondGuaranteeList.add(dto);
+                }
+                if (tdz.compareTo(wrz) == 1) {
+                    beyondWarnList.add(dto);
+                }
+                if (tm.before(nextHour)) {
+                    beyondHourList.add(dto);
+                }
+            } else {
+                beyondHourList.add(dto);
+            }
+        }
+        Map<String, List<FloodWarningDto>> resultMap = new HashMap<>();
+        resultMap.put("beyondHistoryList", beyondHistoryList);
+        resultMap.put("beyondGuaranteeList", beyondGuaranteeList);
+        resultMap.put("beyondWarnList", beyondWarnList);
+        resultMap.put("beyondHourList", beyondHourList);
+        return resultMap;
+    }
+
+    /**
+     * 水雨情查询-洪水告警-模态框-闸坝
+     *
+     * @param paramDto
+     * @return
+     */
+    @Override
+    public List<FloodWarningListDto> getSluiceFloodWarningList(QueryParamDto paramDto) {
+        List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("DD");
+        List<String> stcdList = new ArrayList<>();
+        for (Map<String, Object> map : list) {
+            stcdList.add(map.get("STCD").toString());
+        }
+        List<TWasR> wasRList = wasRDao.findByStcdAndTmBetweenAndOrderByTmDesc(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
+        Map<String, List<TWasR>> map = wasRList.stream().collect(Collectors.groupingBy(TWasR::getStcd));
+
+        List<FloodWarningListDto> resultList = new ArrayList<>();
+        Date hour = DateUtil.getNextHour(DateUtil.getThisDay(), 8);
+        for (Map<String, Object> tempMap : list) {
+            String stcd = map.get("STCD") == null ? "" : map.get("STCD").toString();
+            FloodWarningListDto dto = new FloodWarningListDto(stcd,tempMap);
+            if (map.containsKey(stcd)) {
+                List<TWasR> values = map.get(stcd);
+                Map<Date, TWasR> tmMap = values.stream().collect(Collectors.toMap(TWasR::getTm, tWasR -> tWasR, (oldValue, newValue) -> oldValue));
+                TWasR wasR = tmMap.get(hour) == null ? new TWasR() : tmMap.get(hour);
+                dto.setHourWaterLevel(new BigDecimal(wasR.getUpz() == null ? "0" : wasR.getUpz()));
+                dto.setHourFlow(new BigDecimal(wasR.getTgtq() == null ? "0" : wasR.getTgtq()));
+                TWasR upzValue = values.stream().sorted(Comparator.comparing(TWasR::getUpz, Comparator.nullsFirst(String::compareTo)).reversed()).collect(Collectors.toList()).get(0);
+                dto.setMaxWaterLevel(new BigDecimal(upzValue.getUpz() == null ? "0" : upzValue.getUpz()));
+                dto.setMaxWaterLevelTm(upzValue.getTm());
+                TWasR tgtqValue = values.stream().sorted(Comparator.comparing(TWasR::getTgtq, Comparator.nullsFirst(String::compareTo)).reversed()).collect(Collectors.toList()).get(0);
+                dto.setMaxFlow(new BigDecimal(tgtqValue.getTgtq() == null ? "0" : tgtqValue.getTgtq()));
+                dto.setMaxFlowTm(tgtqValue.getTm());
+            }
+            resultList.add(dto);
+        }
+        return resultList;
+    }
+
+    /**
+     * 水雨情查询-洪水告警-模态框-潮汐
+     *
+     * @param paramDto
+     * @return
+     */
+    @Override
+    public List<FloodWarningListDto> getTideFloodWarningList(QueryParamDto paramDto) {
+        List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("DD");
+        List<String> stcdList = new ArrayList<>();
+        for (Map<String, Object> map : list) {
+            stcdList.add(map.get("STCD").toString());
+        }
+        List<TTideR> tideRList = tideRDao.findDataByStcdAndTime(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
+        Map<String, List<TTideR>> map = tideRList.stream().collect(Collectors.groupingBy(TTideR::getStcd));
+
+        List<FloodWarningListDto> resultList = new ArrayList<>();
+        Date hour = DateUtil.getNextHour(DateUtil.getThisDay(), 8);
+        for (Map<String, Object> tempMap : list) {
+            String stcd = map.get("STCD") == null ? "" : map.get("STCD").toString();
+            FloodWarningListDto dto = new FloodWarningListDto(stcd, tempMap);
+            if (map.containsKey(stcd)) {
+                List<TTideR> values = map.get(stcd);
+                Map<Date, TTideR> tmMap = values.stream().collect(Collectors.toMap(TTideR::getTm, tTideR -> tTideR, (oldValue, newValue) -> oldValue));
+                TTideR tTideR = tmMap.get(hour) == null ? new TTideR() : tmMap.get(hour);
+                dto.setHourWaterLevel(new BigDecimal(tTideR.getTdz() == null ? "0" : tTideR.getTdz()));
+
+                TTideR tdzValue = values.stream().sorted(Comparator.comparing(TTideR::getTdz, Comparator.nullsFirst(String::compareTo)).reversed()).collect(Collectors.toList()).get(0);
+                dto.setMaxWaterLevel(new BigDecimal(tdzValue.getTdz() == null ? "0" : tdzValue.getTdz()));
+                dto.setMaxWaterLevelTm(tdzValue.getTm());
+            }
+            resultList.add(dto);
+        }
+        return resultList;
     }
 }
