@@ -35,4 +35,6 @@ public interface RealTimeMonitorService {
     Object getWaterWayFloodWarningDetailByTime(String startTime, String endTime) throws ParseException;
 
     Object getReservoirFloodWarningByTime(String startTime, String endTime) throws ParseException;
+
+    Object getReservoirFloodWarningDetailByTime(String startTime, String endTime) throws ParseException;
 }

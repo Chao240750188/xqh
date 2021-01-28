@@ -11,6 +11,7 @@ import java.util.List;
 
 @Repository
 public interface YwkModelRoughnessParamDao extends EssenceJpaRepository<YwkModelRoughnessParam, String> {
+<<<<<<< HEAD
     /**
      * 根据模型id查询糙率参数
      * @param modelId
@@ -25,4 +26,11 @@ public interface YwkModelRoughnessParamDao extends EssenceJpaRepository<YwkModel
      */
     @Query(value = "select t from YwkModelRoughnessParam t where t.roughnessParamid=?1")
     public YwkModelRoughnessParam findOneById(String roughnessParamid);
+=======
+
+
+    @Query(value = "select * from YWK_MODEL_ROUGHNESS_PARAM where IDMODEL_ID = ?1",nativeQuery = true)
+    List<YwkModelRoughnessParam> findYwkModelRoughnessParamByModelId(String modelId);
+
+>>>>>>> ce33305276b9abef21c305f50a1c6fd24b1689d5
 }

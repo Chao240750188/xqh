@@ -33,7 +33,7 @@ public class ReservoirFloodWarningDetailDto implements Serializable {
     /**
      * 流量
      */
-    private Double flow;
+    private String flow;
 
     /**
      * 水位
@@ -64,4 +64,15 @@ public class ReservoirFloodWarningDetailDto implements Serializable {
      * 总库容
      */
     private Double capacity;
+
+    /**
+     * 告警说明
+     */
+    private String message;
+
+    /**
+     * 最新24小时水位 0不显示24 ，1显示24小时数据
+     */
+    private String flag24;
+
 }
