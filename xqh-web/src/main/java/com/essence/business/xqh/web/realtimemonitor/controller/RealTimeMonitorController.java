@@ -47,6 +47,25 @@ public class RealTimeMonitorController {
 
 
     /**
+     * 水雨情查询-洪水告警-水库详细信息
+     *
+     * @return com.essence.hdfxdp.util.SystemSecurityMessage
+     * @Date 14:10 2020/8/4
+     * @Param []
+     **/
+    @RequestMapping(value = "/getReservoirFloodWarningDetailByTime", method = RequestMethod.GET)
+    public SystemSecurityMessage getReservoirFloodWarningDetailByTime(@RequestParam(value = "startTime")String startTime,
+                                                                     @RequestParam(value = "endTime")String endTime) {
+        try {
+            return new SystemSecurityMessage("ok", "获取站点信息成功！",realTimeMonitorService.getReservoirFloodWarningDetailByTime(startTime,endTime));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new SystemSecurityMessage("error", "获取站点信息失败!");
+        }
+    }
+
+
+    /**
      * 水雨情查询-洪水告警-水库
      *
      * @return com.essence.hdfxdp.util.SystemSecurityMessage

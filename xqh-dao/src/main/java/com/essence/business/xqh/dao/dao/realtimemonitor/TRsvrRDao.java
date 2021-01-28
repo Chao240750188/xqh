@@ -1,5 +1,6 @@
 package com.essence.business.xqh.dao.dao.realtimemonitor;
 
+import com.essence.business.xqh.dao.entity.realtimemonitor.TRiverR;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRsvrR;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRvfcchB;
 import com.essence.framework.jpa.EssenceJpaRepository;
@@ -30,4 +31,6 @@ public interface TRsvrRDao extends EssenceJpaRepository<TRsvrR, String> {
     @Query(value = "select stcd ,max(RZ) as rz from ST_RSVR_R where tm between " +
             " :startTime  and :endTime  group by stcd  \n",nativeQuery = true)
     List<Map<String,Object>> getWaterLevelMaxByTime(@Param(value = "startTime") Date startTime, @Param(value = "endTime") Date endTime);
+
+    List<TRsvrR> findByTmBetweenOrderByTmDesc(Date startTime, Date endTime);
 }
