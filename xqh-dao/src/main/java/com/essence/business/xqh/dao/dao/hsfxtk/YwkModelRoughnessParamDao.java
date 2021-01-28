@@ -10,6 +10,7 @@ import java.util.List;
 
 @Repository
 public interface YwkModelRoughnessParamDao extends EssenceJpaRepository<YwkModelRoughnessParam, String> {
+
     /**
      * 根据模型id查询糙率参数
      * @param modelId
