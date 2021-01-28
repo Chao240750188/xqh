@@ -105,15 +105,35 @@ public class ModelParamHsfxtkController {
        @RequestMapping(value = "/saveRoughness", method = RequestMethod.POST)
        public SystemSecurityMessage saveRoughness(@RequestBody YwkParamVo ywkParamVo) {
            try {
-               int ret =  modelParamHsfxtkService.saveRoughness(ywkParamVo);
-               return SystemSecurityMessage.getSuccessMsg("保存洪水风险调控模型操率参数列表成功",ret);
+                modelParamHsfxtkService.saveRoughness(ywkParamVo);
+               return SystemSecurityMessage.getSuccessMsg("保存洪水风险调控模型操率参数列表成功");
 
            }catch (Exception e){
                e.printStackTrace();
-               return SystemSecurityMessage.getFailMsg("保存洪水风险调控模型操率参数列表失败！",-1);
+               return SystemSecurityMessage.getFailMsg("保存洪水风险调控模型操率参数列表失败！");
 
            }
        }
+
+
+
+    /**
+     * 删除模型参数跟河道参数列表
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/deleteRoughness/{roughness}", method = RequestMethod.GET)
+    public SystemSecurityMessage deleteRoughness( @PathVariable String roughness) {
+        try {
+            modelParamHsfxtkService.deleteRoughness(roughness);
+            return SystemSecurityMessage.getSuccessMsg("删除洪水风险调控模型操率参数列表成功");
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("删除洪水风险调控模型操率参数列表失败！");
+
+        }
+    }
 
 
 }

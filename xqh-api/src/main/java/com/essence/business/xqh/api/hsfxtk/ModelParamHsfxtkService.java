@@ -46,5 +46,12 @@ public interface ModelParamHsfxtkService {
      * @param ywkParamVo
      * @return
      */
-    int saveRoughness(YwkParamVo ywkParamVo);
+    void saveRoughness(YwkParamVo ywkParamVo);
+
+
+    /**
+     * 删除河道模型操率参数信息
+     * @param roughness
+     */
+    void deleteRoughness(String roughness);
 }
