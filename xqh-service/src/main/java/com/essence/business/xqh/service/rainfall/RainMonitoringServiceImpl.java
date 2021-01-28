@@ -4,14 +4,12 @@ import com.essence.business.xqh.api.rainfall.STTPEnum;
 import com.essence.business.xqh.api.rainfall.dto.rainmonitoring.*;
 import com.essence.business.xqh.api.rainfall.service.RainMonitoringService;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
+import com.essence.business.xqh.api.realtimemonitor.dto.*;
 import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
 import com.essence.business.xqh.dao.dao.realtimemonitor.*;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
-import com.essence.business.xqh.dao.entity.realtimemonitor.TRiverR;
-import com.essence.business.xqh.dao.entity.realtimemonitor.TRvfcchB;
-import com.essence.business.xqh.dao.entity.realtimemonitor.TTideR;
-import com.essence.business.xqh.dao.entity.realtimemonitor.TWasR;
+import com.essence.business.xqh.dao.entity.realtimemonitor.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -376,7 +374,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
      * @return
      */
     @Override
-    public Map<String, List<FloodWarningDto>> getSluiceFloodWarning(QueryParamDto paramDto) {
+    public FloodWarningDto getSluiceFloodWarning(QueryParamDto paramDto) {
         Date nextHour = DateUtil.getNextHour(paramDto.getEndTime(), -24);
         List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("DD");
         List<String> stcdList = new ArrayList<>();
@@ -385,47 +383,49 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         }
         List<TWasR> wasRList = wasRDao.findByStcdAndTmBetweenAndOrderByTmDesc(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
         Map<String, List<TWasR>> map = wasRList.stream().collect(Collectors.groupingBy(TWasR::getStcd));
-        List<FloodWarningDto> beyondHistoryList = new ArrayList<>();//超历史
-        List<FloodWarningDto> beyondGuaranteeList = new ArrayList<>();//超保证
-        List<FloodWarningDto> beyondWarnList = new ArrayList<>();//超警戒
-        List<FloodWarningDto> beyondHourList = new ArrayList<>();//超24小时无数据
+        List<RiverWayDataDto> surpassHistory = new ArrayList<>();//超历史
+        List<RiverWayDataDto> surpassDesign = new ArrayList<>();//超保证
+        List<RiverWayDataDto> surpassFloodLine = new ArrayList<>();//超警戒
+        List<RiverWayDataDto> surpassSafe = new ArrayList<>();//24小时无信息
         for (Map<String, Object> tempMap : list) {
             String stcd = tempMap.get("STCD").toString();
             String stnm = tempMap.get("STNM").toString();
-            BigDecimal lgtd = new BigDecimal(tempMap.get("LGTD") == null ? "0" : tempMap.get("LGTD").toString());
-            BigDecimal lttd = new BigDecimal(tempMap.get("LTTD") == null ? "0" : tempMap.get("LTTD").toString());
+            String rvnm = tempMap.get("RVNM").toString();
+            Double lgtd = new Double(tempMap.get("LGTD") == null ? "0" : tempMap.get("LGTD").toString());
+            Double lttd = new Double(tempMap.get("LTTD") == null ? "0" : tempMap.get("LTTD").toString());
             BigDecimal wrz = new BigDecimal(tempMap.get("WRZ") == null ? "0" : tempMap.get("WRZ").toString());
             BigDecimal grz = new BigDecimal(tempMap.get("GRZ") == null ? "0" : tempMap.get("GRZ").toString());
             BigDecimal obhtz = new BigDecimal(tempMap.get("OBHTZ") == null ? "0" : tempMap.get("OBHTZ").toString());
-            FloodWarningDto dto = new FloodWarningDto(stcd, stnm, lgtd, lttd, wrz, grz, obhtz);
+            RiverWayDataDto dto = new RiverWayDataDto(stcd, stnm, lgtd, lttd, rvnm, "DD");
+            dto.setWarningWaterLevel(wrz.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
             if (map.containsKey(stcd)) {
                 List<TWasR> tWasRList = map.get(stcd);
                 String upzStr = tWasRList.stream().sorted(Comparator.comparing(TWasR::getUpz).reversed()).collect(Collectors.toList()).get(0).getUpz();
                 BigDecimal upz = new BigDecimal(upzStr);
-                dto.setUpz(upz);
+                dto.setWaterLevel(upz.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
                 Date tm = tWasRList.stream().sorted(Comparator.comparing(TWasR::getTm).reversed()).collect(Collectors.toList()).get(0).getTm();
                 if (upz.compareTo(obhtz) == 1) {
-                    beyondHistoryList.add(dto);
+                    surpassHistory.add(dto);
                 }
                 if (upz.compareTo(grz) == 1) {
-                    beyondGuaranteeList.add(dto);
+                    surpassDesign.add(dto);
                 }
                 if (upz.compareTo(wrz) == 1) {
-                    beyondWarnList.add(dto);
+                    surpassFloodLine.add(dto);
                 }
                 if (tm.before(nextHour)) {
-                    beyondHourList.add(dto);
+                    surpassSafe.add(dto);
                 }
             } else {
-                beyondHourList.add(dto);
+                surpassSafe.add(dto);
             }
         }
-        Map<String, List<FloodWarningDto>> resultMap = new HashMap<>();
-        resultMap.put("beyondHistoryList", beyondHistoryList);
-        resultMap.put("beyondGuaranteeList", beyondGuaranteeList);
-        resultMap.put("beyondWarnList", beyondWarnList);
-        resultMap.put("beyondHourList", beyondHourList);
-        return resultMap;
+        FloodWarningDto dto = new FloodWarningDto();
+        dto.setSurpassHistory(surpassHistory);
+        dto.setSurpassDesign(surpassDesign);
+        dto.setSurpassFloodLine(surpassFloodLine);
+        dto.setSurpassSafe(surpassSafe);
+        return dto;
     }
 
     /**
@@ -435,7 +435,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
      * @return
      */
     @Override
-    public Map<String, List<FloodWarningDto>> getTideFloodWarning(QueryParamDto paramDto) {
+    public FloodWarningDto getTideFloodWarning(QueryParamDto paramDto) {
         Date nextHour = DateUtil.getNextHour(paramDto.getEndTime(), -24);
         List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("TT");
         List<String> stcdList = new ArrayList<>();
@@ -445,48 +445,50 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         List<TTideR> tideRList = tideRDao.findDataByStcdAndTime(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
         Map<String, List<TTideR>> map = tideRList.stream().collect(Collectors.groupingBy(TTideR::getStcd));
 
-        List<FloodWarningDto> beyondHistoryList = new ArrayList<>();//超历史
-        List<FloodWarningDto> beyondGuaranteeList = new ArrayList<>();//超保证
-        List<FloodWarningDto> beyondWarnList = new ArrayList<>();//超警戒
-        List<FloodWarningDto> beyondHourList = new ArrayList<>();//超24小时无数据
-
+        List<RiverWayDataDto> surpassHistory = new ArrayList<>();//超历史
+        List<RiverWayDataDto> surpassDesign = new ArrayList<>();//超保证
+        List<RiverWayDataDto> surpassFloodLine = new ArrayList<>();//超警戒
+        List<RiverWayDataDto> surpassSafe = new ArrayList<>();//24小时无信息
         for (Map<String, Object> tempMap : list) {
             String stcd = tempMap.get("STCD").toString();
             String stnm = tempMap.get("STNM").toString();
-            BigDecimal lgtd = new BigDecimal(tempMap.get("LGTD") == null ? "0" : tempMap.get("LGTD").toString());
-            BigDecimal lttd = new BigDecimal(tempMap.get("LTTD") == null ? "0" : tempMap.get("LTTD").toString());
+            String rvnm = tempMap.get("RVNM").toString();
+            Double lgtd = new Double(tempMap.get("LGTD") == null ? "0" : tempMap.get("LGTD").toString());
+            Double lttd = new Double(tempMap.get("LTTD") == null ? "0" : tempMap.get("LTTD").toString());
             BigDecimal wrz = new BigDecimal(tempMap.get("WRZ") == null ? "0" : tempMap.get("WRZ").toString());
             BigDecimal grz = new BigDecimal(tempMap.get("GRZ") == null ? "0" : tempMap.get("GRZ").toString());
             BigDecimal obhtz = new BigDecimal(tempMap.get("OBHTZ") == null ? "0" : tempMap.get("OBHTZ").toString());
-            FloodWarningDto dto = new FloodWarningDto(stcd, stnm, lgtd, lttd, wrz, grz, obhtz);
+
+            RiverWayDataDto dto = new RiverWayDataDto(stcd, stnm, lgtd, lttd, rvnm, "TT");
+            dto.setWarningWaterLevel(wrz.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
             if (map.containsKey(stcd)) {
                 List<TTideR> tTideRList = map.get(stcd);
                 String tdzStr = tTideRList.stream().sorted(Comparator.comparing(TTideR::getTdz).reversed()).collect(Collectors.toList()).get(0).getTdz();
                 BigDecimal tdz = new BigDecimal(tdzStr);
-                dto.setUpz(tdz);
+                dto.setWaterLevel(tdz.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
                 Date tm = tTideRList.stream().sorted(Comparator.comparing(TTideR::getTm).reversed()).collect(Collectors.toList()).get(0).getTm();
                 if (tdz.compareTo(obhtz) == 1) {
-                    beyondHistoryList.add(dto);
+                    surpassHistory.add(dto);
                 }
                 if (tdz.compareTo(grz) == 1) {
-                    beyondGuaranteeList.add(dto);
+                    surpassDesign.add(dto);
                 }
                 if (tdz.compareTo(wrz) == 1) {
-                    beyondWarnList.add(dto);
+                    surpassFloodLine.add(dto);
                 }
                 if (tm.before(nextHour)) {
-                    beyondHourList.add(dto);
+                    surpassSafe.add(dto);
                 }
             } else {
-                beyondHourList.add(dto);
+                surpassSafe.add(dto);
             }
         }
-        Map<String, List<FloodWarningDto>> resultMap = new HashMap<>();
-        resultMap.put("beyondHistoryList", beyondHistoryList);
-        resultMap.put("beyondGuaranteeList", beyondGuaranteeList);
-        resultMap.put("beyondWarnList", beyondWarnList);
-        resultMap.put("beyondHourList", beyondHourList);
-        return resultMap;
+        FloodWarningDto dto = new FloodWarningDto();
+        dto.setSurpassHistory(surpassHistory);
+        dto.setSurpassDesign(surpassDesign);
+        dto.setSurpassFloodLine(surpassFloodLine);
+        dto.setSurpassSafe(surpassSafe);
+        return dto;
     }
 
     /**
@@ -496,7 +498,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
      * @return
      */
     @Override
-    public List<FloodWarningListDto> getSluiceFloodWarningList(QueryParamDto paramDto) {
+    public WaterWayFloodWarningCountDto getSluiceFloodWarningList(QueryParamDto paramDto) {
         List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("DD");
         List<String> stcdList = new ArrayList<>();
         for (Map<String, Object> map : list) {
@@ -505,27 +507,84 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         List<TWasR> wasRList = wasRDao.findByStcdAndTmBetweenAndOrderByTmDesc(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
         Map<String, List<TWasR>> map = wasRList.stream().collect(Collectors.groupingBy(TWasR::getStcd));
 
-        List<FloodWarningListDto> resultList = new ArrayList<>();
-        Date hour = DateUtil.getNextHour(DateUtil.getThisDay(), 8);
+        List<WaterWayFloodWarningDetailDto> surpassList = new ArrayList<>();
+        Integer surpassHistoryCount = 0;
+        Integer surpassDesignCount = 0;
+        Integer surpassFloodLineCount = 0;
+        Integer surpassSafeCount = 0;
+        Date hour8 = DateUtil.getNextHour(DateUtil.getThisDay(), 8);
+        Date hour24 = DateUtil.getNextHour(paramDto.getEndTime(), -24);
+        BigDecimal bigDecimal = new BigDecimal(0);
         for (Map<String, Object> tempMap : list) {
             String stcd = tempMap.get("STCD") == null ? "" : tempMap.get("STCD").toString();
-            FloodWarningListDto dto = new FloodWarningListDto(stcd, tempMap);
+            WaterWayFloodWarningDetailDto dto = new WaterWayFloodWarningDetailDto(stcd, "DD", tempMap);
             if (map.containsKey(stcd)) {
                 List<TWasR> values = map.get(stcd);
                 Map<Date, TWasR> tmMap = values.stream().collect(Collectors.toMap(TWasR::getTm, tWasR -> tWasR, (oldValue, newValue) -> oldValue));
-                TWasR wasR = tmMap.get(hour) == null ? new TWasR() : tmMap.get(hour);
-                dto.setHourWaterLevel(new BigDecimal(wasR.getUpz() == null ? "0" : wasR.getUpz()));
-                dto.setHourFlow(new BigDecimal(wasR.getTgtq() == null ? "0" : wasR.getTgtq()));
-                TWasR upzValue = values.stream().sorted(Comparator.comparing(TWasR::getUpz, Comparator.nullsFirst(String::compareTo)).reversed()).collect(Collectors.toList()).get(0);
-                dto.setMaxWaterLevel(new BigDecimal(upzValue.getUpz() == null ? "0" : upzValue.getUpz()));
-                dto.setMaxWaterLevelTm(upzValue.getTm());
-                TWasR tgtqValue = values.stream().sorted(Comparator.comparing(TWasR::getTgtq, Comparator.nullsFirst(String::compareTo)).reversed()).collect(Collectors.toList()).get(0);
-                dto.setMaxFlow(new BigDecimal(tgtqValue.getTgtq() == null ? "0" : tgtqValue.getTgtq()));
-                dto.setMaxFlowTm(tgtqValue.getTm());
+                TWasR wasR = tmMap.get(hour8) == null ? new TWasR() : tmMap.get(hour8);
+                dto.setWaterLevel8(new Double(wasR.getUpz() == null ? "0" : wasR.getUpz()));
+                dto.setFlow8(wasR.getTgtq());
+
+                TreeSet<BigDecimal> tgtqSet = new TreeSet<>();
+                HashMap<BigDecimal, TWasR> tgtqMap = new HashMap<>();
+                TreeSet<BigDecimal> upzSet = new TreeSet<>();
+                HashMap<BigDecimal, TWasR> upzMap = new HashMap<>();
+                for (TWasR tWasR : values) {
+                    if (tWasR.getTgtq() != null && !"".equals(tWasR.getTgtq())) {
+                        BigDecimal tgtq = new BigDecimal(tWasR.getTgtq());
+                        tgtqSet.add(tgtq);
+                        tgtqMap.put(tgtq, tWasR);
+                    }
+                    if (tWasR.getUpz() != null && !"".equals(tWasR.getUpz())) {
+                        BigDecimal upz = new BigDecimal(tWasR.getUpz());
+                        upzSet.add(upz);
+                        upzMap.put(upz, tWasR);
+                    }
+                }
+                if (tgtqSet.size() > 0) {
+                    dto.setFlow(tgtqMap.get(tgtqSet.last()).getTgtq());
+                    dto.setFlowTm(tgtqMap.get(tgtqSet.last()).getTm());
+                }
+                if (upzSet.size() > 0) {
+                    dto.setWaterLevel(new Double(upzMap.get(upzSet.last()).getUpz()));
+                    dto.setWaterLevelTm(upzMap.get(upzSet.last()).getTm());
+                }
+
+                BigDecimal waterLevelHistoryDistance = getChange(new BigDecimal(dto.getWaterLevel()), new BigDecimal(dto.getWaterLevelHistory()));
+                BigDecimal waterLevelDesignDistance = getChange(new BigDecimal(dto.getWaterLevel()), new BigDecimal(dto.getWaterLevelDesign()));
+                BigDecimal waterLevelLineDistance = getChange(new BigDecimal(dto.getWaterLevel()), new BigDecimal(dto.getWaterLevelLine()));
+                dto.setWaterLevelHistoryDistance(waterLevelHistoryDistance.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
+                dto.setWaterLevelDesignDistance(waterLevelDesignDistance.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
+                dto.setWaterLevelLineDistance(waterLevelLineDistance.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
+
+                TreeSet<Date> set = new TreeSet<>(tmMap.keySet());
+                if (set.last().before(hour24)) {
+                    dto.setFlag24("0");
+                    surpassSafeCount++;
+                } else {
+                    dto.setFlag24("1");
+                }
+                if (waterLevelHistoryDistance != null && waterLevelHistoryDistance.compareTo(bigDecimal) == 1) {
+                    surpassHistoryCount++;
+                }
+                if (waterLevelDesignDistance != null && waterLevelDesignDistance.compareTo(bigDecimal) == 1) {
+                    surpassDesignCount++;
+                }
+                if (waterLevelLineDistance != null && waterLevelLineDistance.compareTo(bigDecimal) == 1) {
+                    surpassFloodLineCount++;
+                }
+            } else {
+                dto.setFlag24("0");
             }
-            resultList.add(dto);
+            surpassList.add(dto);
         }
-        return resultList;
+        WaterWayFloodWarningCountDto dto = new WaterWayFloodWarningCountDto();
+        dto.setSurpassList(surpassList);
+        dto.setSurpassHistoryCount(surpassHistoryCount);
+        dto.setSurpassDesignCount(surpassDesignCount);
+        dto.setSurpassFloodLineCount(surpassFloodLineCount);
+        dto.setSurpassSafeCount(surpassSafeCount);
+        return dto;
     }
 
     /**
@@ -535,7 +594,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
      * @return
      */
     @Override
-    public List<FloodWarningListDto> getTideFloodWarningList(QueryParamDto paramDto) {
+    public WaterWayFloodWarningCountDto getTideFloodWarningList(QueryParamDto paramDto) {
         List<Map<String, Object>> list = stStbprpBDao.getFloodWarningInfo("TT");
         List<String> stcdList = new ArrayList<>();
         for (Map<String, Object> map : list) {
@@ -544,25 +603,76 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         List<TTideR> tideRList = tideRDao.findDataByStcdAndTime(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
         Map<String, List<TTideR>> map = tideRList.stream().collect(Collectors.groupingBy(TTideR::getStcd));
 
-        List<FloodWarningListDto> resultList = new ArrayList<>();
-        Date hour = DateUtil.getNextHour(DateUtil.getThisDay(), 8);
+        List<WaterWayFloodWarningDetailDto> surpassList = new ArrayList<>();
+        Integer surpassHistoryCount = 0;
+        Integer surpassDesignCount = 0;
+        Integer surpassFloodLineCount = 0;
+        Integer surpassSafeCount = 0;
+        Date hour8 = DateUtil.getNextHour(DateUtil.getThisDay(), 8);
+        Date hour24 = DateUtil.getNextHour(paramDto.getEndTime(), -24);
+        BigDecimal bigDecimal = new BigDecimal(0);
         for (Map<String, Object> tempMap : list) {
             String stcd = tempMap.get("STCD") == null ? "" : tempMap.get("STCD").toString();
-            FloodWarningListDto dto = new FloodWarningListDto(stcd, tempMap);
+            WaterWayFloodWarningDetailDto dto = new WaterWayFloodWarningDetailDto(stcd, "TT", tempMap);
             if (map.containsKey(stcd)) {
                 List<TTideR> values = map.get(stcd);
                 Map<Date, TTideR> tmMap = values.stream().collect(Collectors.toMap(TTideR::getTm, tTideR -> tTideR, (oldValue, newValue) -> oldValue));
-                TTideR tTideR = tmMap.get(hour) == null ? new TTideR() : tmMap.get(hour);
-                dto.setHourWaterLevel(new BigDecimal(tTideR.getTdz() == null ? "0" : tTideR.getTdz()));
+                TTideR tideR = tmMap.get(hour8) == null ? new TTideR() : tmMap.get(hour8);
+                dto.setWaterLevel8(new Double(tideR.getTdz() == null ? "0" : tideR.getTdz()));
 
-                TTideR tdzValue = values.stream().sorted(Comparator.comparing(TTideR::getTdz, Comparator.nullsFirst(String::compareTo)).reversed()).collect(Collectors.toList()).get(0);
-                dto.setMaxWaterLevel(new BigDecimal(tdzValue.getTdz() == null ? "0" : tdzValue.getTdz()));
-                dto.setMaxWaterLevelTm(tdzValue.getTm());
+                TreeSet<BigDecimal> treeSet = new TreeSet<>();
+                Map<BigDecimal, TTideR> hashMap = new HashMap<>();
+
+                for (TTideR tTideR : values) {
+                    if (tTideR.getTdz() != null && !"".equals(tTideR.getTdz())) {
+                        BigDecimal tdz = new BigDecimal(tTideR.getTdz());
+                        treeSet.add(tdz);
+                        hashMap.put(tdz, tTideR);
+                    }
+                }
+                if (treeSet.size() > 0) {
+                    TTideR tTideR = hashMap.get(treeSet.last());
+                    dto.setWaterLevel(new Double(tTideR.getTdz()));
+                    dto.setWaterLevelTm(tTideR.getTm());
+                }
+
+                BigDecimal waterLevelHistoryDistance = getChange(new BigDecimal(dto.getWaterLevel()), new BigDecimal(dto.getWaterLevelHistory()));
+                BigDecimal waterLevelDesignDistance = getChange(new BigDecimal(dto.getWaterLevel()), new BigDecimal(dto.getWaterLevelDesign()));
+                BigDecimal waterLevelLineDistance = getChange(new BigDecimal(dto.getWaterLevel()), new BigDecimal(dto.getWaterLevelLine()));
+                dto.setWaterLevelHistoryDistance(waterLevelHistoryDistance.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
+                dto.setWaterLevelDesignDistance(waterLevelDesignDistance.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
+                dto.setWaterLevelLineDistance(waterLevelLineDistance.setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue());
+
+                TreeSet<Date> set = new TreeSet<>(tmMap.keySet());
+                if (set.last().before(hour24)) {
+                    dto.setFlag24("0");
+                    surpassSafeCount++;
+                } else {
+                    dto.setFlag24("1");
+                }
+                if (waterLevelHistoryDistance != null && waterLevelHistoryDistance.compareTo(bigDecimal) == 1) {
+                    surpassHistoryCount++;
+                }
+                if (waterLevelDesignDistance != null && waterLevelDesignDistance.compareTo(bigDecimal) == 1) {
+                    surpassDesignCount++;
+                }
+                if (waterLevelLineDistance != null && waterLevelLineDistance.compareTo(bigDecimal) == 1) {
+                    surpassFloodLineCount++;
+                }
+            } else {
+                dto.setFlag24("0");
             }
-            resultList.add(dto);
+            surpassList.add(dto);
         }
-        return resultList;
+        WaterWayFloodWarningCountDto dto = new WaterWayFloodWarningCountDto();
+        dto.setSurpassList(surpassList);
+        dto.setSurpassHistoryCount(surpassHistoryCount);
+        dto.setSurpassDesignCount(surpassDesignCount);
+        dto.setSurpassFloodLineCount(surpassFloodLineCount);
+        dto.setSurpassSafeCount(surpassSafeCount);
+        return dto;
     }
+
 
     /**
      * 水情服务-水情简报表
@@ -633,16 +743,16 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         return list;
     }
 
-    private BigDecimal getChange(BigDecimal last, BigDecimal first) {
+    private BigDecimal getChange(BigDecimal begin, BigDecimal end) {
         BigDecimal change = null;
-        if (last != null) {
-            if (first != null) {
-                change = last.subtract(first);
+        if (begin != null) {
+            if (end != null) {
+                change = begin.subtract(end);
             } else {
-                change = last;
+                change = begin;
             }
-        } else if (first != null) {
-            change = new BigDecimal(0).subtract(first);
+        } else if (end != null) {
+            change = new BigDecimal(0).subtract(end);
         }
         return change;
     }
@@ -651,15 +761,75 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
     /**
      * 水情服务-水库水情表
      *
-     * @param dto
+     * @param paramDto
      * @return
      */
     @Override
-    public List<ReservoirListDto> getReservoirList(QueryParamDto dto) {
+    public List<ReservoirListDto> getReservoirList(QueryParamDto paramDto) {
+        List<Map<String, Object>> stbprpList = stStbprpBDao.getFloodWarningInfo("RR");
+        List<String> stcdList = new ArrayList<>();
+        for (Map<String, Object> map : stbprpList) {
+            String stcd = map.get("STCD").toString();
+            stcdList.add(stcd);
+        }
+        //水库水情表
+        List<TRsvrR> rsvrRList = rsvrRDao.findByStcdInAndTmBetweenOrderByTmDesc(stcdList, paramDto.getStartTime(), paramDto.getEndTime());
+        Map<String, List<TRsvrR>> rscrMap = rsvrRList.stream().collect(Collectors.groupingBy(TRsvrR::getStcd));
 
-        List<Map<String, Object>> stStbprpBDaoFloodWarningInfo = stStbprpBDao.getFloodWarningInfo("RR");
+        //汛限水位表
+        List<TRsvrfsrB> rsvrfsrBList = rsvrfsrBDao.findByStcdInaAndFstp(stcdList, "1");
+        Map<String, String> rsvrfsrMap = rsvrfsrBList.stream().collect(Collectors.toMap(TRsvrfsrB::getStcd, TRsvrfsrB::getFsltdz));
+        //防洪指标表
+        List<TRsvrfcchB> rsvrfcchBList = rsvrfcchBDao.findByStcdIn(stcdList);
+        Map<String, TRsvrfcchB> rsvrfcchBMap = rsvrfcchBList.stream().collect(Collectors.toMap(TRsvrfcchB::getStcd, tRsvrfcchB -> tRsvrfcchB));
 
+        List<ReservoirListDto> resultList = new ArrayList<>();
 
-        return null;
+        for (Map<String, Object> map : stbprpList) {
+            ReservoirListDto dto = new ReservoirListDto();
+            String stcd = map.get("STCD").toString();
+            dto.setStcd(stcd);
+            dto.setHnnm(map.get("HNNM").toString());
+            dto.setStnm(map.get("STNM").toString());
+            dto.setFsltdz(rsvrfsrMap.get(stcd));
+            TRsvrfcchB tRsvrfcchB = rsvrfcchBMap.get(stcd) == null ? new TRsvrfcchB() : rsvrfcchBMap.get(stcd);
+            dto.setDdz(tRsvrfcchB.getDdz());
+            dto.setNormz(tRsvrfcchB.getNormz());
+
+            List<TRsvrR> values = rscrMap.get(stcd);
+            List<TRsvrR> collect = values.stream().sorted(Comparator.comparing(TRsvrR::getTm, Comparator.nullsFirst(Date::compareTo)).reversed()).collect(Collectors.toList());
+            TRsvrR tRsvrR = collect.get(0);
+            dto.setRz(tRsvrR.getRz());
+            dto.setInq(tRsvrR.getInq());
+            dto.setOtq(tRsvrR.getOtq());
+            int rwptn;//水势 落:4 涨:5 平:6
+            if (collect.size() > 2) {
+                String rz = collect.get(1).getRz();
+                BigDecimal first = null;
+                if (dto.getRz() != null && !"".equals(dto.getRz())) {
+                    first = new BigDecimal(dto.getRz());
+                }
+                BigDecimal last = null;
+                if (rz != null && !"".equals(rz)) {
+                    last = new BigDecimal(rz);
+                }
+                BigDecimal change = getChange(first, last);
+                if (change != null && change.compareTo(new BigDecimal(0)) == 1) {
+                    rwptn = 5;
+                } else if (change != null && change.compareTo(new BigDecimal(0)) == 0) {
+                    rwptn = 6;
+                } else if (change != null && change.compareTo(new BigDecimal(0)) == -1) {
+                    rwptn = 4;
+                } else {
+                    rwptn = 6;
+                }
+            } else {
+                rwptn = 5;
+            }
+            dto.setRwptn(rwptn);
+
+            resultList.add(dto);
+        }
+        return resultList;
     }
 }

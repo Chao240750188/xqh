@@ -2,6 +2,8 @@ package com.essence.business.xqh.api.rainfall.service;
 
 import com.essence.business.xqh.api.rainfall.dto.rainmonitoring.*;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
+import com.essence.business.xqh.api.realtimemonitor.dto.FloodWarningDto;
+import com.essence.business.xqh.api.realtimemonitor.dto.WaterWayFloodWarningCountDto;
 
 import java.util.List;
 import java.util.Map;
@@ -90,7 +92,7 @@ public interface RainMonitoringService {
      * @param dto
      * @return
      */
-    Map<String, List<FloodWarningDto>> getSluiceFloodWarning(QueryParamDto dto);
+    FloodWarningDto getSluiceFloodWarning(QueryParamDto dto);
 
     /**
      * 水雨情查询-洪水告警-潮汐
@@ -98,7 +100,7 @@ public interface RainMonitoringService {
      * @param dto
      * @return
      */
-    Map<String, List<FloodWarningDto>> getTideFloodWarning(QueryParamDto dto);
+    FloodWarningDto getTideFloodWarning(QueryParamDto dto);
 
     /**
      * 水雨情查询-洪水告警-模态框-闸坝
@@ -106,7 +108,7 @@ public interface RainMonitoringService {
      * @param dto
      * @return
      */
-    List<FloodWarningListDto> getSluiceFloodWarningList(QueryParamDto dto);
+    WaterWayFloodWarningCountDto getSluiceFloodWarningList(QueryParamDto dto);
 
     /**
      * 水雨情查询-洪水告警-模态框-潮汐
@@ -114,7 +116,7 @@ public interface RainMonitoringService {
      * @param dto
      * @return
      */
-    List<FloodWarningListDto> getTideFloodWarningList(QueryParamDto dto);
+    WaterWayFloodWarningCountDto getTideFloodWarningList(QueryParamDto dto);
 
 
     /**

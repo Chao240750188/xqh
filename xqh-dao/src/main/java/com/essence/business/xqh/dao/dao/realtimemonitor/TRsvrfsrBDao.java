@@ -1,7 +1,6 @@
 package com.essence.business.xqh.dao.dao.realtimemonitor;
 
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRsvrfsrB;
-import com.essence.business.xqh.dao.entity.realtimemonitor.TRvfcchB;
 import com.essence.framework.jpa.EssenceJpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -23,4 +22,9 @@ public interface TRsvrfsrBDao extends EssenceJpaRepository<TRsvrfsrB, String> {
     List<TRsvrfsrB> findByFstp(String fstp);
 
     TRsvrfsrB findByStcdAndFstp(String stcd, String fstp);
+
+
+    List<TRsvrfsrB> findByStcdInaAndFstp(List<String> stcdList,String fstp);
+
+
 }

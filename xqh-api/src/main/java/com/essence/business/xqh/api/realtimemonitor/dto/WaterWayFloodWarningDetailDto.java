@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * @author Stack
@@ -110,4 +111,23 @@ public class WaterWayFloodWarningDetailDto implements Serializable {
      */
     private String flag24;
 
+    public WaterWayFloodWarningDetailDto() {
+    }
+
+    public WaterWayFloodWarningDetailDto(String stcd, String sttp, Map<String,Object> map) {
+        String stnm = map.get("STNM") == null ? "" : map.get("STNM").toString();
+        String rvnm = map.get("RVNM").toString() == null ? "" : map.get("RVNM").toString();
+        String hnnm = map.get("HNNM").toString() == null ? "" : map.get("HNNM").toString();
+        Double waterLevelLine = new Double(map.get("WRZ") == null ? "0" : map.get("WRZ").toString());
+        Double waterLevelDesign = new Double(map.get("GRZ") == null ? "0" : map.get("GRZ").toString());
+        Double waterLevelHistory = new Double(map.get("OBHTZ") == null ? "0" : map.get("OBHTZ").toString());
+        this.stcd = stcd;
+        this.stnm = stnm;
+        this.waterLevelHistory = waterLevelHistory;
+        this.waterLevelDesign = waterLevelDesign;
+        this.waterLevelLine = waterLevelLine;
+        this.rvnm = rvnm;
+        this.sttp = sttp;
+        this.hnnm = hnnm;
+    }
 }
