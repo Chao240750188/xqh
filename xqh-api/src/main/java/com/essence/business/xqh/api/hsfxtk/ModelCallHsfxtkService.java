@@ -21,4 +21,6 @@ public interface ModelCallHsfxtkService {
      */
     Integer saveGridProcessToDb(String planId);
 
+    void test(String planId) throws Exception;
+
 }
