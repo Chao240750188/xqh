@@ -3,9 +3,9 @@ package com.essence.business.xqh.service.hsfxtk;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
-import com.essence.business.xqh.api.hsfxtk.dto.ModelParamVo;
-import com.essence.business.xqh.api.hsfxtk.dto.PlanInfoHsfxtkVo;
+import com.essence.business.xqh.api.hsfxtk.dto.*;
 import com.essence.business.xqh.common.util.DateUtil;
+import com.essence.business.xqh.common.util.ExcelUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
@@ -14,12 +14,17 @@ import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
 import com.essence.business.xqh.dao.entity.hsfxtk.*;
 import com.essence.framework.util.StrUtil;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.util.IOUtils;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
 import java.io.*;
+import java.net.URL;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,6 +52,8 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
     private YwkModelBoundaryBasicRlDao ywkModelBoundaryBasicRlDao;
     @Autowired
     private YwkBoundaryBasicDao ywkBoundaryBasicDao;
+    @Autowired
+    private YwkPlaninFloodBoundaryDao ywkPlaninFloodBoundaryDao;
 
     /**
      * 根据方案名称校验方案是否存在
@@ -57,6 +64,8 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         List<YwkPlaninfo> byCPlanname = ywkPlaninfoDao.findByCPlanname(planName);
         return byCPlanname.size();
     }
+
+
 
     /**
      * 方案计创建入库
@@ -303,7 +312,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         //先删除再新增
         List<YwkPlaninFloodRoughness> planFloodRoughnessList  = ywkPlaninFloodRoughnessDao.findByPlanId(planId);
         for(YwkPlaninFloodRoughness floodRoughness:planFloodRoughnessList){
-            ywkPlaninRiverRoughnessDao.deleteByPlanRoughnessId(floodRoughness.getRoughnessParamid());
+            ywkPlaninRiverRoughnessDao.deleteByPlanRoughnessId(floodRoughness.getPlanRoughnessid());
         }
         ywkPlaninFloodRoughnessDao.deleteByPlanId(planId);
         //插入最新设定数据
@@ -335,7 +344,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         if(planRiverRoughnessList.size()>0){
             ywkPlaninRiverRoughnessDao.saveAll(planRiverRoughnessList);
         }
-        return null;
+        return modelParamVo;
     }
 
     /**
@@ -354,7 +363,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         for (YwkModelBoundaryBasicRl modelboundary:modelBoundaryList) {
             stcdList.add(modelboundary.getStcd());
         }
-        List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdIn(stcdList);
+        List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdInOrderByStcd(stcdList);
         //封装边界流量数据
         for (YwkBoundaryBasic ywkBoundaryBasic:boundaryBasicList) {
             JSONObject jsonObject = new JSONObject();
@@ -365,7 +374,161 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         return list;
     }
 
+    /**
+     * 下载边界数据模板
+     * @param planId
+     * @param modelId
+     * @return
+     */
+    @Override
+    public Workbook exportDutyTemplate(String planId,String modelId) {
+        //查询模型边界关联表
+        List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(modelId);
+        //查询边界详细数据表
+        List<String> stcdList = new ArrayList<>();
+        stcdList.add(StrUtil.getUUID());
+        for (YwkModelBoundaryBasicRl modelboundary:modelBoundaryList) {
+            stcdList.add(modelboundary.getStcd());
+        }
+        List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdInOrderByStcd(stcdList);
+        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+        //封装边界模板数据
+        XSSFWorkbook workbook = new XSSFWorkbook();
 
+        //设置样式
+        XSSFFont font = workbook.createFont();
+        font.setFontHeightInPoints((short) 11);//字体高度
+        font.setFontName("宋体");//字体
+        XSSFCellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setFont(font);
+        style.setWrapText(true);//自动换行
+        XSSFSheet sheet = workbook.createSheet("边界数据导入模板");
+        //填充表头
+        //第一行
+        XSSFRow row = sheet.createRow(0);
+        XSSFCell cell = row.createCell(0);
+        cell.setCellStyle(style);
+        cell.setCellValue("时间/边界值");
+        //设置自动列宽
+        sheet.setColumnWidth(0, 5100);
 
+        for (int i = 0; i < boundaryBasicList.size(); i++) {
+            sheet.setColumnWidth(i+1, 4000);
+            YwkBoundaryBasic ywkBoundaryBasic = boundaryBasicList.get(i);
+            String dataType = "0".equals(ywkBoundaryBasic.getBoundaryDataType())?"水位":"流量";
+            XSSFCell cells = row.createCell(i+1);
+            cells.setCellStyle(style);
+            cells.setCellValue(ywkBoundaryBasic.getBoundarynm()+"("+dataType+")");
+        }
+        //封装时间列
+        Date startTime = planInfo.getdCaculatestarttm();
+        Date endTime = planInfo.getdCaculateendtm();
+        int beginLine = 1;
+        //封装数据
+        int count = 1;
+        for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextHour(startTime, count)) {
+            XSSFRow row1 = sheet.createRow(beginLine);
+            row1.createCell(0).setCellValue(DateUtil.dateToStringNormal3(time));
+            count++;
+            beginLine++;
+        }
+        return workbook;
+    }
+
+    @Override
+    public List<Object> importBoundaryData(MultipartFile mutilpartFile,String planId,String modelId) throws IOException {
+        List<Object> boundaryDataList = new ArrayList<>();
+        //查询模型边界关联表
+        List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(modelId);
+        //查询边界详细数据表
+        List<String> stcdList = new ArrayList<>();
+        stcdList.add(StrUtil.getUUID());
+        for (YwkModelBoundaryBasicRl modelboundary:modelBoundaryList) {
+            stcdList.add(modelboundary.getStcd());
+        }
+        List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdInOrderByStcd(stcdList);
+
+        //解析ecxel数据 不包含第一行
+        List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile,1);
+        // 判断有无数据 时间-每个边界的值集合
+        Map<String,List<String>> dataMap = new HashMap<>();
+        if (excelList != null && excelList.size() > 0) {
+            // 遍历每行数据（除了标题）
+            for (int i = 0; i < excelList.size(); i++) {
+                String[] strings = excelList.get(i);
+                if (strings != null && strings.length > 0) {
+                    // 封装每列（每个指标项数据）
+                    List<String> dataList= new ArrayList<>(Arrays.asList(strings));
+                    dataMap.put((strings[0]+"").trim(),dataList.subList(0,dataList.size()));
+                }
+            }
+        }
+        //封装边界流量数据
+        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+        //封装时间列
+        Date startTime = planInfo.getdCaculatestarttm();
+        Date endTime = planInfo.getdCaculateendtm();
+        for (int i = 0; i < boundaryBasicList.size(); i++) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("boundary",boundaryBasicList.get(i));
+            //封装时间数据
+            List<Object> dataList = new ArrayList<>();
+            int count = 1;
+            for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextHour(startTime, count)) {
+                String timeStr = DateUtil.dateToStringNormal3(time);
+                List<String> strings = dataMap.get(timeStr);
+                JSONObject dataTimeObj = new JSONObject();
+                dataTimeObj.put("time",timeStr);
+                try{
+                    dataTimeObj.put("boundaryData",Double.parseDouble(strings.get(i+1)));
+                }catch (Exception e){
+                    dataTimeObj.put("boundaryData",0.0);
+                }
+                dataList.add(dataTimeObj);
+                count++;
+            }
+            jsonObject.put("dataList",dataList);
+            boundaryDataList.add(jsonObject);
+        }
+        return boundaryDataList;
+    }
+
+    @Override
+    @Transactional
+    public List<YwkPlanInfoBoundaryDto> savePlanBoundaryData(List<YwkPlanInfoBoundaryDto> ywkPlanInfoBoundaryDtoList,String planId) {
+        //根据方案id删除边界条件信息
+        ywkPlaninFloodBoundaryDao.deleteByPlanId(planId);
+        //封装新数据
+        YwkPlaninfo planinfo = ywkPlaninfoDao.findOneById(planId);
+        //输出步长
+        Date startTime = planinfo.getdCaculatestarttm();
+        Long step = planinfo.getnOutputtm();
+        //封装边界条件数据
+        List<YwkPlaninFloodBoundary> planBoundaryList = new ArrayList<>();
+        for (YwkPlanInfoBoundaryDto ywkPlanInfoBoundaryDto:ywkPlanInfoBoundaryDtoList) {
+            YwkBoundaryBasicDto boundary = ywkPlanInfoBoundaryDto.getBoundary();
+            List<YwkBoundaryDataDto> dataList = ywkPlanInfoBoundaryDto.getDataList();
+            for (YwkBoundaryDataDto ywkBoundaryDataDto:dataList){
+                Date time = ywkBoundaryDataDto.getTime();
+                YwkPlaninFloodBoundary ywkPlaninFloodBoundary = new YwkPlaninFloodBoundary();
+                ywkPlaninFloodBoundary.setId(StrUtil.getUUID());
+                ywkPlaninFloodBoundary.setPlanId(planId);
+                ywkPlaninFloodBoundary.setStcd(boundary.getStcd());
+                ywkPlaninFloodBoundary.setAbsoluteTime(time);
+                int i = DateUtil.dValueOfTime(startTime, time);
+                ywkPlaninFloodBoundary.setRelativeTime(Long.parseLong(i+""));
+                if("0".equals(boundary.getBoundaryDataType())){
+                    ywkPlaninFloodBoundary.setZ(ywkBoundaryDataDto.getBoundaryData());
+                }else{
+                    ywkPlaninFloodBoundary.setQ(ywkBoundaryDataDto.getBoundaryData());
+                }
+                planBoundaryList.add(ywkPlaninFloodBoundary);
+            }
+        }
+        ywkPlaninFloodBoundaryDao.saveAll(planBoundaryList);
+        return ywkPlanInfoBoundaryDtoList;
+    }
 
 }

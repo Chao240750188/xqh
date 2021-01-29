@@ -3,9 +3,18 @@ package com.essence.business.xqh.web.hsfxtk.controller;
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
 import com.essence.business.xqh.api.hsfxtk.dto.ModelParamVo;
 import com.essence.business.xqh.api.hsfxtk.dto.PlanInfoHsfxtkVo;
+import com.essence.business.xqh.api.hsfxtk.dto.YwkPlanInfoBoundaryDto;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
+import com.essence.business.xqh.common.util.ExcelUtil;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -124,6 +133,75 @@ public class ModelHsfxtkController {
         }catch (Exception e){
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("查询方案边界列表失败！",null);
+        }
+    }
+
+    /**
+     * 下载边界条件数据模板
+     *
+     * @param response
+     * @throws Exception
+     */
+    @RequestMapping(value = "/exportBoundaryTemplate/{planId}/{modelId}", method = RequestMethod.GET)
+    public void exportBoundaryTemplate(HttpServletRequest request, HttpServletResponse response,@PathVariable String planId,@PathVariable String modelId) {
+       try {
+            Workbook workbook = modelCallHsfxtkService.exportDutyTemplate(planId,modelId);
+            //响应尾
+            response.setContentType("applicationnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            String fileName = "边界数据模板.xlsx";
+            response.setHeader("Content-disposition", "attachment;filename=" + new String(fileName.getBytes(), "iso_8859_1"));
+            OutputStream ouputStream = response.getOutputStream();
+            workbook.write(ouputStream);
+            ouputStream.flush();
+            ouputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 上传界条件数据解析-Excel导入
+     *
+     * @return SystemSecurityMessage 返回结果json
+     */
+    @RequestMapping(value = "/importBoundaryData/{planId}/{modelId}", method = RequestMethod.POST)
+    public SystemSecurityMessage importBoundaryData(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile,@PathVariable String planId,@PathVariable String modelId) {
+        SystemSecurityMessage SystemSecurityMessage = null;
+        // 值班表文件上传解析
+        String checkFlog = ExcelUtil.checkFile(mutilpartFile);
+        if (mutilpartFile == null) {
+            SystemSecurityMessage = new SystemSecurityMessage("error", "上传文件为空！", null);
+        } else if (!"excel".equals(checkFlog)) {
+            SystemSecurityMessage = new SystemSecurityMessage("error", "上传文件类型错误！", null);
+        } else {
+            // 解析表格数据为对象类型
+            try {
+                List<Object> boundaryList = modelCallHsfxtkService.importBoundaryData(mutilpartFile,planId,modelId);
+                SystemSecurityMessage = new SystemSecurityMessage("ok", "边界数据表上传解析成功!", boundaryList);
+            } catch (Exception e) {
+                String eMessage = "";
+                if (e != null) {
+                    eMessage = e.getMessage();
+                }
+                SystemSecurityMessage = new SystemSecurityMessage("error", "边界数据表上传解析失败，错误原因：" + eMessage, null);
+            }
+        }
+        return SystemSecurityMessage;
+    }
+
+    /**
+     * 方案计算边界条件值-保存提交入库
+     * @return
+     */
+    @RequestMapping(value = "savePlanBoundaryData/{planId}", method = RequestMethod.POST)
+    public SystemSecurityMessage savePlanBoundaryData(@RequestBody List<YwkPlanInfoBoundaryDto> ywkPlanInfoBoundaryDtoList,@PathVariable String planId) {
+        try {
+            List<YwkPlanInfoBoundaryDto> boundaryList = modelCallHsfxtkService.savePlanBoundaryData(ywkPlanInfoBoundaryDtoList,planId);
+            return SystemSecurityMessage.getSuccessMsg("方案计算边界条件值-提交入库成功",boundaryList);
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("方案计算边界条件值-提交入库失败！",null);
         }
     }
 

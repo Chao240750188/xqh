@@ -15,5 +15,5 @@ public interface YwkBoundaryBasicDao extends EssenceJpaRepository<YwkBoundaryBas
      * @param stcdList
      * @return
      */
-    List<YwkBoundaryBasic> findByStcdIn(List<String> stcdList);
+    List<YwkBoundaryBasic> findByStcdInOrderByStcd(List<String> stcdList);
 }

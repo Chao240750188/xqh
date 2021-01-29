@@ -2,7 +2,13 @@ package com.essence.business.xqh.api.hsfxtk;
 
 import com.essence.business.xqh.api.hsfxtk.dto.ModelParamVo;
 import com.essence.business.xqh.api.hsfxtk.dto.PlanInfoHsfxtkVo;
+import com.essence.business.xqh.api.hsfxtk.dto.YwkPlanInfoBoundaryDto;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -58,4 +64,26 @@ public interface ModelCallHsfxtkService {
      * @param planName
      */
     Integer getPlanInfoByName(String planName);
+
+    /**
+     * 下载边界数据模板
+     * @param planId
+     * @param modelId
+     * @return
+     */
+    Workbook exportDutyTemplate(String planId,String modelId);
+
+    /**
+     * 上传界条件数据解析-Excel导入
+     * @param mutilpartFile
+     * @return
+     */
+    List<Object> importBoundaryData(MultipartFile mutilpartFile,String planId,String modelId) throws IOException;
+
+    /**
+     * 方案计算边界条件值-提交入库
+     * @param ywkPlanInfoBoundaryDtoList
+     * @return
+     */
+    List<YwkPlanInfoBoundaryDto> savePlanBoundaryData(List<YwkPlanInfoBoundaryDto> ywkPlanInfoBoundaryDtoList,String planId);
 }
