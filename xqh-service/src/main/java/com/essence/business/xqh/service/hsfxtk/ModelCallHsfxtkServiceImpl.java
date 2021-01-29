@@ -552,6 +552,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     @Override
     public BreakVo savePlanBreak(BreakVo breakDto) {
+        //根据方案id删除旧数据
+        ywkPlaninFloodBreakDao.deleteByNPlanid(breakDto.getnPlanid());
+        //保存记录
         YwkPlaninFloodBreak target = new YwkPlaninFloodBreak();
         BeanUtils.copyProperties(breakDto,target);
         target.setId(StrUtil.getUUID());

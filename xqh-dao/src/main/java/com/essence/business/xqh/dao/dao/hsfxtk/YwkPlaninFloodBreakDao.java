@@ -6,4 +6,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface YwkPlaninFloodBreakDao extends EssenceJpaRepository<YwkPlaninFloodBreak, String> {
+    /**
+     * 根据方案id删除
+     * @param getnPlanid
+     */
+    void deleteByNPlanid(String getnPlanid);
 }
