@@ -1,9 +1,7 @@
 package com.essence.business.xqh.api.hsfxtk;
 
 import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkModelRoughnessParamDto;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkParamVo;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkRiverRoughnessParamDto;
+import com.essence.business.xqh.api.hsfxtk.dto.*;
 
 import java.util.List;
 import java.util.Map;
@@ -54,4 +52,18 @@ public interface ModelParamHsfxtkService {
      * @param roughness
      */
     void deleteRoughness(String roughness);
+
+    /**
+     * 根据模型id获取溃口列表
+     * @param modelId
+     * @return
+     */
+    List<YwkBreakBasicDto> getBreakList(String modelId);
+
+
+    /**
+     * 保存溃口
+     * @param breakDto
+     */
+    void saveBreak(BreakVo breakDto);
 }

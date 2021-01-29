@@ -3,9 +3,7 @@ package com.essence.business.xqh.web.hsfxtk.controller;
 
 import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
 import com.essence.business.xqh.api.hsfxtk.ModelParamHsfxtkService;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkModelRoughnessParamDto;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkParamVo;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkRiverRoughnessParamDto;
+import com.essence.business.xqh.api.hsfxtk.dto.*;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -98,7 +96,7 @@ public class ModelParamHsfxtkController {
            }
 
        /**
-        * 保存参数入库
+        * 保存参数入库 TODO 已测试
         * @param
         * @return
         */
@@ -117,7 +115,7 @@ public class ModelParamHsfxtkController {
 
 
 
-    /**
+    /**  TODO 以测试
      * 删除模型参数跟河道参数列表
      * @param
      * @return
@@ -134,6 +132,45 @@ public class ModelParamHsfxtkController {
 
         }
     }
+
+
+    /**  TODO 已测试
+     * 根据模型id获取溃口列表
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/getBreakList/{modelId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getBreakList( @PathVariable String modelId) {
+        try {
+            List<YwkBreakBasicDto> result = modelParamHsfxtkService.getBreakList(modelId);
+            return SystemSecurityMessage.getSuccessMsg("根据模型id获取溃口列表成功",result);
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("根据模型id获取溃口列表失败！",new ArrayList<>());
+
+        }
+    }
+
+    /**  TODO
+     * 保存溃口列表
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/saveBreak", method = RequestMethod.POST)
+    public SystemSecurityMessage saveBreak( @RequestBody BreakVo breakDto) {
+        try {
+            modelParamHsfxtkService.saveBreak(breakDto);
+            return SystemSecurityMessage.getSuccessMsg("保存溃口信息成功");
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("保存溃口信息失败！");
+
+        }
+    }
+
+
 
 
 }
