@@ -107,7 +107,7 @@ public class ModelParamHsfxtkServiceImpl implements ModelParamHsfxtkService {
 
     @Transactional
     @Override
-    public int saveRoughness(YwkParamVo ywkParamVo) {
+    public void saveRoughness(YwkParamVo ywkParamVo) {
 
         YwkModelRoughnessParam ywkModelRoughnessParam = new YwkModelRoughnessParam();
         if (ywkParamVo.getId()!=null){
@@ -120,7 +120,7 @@ public class ModelParamHsfxtkServiceImpl implements ModelParamHsfxtkService {
         ywkModelRoughnessParam.setRoughnessParamnm(ywkParamVo.getRoughnessParamnm());
         ywkModelRoughnessParam.setModitime(new Timestamp(new Date().getTime()));
 
-         ywkModelRoughnessParamDao.save(ywkModelRoughnessParam);
+        ywkModelRoughnessParamDao.save(ywkModelRoughnessParam);
         ywkModelRoughnessParamDao.flush();
         List<YwkRoughnessVo> ywkRoughnessVos = ywkParamVo.getYwkRoughnessVos();
 
@@ -144,6 +144,14 @@ public class ModelParamHsfxtkServiceImpl implements ModelParamHsfxtkService {
         ywkRiverRoughnessParamDao.flush();
         ywkRiverRoughnessParamDao.saveAll(list);
 
-        return 1;
+    }
+
+
+    @Transactional
+    @Override
+    public void deleteRoughness(String roughness) {
+
+        ywkModelRoughnessParamDao.deleteById(roughness);
+        ywkRiverRoughnessParamDao.deleteByRoughnessParamid(roughness);
     }
 }

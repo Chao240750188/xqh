@@ -29,4 +29,5 @@ public interface YwkModelRoughnessParamDao extends EssenceJpaRepository<YwkModel
 
     @Query(value = "select * from YWK_MODEL_ROUGHNESS_PARAM where IDMODEL_ID = ?1",nativeQuery = true)
     List<YwkModelRoughnessParam> findYwkModelRoughnessParamByModelId(String modelId);
+
 }
