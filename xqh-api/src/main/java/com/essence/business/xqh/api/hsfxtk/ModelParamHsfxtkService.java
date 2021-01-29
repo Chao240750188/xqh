@@ -53,17 +53,4 @@ public interface ModelParamHsfxtkService {
      */
     void deleteRoughness(String roughness);
 
-    /**
-     * 根据模型id获取溃口列表
-     * @param modelId
-     * @return
-     */
-    List<YwkBreakBasicDto> getBreakList(String modelId);
-
-
-    /**
-     * 保存溃口
-     * @param breakDto
-     */
-    void saveBreak(BreakVo breakDto);
 }

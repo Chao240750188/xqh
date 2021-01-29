@@ -126,51 +126,11 @@ public class ModelParamHsfxtkController {
             modelParamHsfxtkService.deleteRoughness(roughness);
             return SystemSecurityMessage.getSuccessMsg("删除洪水风险调控模型操率参数列表成功");
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("删除洪水风险调控模型操率参数列表失败！");
 
         }
     }
-
-
-    /**  TODO 已测试
-     * 根据模型id获取溃口列表
-     * @param
-     * @return
-     */
-    @RequestMapping(value = "/getBreakList/{modelId}", method = RequestMethod.GET)
-    public SystemSecurityMessage getBreakList( @PathVariable String modelId) {
-        try {
-            List<YwkBreakBasicDto> result = modelParamHsfxtkService.getBreakList(modelId);
-            return SystemSecurityMessage.getSuccessMsg("根据模型id获取溃口列表成功",result);
-
-        }catch (Exception e){
-            e.printStackTrace();
-            return SystemSecurityMessage.getFailMsg("根据模型id获取溃口列表失败！",new ArrayList<>());
-
-        }
-    }
-
-    /**  TODO
-     * 保存溃口列表
-     * @param
-     * @return
-     */
-    @RequestMapping(value = "/saveBreak", method = RequestMethod.POST)
-    public SystemSecurityMessage saveBreak( @RequestBody BreakVo breakDto) {
-        try {
-            modelParamHsfxtkService.saveBreak(breakDto);
-            return SystemSecurityMessage.getSuccessMsg("保存溃口信息成功");
-
-        }catch (Exception e){
-            e.printStackTrace();
-            return SystemSecurityMessage.getFailMsg("保存溃口信息失败！");
-
-        }
-    }
-
-
-
 
 }

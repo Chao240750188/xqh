@@ -1,9 +1,7 @@
 package com.essence.business.xqh.web.hsfxtk.controller;
 
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
-import com.essence.business.xqh.api.hsfxtk.dto.ModelParamVo;
-import com.essence.business.xqh.api.hsfxtk.dto.PlanInfoHsfxtkVo;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkPlanInfoBoundaryDto;
+import com.essence.business.xqh.api.hsfxtk.dto.*;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.common.util.ExcelUtil;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -15,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -205,6 +204,41 @@ public class ModelHsfxtkController {
         }
     }
 
+    /**  TODO 已测试
+     * 根据模型id获取溃口列表
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/getBreakList/{modelId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getBreakList( @PathVariable String modelId) {
+        try {
+            List<YwkBreakBasicDto> result = modelCallHsfxtkService.getBreakList(modelId);
+            return SystemSecurityMessage.getSuccessMsg("根据模型id获取溃口列表成功",result);
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("根据模型id获取溃口列表失败！",new ArrayList<>());
+
+        }
+    }
+
+    /**  TODO
+     * 保存溃口列表
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/savePlanBreak", method = RequestMethod.POST)
+    public SystemSecurityMessage savePlanBreak( @RequestBody BreakVo breakDto) {
+        try {
+            BreakVo breakVo = modelCallHsfxtkService.savePlanBreak(breakDto);
+            return SystemSecurityMessage.getSuccessMsg("保存溃口信息成功",breakVo);
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("保存溃口信息失败！");
+
+        }
+    }
     @RequestMapping(value = "/test/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage savePlanToDb(@PathVariable String planId) {
         try {

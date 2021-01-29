@@ -1,8 +1,6 @@
 package com.essence.business.xqh.api.hsfxtk;
 
-import com.essence.business.xqh.api.hsfxtk.dto.ModelParamVo;
-import com.essence.business.xqh.api.hsfxtk.dto.PlanInfoHsfxtkVo;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkPlanInfoBoundaryDto;
+import com.essence.business.xqh.api.hsfxtk.dto.*;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
@@ -86,4 +84,18 @@ public interface ModelCallHsfxtkService {
      * @return
      */
     List<YwkPlanInfoBoundaryDto> savePlanBoundaryData(List<YwkPlanInfoBoundaryDto> ywkPlanInfoBoundaryDtoList,String planId);
+
+    /**
+     * 根据模型id获取溃口列表
+     * @param modelId
+     * @return
+     */
+    List<YwkBreakBasicDto> getBreakList(String modelId);
+
+
+    /**
+     * 保存溃口
+     * @param breakDto
+     */
+    BreakVo savePlanBreak(BreakVo breakDto);
 }

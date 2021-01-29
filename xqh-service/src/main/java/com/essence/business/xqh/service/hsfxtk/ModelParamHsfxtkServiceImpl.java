@@ -152,27 +152,4 @@ public class ModelParamHsfxtkServiceImpl implements ModelParamHsfxtkService {
         ywkRiverRoughnessParamDao.deleteByRoughnessParamid(roughness);
     }
 
-
-    @Override
-    public List<YwkBreakBasicDto> getBreakList(String modelId) {
-
-        List<YwkBreakBasic> ywkBreakBasics = ywkBreakBasicDao.findsByModelId(modelId);
-        List<YwkBreakBasicDto> results = new ArrayList<>();
-        for (YwkBreakBasic source : ywkBreakBasics){
-            YwkBreakBasicDto target = new YwkBreakBasicDto();
-            BeanUtils.copyProperties(source,target);
-            results.add(target);
-        }
-        return results;
-    }
-
-
-    @Override
-    public void saveBreak(BreakVo breakDto) {
-
-        YwkPlaninFloodBreak target = new YwkPlaninFloodBreak();
-        BeanUtils.copyProperties(breakDto,target);
-        target.setId(StrUtil.getUUID());
-        ywkPlaninFloodBreakDao.save(target);
-    }
 }

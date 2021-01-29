@@ -17,6 +17,7 @@ import com.essence.framework.util.StrUtil;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.*;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -54,7 +55,11 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
     private YwkBoundaryBasicDao ywkBoundaryBasicDao;
     @Autowired
     private YwkPlaninFloodBoundaryDao ywkPlaninFloodBoundaryDao;
+    @Autowired
+    YwkBreakBasicDao ywkBreakBasicDao;//溃口基本信息表
 
+    @Autowired
+    YwkPlaninFloodBreakDao ywkPlaninFloodBreakDao;//溃口方案表
     /**
      * 根据方案名称校验方案是否存在
      * @param planName
@@ -529,6 +534,29 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         }
         ywkPlaninFloodBoundaryDao.saveAll(planBoundaryList);
         return ywkPlanInfoBoundaryDtoList;
+    }
+
+    @Override
+    public List<YwkBreakBasicDto> getBreakList(String modelId) {
+
+        List<YwkBreakBasic> ywkBreakBasics = ywkBreakBasicDao.findsByModelId(modelId);
+        List<YwkBreakBasicDto> results = new ArrayList<>();
+        for (YwkBreakBasic source : ywkBreakBasics){
+            YwkBreakBasicDto target = new YwkBreakBasicDto();
+            BeanUtils.copyProperties(source,target);
+            results.add(target);
+        }
+        return results;
+    }
+
+
+    @Override
+    public BreakVo savePlanBreak(BreakVo breakDto) {
+        YwkPlaninFloodBreak target = new YwkPlaninFloodBreak();
+        BeanUtils.copyProperties(breakDto,target);
+        target.setId(StrUtil.getUUID());
+        ywkPlaninFloodBreakDao.save(target);
+        return breakDto;
     }
 
 }
