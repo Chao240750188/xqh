@@ -1,24 +1,28 @@
 package com.essence.business.xqh.service.hsfxtk;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
+import com.essence.business.xqh.api.hsfxtk.dto.ModelParamVo;
 import com.essence.business.xqh.api.hsfxtk.dto.PlanInfoHsfxtkVo;
 import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
+import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
-import com.essence.business.xqh.dao.dao.hsfxtk.YwkPlanOutputGridMaxDao;
-import com.essence.business.xqh.dao.dao.hsfxtk.YwkPlanOutputGridProcessDao;
+import com.essence.business.xqh.dao.dao.hsfxtk.*;
+import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
-import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlanOutputGridMax;
-import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlanOutputGridMaxPK;
-import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlanOutputGridProcess;
+import com.essence.business.xqh.dao.entity.hsfxtk.*;
 import com.essence.framework.util.StrUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import javax.transaction.Transactional;
 import java.io.*;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
@@ -29,7 +33,37 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
     YwkPlanOutputGridProcessDao ywkPlanOutputGridProcessDao;
     @Autowired
     private YwkPlanOutputGridMaxDao ywkPlanOutputGridMaxDao;
+    @Autowired
+    private YwkModelDao ywkModelDao;
+    @Autowired
+    private YwkModelRoughnessParamDao ywkModelRoughnessParamDao;
+    @Autowired
+    private YwkRiverRoughnessParamDao ywkRiverRoughnessParamDao;
+    @Autowired
+    private YwkPlaninFloodRoughnessDao ywkPlaninFloodRoughnessDao;
+    @Autowired
+    private YwkPlaninRiverRoughnessDao ywkPlaninRiverRoughnessDao;
+    @Autowired
+    private YwkModelBoundaryBasicRlDao ywkModelBoundaryBasicRlDao;
+    @Autowired
+    private YwkBoundaryBasicDao ywkBoundaryBasicDao;
 
+    /**
+     * 根据方案名称校验方案是否存在
+     * @param planName
+     */
+    @Override
+    public Integer getPlanInfoByName(String planName) {
+        List<YwkPlaninfo> byCPlanname = ywkPlaninfoDao.findByCPlanname(planName);
+        return byCPlanname.size();
+    }
+
+    /**
+     * 方案计创建入库
+     *
+     * @param vo
+     * @return
+     */
     @Override
     public String savePlanToDb(PlanInfoHsfxtkVo vo) {
         if(StrUtil.isEmpty(vo.getnPlanid())){
@@ -63,7 +97,11 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         return saveDbo.getnPlanid();
     }
 
-
+    /**
+     * 保存网格执行过程入库
+     * @param planId
+     * @return
+     */
     @Override
     public Integer saveGridProcessToDb(String planId) {
 
@@ -217,5 +255,117 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
     public void test(String planId) throws Exception {
         saveGridProcessToDb(planId);
     }
+
+    /**
+     * 防洪保护区设置获取模型列表
+     * @return
+     */
+    @Override
+    public List<Object> getModelList() {
+        List<Object> list = new ArrayList<>();
+        List<YwkModel> modelList = ywkModelDao.getYwkModelByModelType("HSFX");
+        for(YwkModel ywkModel:modelList){
+            list.add(ywkModel);
+        }
+        return list;
+    }
+
+    /**
+     * 根据模型获取河道糙率设置参数
+     * @param modelId
+     * @return
+     */
+    @Override
+    public List<Object> getModelRiverRoughness(String modelId) {
+        List<Object> list = new ArrayList<>();
+        //根据模型id获取模型糙率设置
+        List<YwkModelRoughnessParam> modelRoughnessList = ywkModelRoughnessParamDao.findByIdmodelId(modelId);
+        //查询糙率参数
+        List<YwkRiverRoughnessParam> paramList = ywkRiverRoughnessParamDao.findAll();
+        Map<String, List<YwkRiverRoughnessParam>> paramMap = paramList.stream().collect(Collectors.groupingBy(YwkRiverRoughnessParam::getRoughnessParamid));
+        //封装参数
+        for (YwkModelRoughnessParam roughnessParam:modelRoughnessList) {
+            roughnessParam.setParamList(paramMap.get(roughnessParam.getRoughnessParamid()));
+            list.add(roughnessParam);
+        }
+        return list;
+    }
+
+    @Override
+    @Transactional
+    public ModelParamVo saveModelRiverRoughness(ModelParamVo modelParamVo) {
+        //修改方案计算模型
+        String planId = modelParamVo.getnPlanid();
+        YwkPlaninfo ywkPlaninfo = ywkPlaninfoDao.findOneById(planId);
+        ywkPlaninfo.setnModelid(modelParamVo.getIdmodelId());
+        ywkPlaninfoDao.save(ywkPlaninfo);
+        //保存方案计算模型糙率参数
+        //先删除再新增
+        List<YwkPlaninFloodRoughness> planFloodRoughnessList  = ywkPlaninFloodRoughnessDao.findByPlanId(planId);
+        for(YwkPlaninFloodRoughness floodRoughness:planFloodRoughnessList){
+            ywkPlaninRiverRoughnessDao.deleteByPlanRoughnessId(floodRoughness.getRoughnessParamid());
+        }
+        ywkPlaninFloodRoughnessDao.deleteByPlanId(planId);
+        //插入最新设定数据
+        //查询模板数据
+        YwkModelRoughnessParam modelRoughness = ywkModelRoughnessParamDao.findOneById(modelParamVo.getRoughnessParamid());
+        //方案模型糙率
+        YwkPlaninFloodRoughness ywkPlaninFloodRoughness = new YwkPlaninFloodRoughness();
+        String ywkPlaninFloodRoughnessId = StrUtil.getUUID();
+        ywkPlaninFloodRoughness.setPlanRoughnessid(ywkPlaninFloodRoughnessId);
+        ywkPlaninFloodRoughness.setPlanId(planId);
+        ywkPlaninFloodRoughness.setRoughnessParamnm(modelRoughness.getRoughnessParamnm());
+        ywkPlaninFloodRoughness.setRoughnessParamid(modelRoughness.getRoughnessParamid());
+        ywkPlaninFloodRoughness.setGridSynthesizeRoughness(modelRoughness.getGridSynthesizeRoughness());
+        //方案河道糙率
+        List<YwkRiverRoughnessParam> ywkRiverRougParamsList = ywkRiverRoughnessParamDao.findByRoughnessParamid(modelRoughness.getRoughnessParamid());
+        List<YwkPlaninRiverRoughness>  planRiverRoughnessList = new ArrayList<>();
+        for(YwkRiverRoughnessParam ywkRiverRoughnessParam:ywkRiverRougParamsList){
+            YwkPlaninRiverRoughness ywkPlaninRiverRoughness = new YwkPlaninRiverRoughness();
+            ywkPlaninRiverRoughness.setId(StrUtil.getUUID());
+            ywkPlaninRiverRoughness.setPlanRoughnessId(ywkPlaninFloodRoughnessId);
+            ywkPlaninRiverRoughness.setRoughness(ywkRiverRoughnessParam.getRoughness());
+            ywkPlaninRiverRoughness.setMileage(ywkRiverRoughnessParam.getMileage());
+            ywkPlaninRiverRoughness.setIsFix(ywkRiverRoughnessParam.getIsFix());
+            planRiverRoughnessList.add(ywkPlaninRiverRoughness);
+        }
+        //保存方案模型糙率
+        ywkPlaninFloodRoughnessDao.save(ywkPlaninFloodRoughness);
+        //保存方案河道糙率
+        if(planRiverRoughnessList.size()>0){
+            ywkPlaninRiverRoughnessDao.saveAll(planRiverRoughnessList);
+        }
+        return null;
+    }
+
+    /**
+     * 查询方案边界条件列表数据
+     * @param modelParamVo
+     * @return
+     */
+    @Override
+    public List<Object> getModelBoundaryBasic(ModelParamVo modelParamVo) {
+        List<Object> list = new ArrayList<>();
+        //查询模型边界关联表
+        List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(modelParamVo.getIdmodelId());
+        //查询边界详细数据表
+        List<String> stcdList = new ArrayList<>();
+        stcdList.add(StrUtil.getUUID());
+        for (YwkModelBoundaryBasicRl modelboundary:modelBoundaryList) {
+            stcdList.add(modelboundary.getStcd());
+        }
+        List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdIn(stcdList);
+        //封装边界流量数据
+        for (YwkBoundaryBasic ywkBoundaryBasic:boundaryBasicList) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("boundary",ywkBoundaryBasic);
+            jsonObject.put("dataList",new ArrayList<>());
+            list.add(jsonObject);
+        }
+        return list;
+    }
+
+
+
 
 }
