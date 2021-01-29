@@ -12,8 +12,8 @@ public class YwkPlaninRiverRoughness {
     @Id
     @Column(name = "ID")
     private String id;
-    @Column(name = "ROUGHNESS_PARAMID")
-    private String roughnessParamid;
+    @Column(name = "PLAN_ROUGHNESSID")
+    private String planRoughnessId;
     @Column(name = "MILEAGE")
     private Double mileage;
     @Column(name = "ROUGHNESS")
@@ -27,14 +27,6 @@ public class YwkPlaninRiverRoughness {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getRoughnessParamid() {
-        return roughnessParamid;
-    }
-
-    public void setRoughnessParamid(String roughnessParamid) {
-        this.roughnessParamid = roughnessParamid;
     }
 
     public Double getMileage() {
@@ -59,5 +51,13 @@ public class YwkPlaninRiverRoughness {
 
     public void setIsFix(Integer isFix) {
         this.isFix = isFix;
+    }
+
+    public String getPlanRoughnessId() {
+        return planRoughnessId;
+    }
+
+    public void setPlanRoughnessId(String planRoughnessId) {
+        this.planRoughnessId = planRoughnessId;
     }
 }

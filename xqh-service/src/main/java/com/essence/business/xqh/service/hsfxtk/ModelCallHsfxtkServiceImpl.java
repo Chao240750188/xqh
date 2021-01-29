@@ -293,7 +293,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     @Override
     @Transactional
-    public List<Object> saveModelRiverRoughness(ModelParamVo modelParamVo) {
+    public ModelParamVo saveModelRiverRoughness(ModelParamVo modelParamVo) {
         //修改方案计算模型
         String planId = modelParamVo.getnPlanid();
         YwkPlaninfo ywkPlaninfo = ywkPlaninfoDao.findOneById(planId);
@@ -303,7 +303,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         //先删除再新增
         List<YwkPlaninFloodRoughness> planFloodRoughnessList  = ywkPlaninFloodRoughnessDao.findByPlanId(planId);
         for(YwkPlaninFloodRoughness floodRoughness:planFloodRoughnessList){
-            ywkPlaninRiverRoughnessDao.deleteByRoughnessParamid(floodRoughness.getRoughnessParamid());
+            ywkPlaninRiverRoughnessDao.deleteByPlanRoughnessId(floodRoughness.getRoughnessParamid());
         }
         ywkPlaninFloodRoughnessDao.deleteByPlanId(planId);
         //插入最新设定数据
@@ -323,7 +323,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         for(YwkRiverRoughnessParam ywkRiverRoughnessParam:ywkRiverRougParamsList){
             YwkPlaninRiverRoughness ywkPlaninRiverRoughness = new YwkPlaninRiverRoughness();
             ywkPlaninRiverRoughness.setId(StrUtil.getUUID());
-            ywkPlaninRiverRoughness.setRoughnessParamid(ywkPlaninFloodRoughnessId);
+            ywkPlaninRiverRoughness.setPlanRoughnessId(ywkPlaninFloodRoughnessId);
             ywkPlaninRiverRoughness.setRoughness(ywkRiverRoughnessParam.getRoughness());
             ywkPlaninRiverRoughness.setMileage(ywkRiverRoughnessParam.getMileage());
             ywkPlaninRiverRoughness.setIsFix(ywkRiverRoughnessParam.getIsFix());

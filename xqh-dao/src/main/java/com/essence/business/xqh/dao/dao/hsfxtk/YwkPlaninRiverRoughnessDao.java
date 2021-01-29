@@ -14,5 +14,5 @@ public interface YwkPlaninRiverRoughnessDao extends EssenceJpaRepository<YwkPlan
      * 根据模型糙率-删除方案河道糙率设定
      * @param roughnessParamid
      */
-    void deleteByRoughnessParamid(String roughnessParamid);
+    void deleteByPlanRoughnessId(String roughnessParamid);
 }
