@@ -100,9 +100,9 @@ public class ModelHsfxtkController {
     @RequestMapping(value = "saveModelRiverRoughness", method = RequestMethod.POST)
     public SystemSecurityMessage saveModelRiverRoughness(@RequestBody ModelParamVo modelParamVo) {
         try {
-            List<Object> modelRiverRoughnessList =  modelCallHsfxtkService.saveModelRiverRoughness(modelParamVo);
+            ModelParamVo  modelParamVos =  modelCallHsfxtkService.saveModelRiverRoughness(modelParamVo);
 
-            return SystemSecurityMessage.getSuccessMsg("防洪保护区设置-保存方案输入-糙率参数设置入库成功",modelRiverRoughnessList);
+            return SystemSecurityMessage.getSuccessMsg("防洪保护区设置-保存方案输入-糙率参数设置入库成功",modelParamVos);
 
         }catch (Exception e){
             e.printStackTrace();

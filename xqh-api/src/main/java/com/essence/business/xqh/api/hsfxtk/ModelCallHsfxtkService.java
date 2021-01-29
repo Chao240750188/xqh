@@ -44,7 +44,7 @@ public interface ModelCallHsfxtkService {
      * @param modelParamVo
      * @return
      */
-    List<Object> saveModelRiverRoughness(ModelParamVo modelParamVo);
+    ModelParamVo saveModelRiverRoughness(ModelParamVo modelParamVo);
 
     /**
      * 查询方案边界条件列表数据
