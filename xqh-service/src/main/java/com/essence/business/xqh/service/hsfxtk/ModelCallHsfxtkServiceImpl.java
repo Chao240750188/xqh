@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
 import com.essence.business.xqh.api.hsfxtk.dto.*;
+import com.essence.business.xqh.common.util.CacheUtil;
 import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.common.util.ExcelUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
@@ -359,7 +360,16 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
      */
     @Override
     public List<Object> getModelBoundaryBasic(ModelParamVo modelParamVo) {
+        //先从缓存获取
+        List<Object> dataCacheList = (List<Object>) CacheUtil.get("modelBoundaryData", modelParamVo.getnPlanid());
+        if(dataCacheList!=null)
+            return dataCacheList;
+        //如果缓存没有从数据库获取
         List<Object> list = new ArrayList<>();
+        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(modelParamVo.getnPlanid());
+        //封装时间列
+        Date startTime = planInfo.getdCaculatestarttm();
+        Date endTime = planInfo.getdCaculateendtm();
         //查询模型边界关联表
         List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(modelParamVo.getIdmodelId());
         //查询边界详细数据表
@@ -373,7 +383,16 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         for (YwkBoundaryBasic ywkBoundaryBasic:boundaryBasicList) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("boundary",ywkBoundaryBasic);
-            jsonObject.put("dataList",new ArrayList<>());
+            List<Object> dataList = new ArrayList<>();
+            int count = 1;
+            for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextHour(startTime, count)) {
+                JSONObject dataJsonObj = new JSONObject();
+                dataJsonObj.put("time",DateUtil.dateToStringNormal3(time));
+                dataJsonObj.put("boundaryData",0.0);
+                dataList.add(dataJsonObj);
+                count++;
+            }
+            jsonObject.put("dataList",dataList);
             list.add(jsonObject);
         }
         return list;
@@ -497,6 +516,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             jsonObject.put("dataList",dataList);
             boundaryDataList.add(jsonObject);
         }
+        //存入缓存
+        CacheUtil.saveOrUpdate("modelBoundaryData", planId,boundaryDataList);
+
         return boundaryDataList;
     }
 
@@ -533,6 +555,10 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             }
         }
         ywkPlaninFloodBoundaryDao.saveAll(planBoundaryList);
+        //更新缓存
+        //存入缓存
+        CacheUtil.saveOrUpdate("modelBoundaryData", planId,ywkPlanInfoBoundaryDtoList);
+
         return ywkPlanInfoBoundaryDtoList;
     }
 
@@ -551,6 +577,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
 
     @Override
+    @Transactional
     public BreakVo savePlanBreak(BreakVo breakDto) {
         //根据方案id删除旧数据
         ywkPlaninFloodBreakDao.deleteByNPlanid(breakDto.getnPlanid());

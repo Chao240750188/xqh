@@ -223,7 +223,7 @@ public class ModelHsfxtkController {
     }
 
     /**  TODO
-     * 保存溃口列表
+     * 保存方案溃口信息
      * @param
      * @return
      */
