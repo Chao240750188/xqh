@@ -1039,7 +1039,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
                 for (int i = 1;i < readDatas.size();i++){
                     List<String> strings = readDatas.get(i);
                     if (i == 2){
-                        strings.set(1,size+"") ;//模拟时间
+                        strings.set(1,size-1+"") ;//模拟时间
                     }else if (i == 4 ){
                         strings.set(1,planInfo.getnOutputtm()+"");//输出时间步长
                     }else if (i == 8){ //溃口里程
