@@ -1,6 +1,4 @@
-package com.essence.business.xqh.api.rainfall.dto.rainmonitoring;
-
-import com.essence.business.xqh.api.rainfall.STTPEnum;
+package com.essence.business.xqh.api.waterandrain.dto;
 
 /**
  * @author fengpp

@@ -33,4 +33,13 @@ public interface TRiverRODao extends EssenceJpaRepository<TRiverR, String> {
     List<TRiverR> findByTmBetweenOrderByTmDesc(Date startTime, Date endTime);
 
     List<TRiverR> findByStcdInAndTmBetweenOrderByTmDesc(List<String> stcdList, Date startTime, Date endTime);
+
+    /**
+     * 查询最新的两条数据
+     * @param stcdList
+     * @param endTime
+     * @return
+     */
+    @Query(value="SELECT * FROM (SELECT STCD,TM,Q FLOW,Z WATERLEVEL,row_number() over(partition by STCD ORDER BY TM DESC) rn FROM ST_RIVER_R WHERE STCD IN (?1) AND TM <= ?2) WHERE rn <3 ",nativeQuery=true)
+    List<Map<String,Object>> findRiverLastData(List<String> stcdList,Date endTime);
 }

@@ -1,4 +1,6 @@
-package com.essence.business.xqh.api.rainfall.dto.rainmonitoring;
+package com.essence.business.xqh.api.waterandrain.dto;
+
+import com.essence.business.xqh.api.rainfall.dto.rainmonitoring.TideTendency;
 
 import java.math.BigDecimal;
 import java.util.List;

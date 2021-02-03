@@ -1,4 +1,4 @@
-package com.essence.business.xqh.api.rainfall;
+package com.essence.business.xqh.api.waterandrain;
 
 /**
  * @author fengpp
