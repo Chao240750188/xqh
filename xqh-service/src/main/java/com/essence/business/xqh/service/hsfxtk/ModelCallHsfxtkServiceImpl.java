@@ -622,6 +622,13 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         String hsfx_model_template_run_plan = hsfx_model_template_run + File.separator + planId;
         //List<YwkPlanOutputGridProcess> results = analysisOfGridProcessCSV(hsfx_model_template_output,planinfo);
 
+        File inputPath = new File(hsfx_model_template_input);
+        File outPath = new File(hsfx_model_template_output);
+        File runPath = new File(hsfx_model_template_run_plan);
+        inputPath.mkdir();
+        outPath.mkdir();
+        runPath.mkdir();
+
         SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
