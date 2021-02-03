@@ -663,7 +663,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             System.out.println("水动力模型计算:溃口CTR.csv输入文件写入失败。。。");
             return ;
         }
-        int result2 = writeDataToInputBDCsv(hsfx_model_template,hsfx_model_template_input,planInfo);
+        int result2 = writeDataToInputBDCsv(hsfx_model_template,hsfx_model_template_input,planInfo,BndList.size());
 
         if (result2 == 0){
             System.out.println("水动力模型计算:溃口通道BD.csv输入文件写入失败。。。");
@@ -724,7 +724,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
                 }
             }
         }
-        System.out.println("水库调度模型调用成功！");
+        System.out.println("水动力调度模型调用成功！");
     }
 
     private int copyExeFile(String hsfx_model_template_run, String hsfx_model_template_run_plan) {
@@ -917,7 +917,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     }
 
-    private int writeDataToInputBDCsv(String hsfx_model_template,String hsfx_model_template_input, YwkPlaninfo planInfo) {
+    private int writeDataToInputBDCsv(String hsfx_model_template,String hsfx_model_template_input, YwkPlaninfo planInfo,int size) {
 
         //获取溃口入参数据
         YwkPlaninFloodBreak floodBreak = ywkPlaninFloodBreakDao.findByNPlanid(planInfo.getnPlanid());
@@ -953,6 +953,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             //BufferedWriter bw = new BufferedWriter(new FileWriter(BDInputUrl, false)); // 附加
             BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (BDInputUrl,false),"UTF-8"));
             readDatas.get(1).set(3,breakBasic.getBreakNo()+"");//设置溃口通道编号
+            readDatas.get(3).set(3,size+"");//设置计算结束时间
             for (int i=0 ; i < readDatas.size();i++){
                 List<String> strings = readDatas.get(i);
                 String line = "";
@@ -1066,7 +1067,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
                     strings.set(2,ywkPlaninRiverRoughness.getMileage()+"");
                     strings.set(3,ywkPlaninRiverRoughness.getRoughness()+"");
                     if (i == 2){
-                        strings.set(1,size+"") ;//模拟时间
+                        strings.set(1,size-1+"") ;//模拟时间 比数据的个数少1
                     }else if (i == 4 ){
                         strings.set(1,planInfo.getnOutputtm()+"");//输出时间步长
                     }else if (i == 8){ //溃口里程
