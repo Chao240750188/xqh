@@ -5,6 +5,8 @@ import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlaninFloodBoundary;
 import com.essence.framework.jpa.EssenceJpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface YwkPlaninFloodBoundaryDao extends EssenceJpaRepository<YwkPlaninFloodBoundary, String> {
 
@@ -13,4 +15,6 @@ public interface YwkPlaninFloodBoundaryDao extends EssenceJpaRepository<YwkPlani
      * @param planId
      */
     void deleteByPlanId(String planId);
+
+    List<YwkPlaninFloodBoundary> findByPlanId(String planId);
 }

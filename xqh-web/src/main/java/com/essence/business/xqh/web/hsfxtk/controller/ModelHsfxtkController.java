@@ -11,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -249,6 +248,23 @@ public class ModelHsfxtkController {
         }catch (Exception e){
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("洪水风险调控方案保存失败！",null);
+
+        }
+    }
+
+
+    /**
+     * 水文调度模型计算执行
+     * @return
+     */
+    @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage modelCall2(@PathVariable  String planId) {
+        try {
+            modelCallHsfxtkService.callMode(planId);
+            return SystemSecurityMessage.getSuccessMsg("调用洪水风险调控模型成功！");
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("调用洪水风险调控模型失败！");
 
         }
     }

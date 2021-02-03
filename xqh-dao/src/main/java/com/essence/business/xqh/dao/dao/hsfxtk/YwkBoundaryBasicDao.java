@@ -16,4 +16,11 @@ public interface YwkBoundaryBasicDao extends EssenceJpaRepository<YwkBoundaryBas
      * @return
      */
     List<YwkBoundaryBasic> findByStcdInOrderByStcd(List<String> stcdList);
+
+    /**
+     * 根据边界编码查询边界条件数据
+     * @param stcdList
+     * @return
+     */
+    List<YwkBoundaryBasic> findByStcdInOrderByBoundaryType(List<String> stcdList);
 }

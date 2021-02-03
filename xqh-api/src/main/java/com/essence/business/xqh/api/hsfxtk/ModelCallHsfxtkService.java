@@ -2,11 +2,9 @@ package com.essence.business.xqh.api.hsfxtk;
 
 import com.essence.business.xqh.api.hsfxtk.dto.*;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 
 /**
@@ -98,4 +96,12 @@ public interface ModelCallHsfxtkService {
      * @param breakDto
      */
     BreakVo savePlanBreak(BreakVo breakDto);
+
+
+    /**
+     * 方案计算
+     * @param planId
+     */
+
+    void callMode(String planId);
 }

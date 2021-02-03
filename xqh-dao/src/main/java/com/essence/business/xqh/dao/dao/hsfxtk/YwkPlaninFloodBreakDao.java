@@ -11,4 +11,13 @@ public interface YwkPlaninFloodBreakDao extends EssenceJpaRepository<YwkPlaninFl
      * @param getnPlanid
      */
     void deleteByNPlanid(String getnPlanid);
+
+
+    /**
+     * findByPlanId
+     * @param getnPlanid
+     * @return
+     */
+    YwkPlaninFloodBreak findByNPlanid(String getnPlanid);
+
 }

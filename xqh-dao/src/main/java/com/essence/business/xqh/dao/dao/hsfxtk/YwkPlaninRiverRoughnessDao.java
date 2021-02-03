@@ -1,7 +1,6 @@
 package com.essence.business.xqh.dao.dao.hsfxtk;
 
 
-import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlaninFloodRoughness;
 import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlaninRiverRoughness;
 import com.essence.framework.jpa.EssenceJpaRepository;
 import org.springframework.stereotype.Repository;
@@ -15,4 +14,11 @@ public interface YwkPlaninRiverRoughnessDao extends EssenceJpaRepository<YwkPlan
      * @param roughnessParamid
      */
     void deleteByPlanRoughnessId(String roughnessParamid);
+
+
+    /**
+    * 根据模型糙率-查找方案河道糙率设定
+    * @pa*/
+    List<YwkPlaninRiverRoughness> findByPlanRoughnessIdOrderByMileageAsc(String roughnessParamid);
+
 }
