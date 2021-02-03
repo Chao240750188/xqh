@@ -389,7 +389,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("boundary",ywkBoundaryBasic);
             List<Object> dataList = new ArrayList<>();
-            int count = 1;
+            int count = 0;
             for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextHour(startTime, count)) {
                 JSONObject dataJsonObj = new JSONObject();
                 dataJsonObj.put("time",DateUtil.dateToStringNormal3(time));
@@ -456,7 +456,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         Date endTime = planInfo.getdCaculateendtm();
         int beginLine = 1;
         //封装数据
-        int count = 1;
+        int count = 0;
         for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextHour(startTime, count)) {
             XSSFRow row1 = sheet.createRow(beginLine);
             row1.createCell(0).setCellValue(DateUtil.dateToStringNormal3(time));
@@ -504,7 +504,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             jsonObject.put("boundary",boundaryBasicList.get(i));
             //封装时间数据
             List<Object> dataList = new ArrayList<>();
-            int count = 1;
+            int count = 0;
             for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextHour(startTime, count)) {
                 String timeStr = DateUtil.dateToStringNormal3(time);
                 List<String> strings = dataMap.get(timeStr);
@@ -622,12 +622,17 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         String hsfx_model_template_run_plan = hsfx_model_template_run + File.separator + planId;
         //List<YwkPlanOutputGridProcess> results = analysisOfGridProcessCSV(hsfx_model_template_output,planinfo);
 
-        File inputPath = new File(hsfx_model_template_input);
-        File outPath = new File(hsfx_model_template_output);
+        File inputyiweiPath = new File(hsfx_model_template_input+File.separator+"yiwei");
+        File inputerweiPath = new File(hsfx_model_template_input+File.separator+"erwei");
+
+        File outyiweiPath = new File(hsfx_model_template_output+File.separator+"yiwei");
+        File outerweiPath = new File(hsfx_model_template_output+File.separator+"erwei");
         File runPath = new File(hsfx_model_template_run_plan);
-        inputPath.mkdir();
-        outPath.mkdir();
-        runPath.mkdir();
+        inputyiweiPath.mkdirs();
+        inputerweiPath.mkdirs();
+        outyiweiPath.mkdirs();
+        outerweiPath.mkdirs();
+        runPath.mkdirs();
 
         SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date startTime = planInfo.getdCaculatestarttm();
@@ -786,7 +791,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         finals.add(JinduUrl);
         finals.add(errorUrl);
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, true)); // 附加
+            BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, false)); // 附加
             // 添加新的数据行
             for (int i=0;i<finals.size();i++){
                 String s = finals.get(i);
@@ -821,8 +826,8 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         String SecUrl = hsfx_model_template+File.separator+"yiwei"+File.separator+"SEC.csv";
         String SecInputUrl = hsfx_model_template_input+File.separator+"yiwei"+File.separator+"SEC.csv";
 
-        String shujuUrl = hsfx_model_template+File.separator+"erwei"+File.separator+"数据.csv";
-        String shujuInputUrl = hsfx_model_template_input+File.separator+"erwei"+File.separator+"数据.csv";
+        String shujuUrl = hsfx_model_template+File.separator+"erwei"+File.separator+"数据.xls";
+        String shujuInputUrl = hsfx_model_template_input+File.separator+"erwei"+File.separator+"数据.xls";
 
         String InUrl = hsfx_model_template+File.separator+"erwei"+File.separator+"IN.csv";
         String InInputUrl = hsfx_model_template_input+File.separator+"erwei"+File.separator+"IN.csv";
@@ -878,7 +883,8 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         }
 
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(WGInputUrl, false)); // 附加
+            //BufferedWriter bw = new BufferedWriter(new FileWriter(WGInputUrl, false)); // 附加
+            BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (WGInputUrl,false),"UTF-8"));
             for (int i = 1;i < readDatas.size();i++){
                 readDatas.get(i).set(4,byPlanId.get(0).getGridSynthesizeRoughness()+"");
             }
@@ -944,7 +950,8 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         }
 
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(BDInputUrl, false)); // 附加
+            //BufferedWriter bw = new BufferedWriter(new FileWriter(BDInputUrl, false)); // 附加
+            BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (BDInputUrl,false),"UTF-8"));
             readDatas.get(1).set(3,breakBasic.getBreakNo()+"");//设置溃口通道编号
             for (int i=0 ; i < readDatas.size();i++){
                 List<String> strings = readDatas.get(i);
@@ -1017,7 +1024,8 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             //溃口基本信息表
             YwkBreakBasic breakBasic = ywkBreakBasicDao.findById(floodBreak.getBreakId()).get();
 
-            BufferedWriter bw = new BufferedWriter(new FileWriter(CTRInputUrl, false)); // 附加
+            //BufferedWriter bw = new BufferedWriter(new FileWriter(CTRInputUrl, false)); // 附加
+            BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (CTRInputUrl,false),"UTF-8"));
             //数据小于等于excel的个数
             if (ctrCsvDatas.size() <= readDatas.size()-1){//9个数据，7个excel 1个表头 TODO 这个if已经测试了 但是else没有测试呢
 
@@ -1249,8 +1257,10 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         String BndInputUrl = hsfx_model_template_input + File.separator + "yiwei"+File.separator+"BND.csv";
 
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(BndInputUrl, false)); // 附加
-           //BufferedWriter bw = new BufferedWriter(new FileWriter("/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本/yiwei/BND.csv", false)); // 附加
+            //BufferedWriter bw = new BufferedWriter(new FileWriter(BndInputUrl, false)); // 附加
+            BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (BndInputUrl,false),"UTF-8"));
+
+            //BufferedWriter bw = new BufferedWriter(new FileWriter("/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本/yiwei/BND.csv", false)); // 附加
             // 添加新的数据行
 
             String head = "\"上边界条件\"" + "," + "\"\""+",";
