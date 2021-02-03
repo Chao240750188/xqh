@@ -3,10 +3,8 @@ package com.essence.business.xqh.service.hsfxtk;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
-import com.essence.business.xqh.api.hsfxtk.dto.ModelParamVo;
-import com.essence.business.xqh.api.hsfxtk.dto.PlanInfoHsfxtkVo;
-import com.essence.business.xqh.common.util.DateUtil;
-import com.essence.business.xqh.common.util.PropertiesUtil;
+import com.essence.business.xqh.api.hsfxtk.dto.*;
+import com.essence.business.xqh.common.util.*;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
 import com.essence.business.xqh.dao.dao.hsfxtk.*;
@@ -14,13 +12,21 @@ import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
 import com.essence.business.xqh.dao.entity.hsfxtk.*;
 import com.essence.framework.util.StrUtil;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.*;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
 import java.io.*;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,7 +53,19 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
     private YwkModelBoundaryBasicRlDao ywkModelBoundaryBasicRlDao;
     @Autowired
     private YwkBoundaryBasicDao ywkBoundaryBasicDao;
+    @Autowired
+    private YwkPlaninFloodBoundaryDao ywkPlaninFloodBoundaryDao;
+    @Autowired
+    YwkBreakBasicDao ywkBreakBasicDao;//溃口基本信息表
 
+    @Autowired
+    YwkPlaninFloodBreakDao ywkPlaninFloodBreakDao;//溃口方案表
+
+    @Autowired
+    YwkFloodChannelBasicDao ywkFloodChannelBasicDao;//分洪道基本信息表
+
+    @Autowired
+    YwkFloodChannelFlowDao ywkFloodChannelFlowDao;//分洪道数据表
     /**
      * 根据方案名称校验方案是否存在
      * @param planName
@@ -57,6 +75,8 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         List<YwkPlaninfo> byCPlanname = ywkPlaninfoDao.findByCPlanname(planName);
         return byCPlanname.size();
     }
+
+
 
     /**
      * 方案计创建入库
@@ -303,7 +323,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         //先删除再新增
         List<YwkPlaninFloodRoughness> planFloodRoughnessList  = ywkPlaninFloodRoughnessDao.findByPlanId(planId);
         for(YwkPlaninFloodRoughness floodRoughness:planFloodRoughnessList){
-            ywkPlaninRiverRoughnessDao.deleteByPlanRoughnessId(floodRoughness.getRoughnessParamid());
+            ywkPlaninRiverRoughnessDao.deleteByPlanRoughnessId(floodRoughness.getPlanRoughnessid());
         }
         ywkPlaninFloodRoughnessDao.deleteByPlanId(planId);
         //插入最新设定数据
@@ -335,7 +355,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         if(planRiverRoughnessList.size()>0){
             ywkPlaninRiverRoughnessDao.saveAll(planRiverRoughnessList);
         }
-        return null;
+        return modelParamVo;
     }
 
     /**
@@ -345,7 +365,16 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
      */
     @Override
     public List<Object> getModelBoundaryBasic(ModelParamVo modelParamVo) {
+        //先从缓存获取
+        List<Object> dataCacheList = (List<Object>) CacheUtil.get("modelBoundaryData", modelParamVo.getnPlanid());
+        if(dataCacheList!=null)
+            return dataCacheList;
+        //如果缓存没有从数据库获取
         List<Object> list = new ArrayList<>();
+        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(modelParamVo.getnPlanid());
+        //封装时间列
+        Date startTime = planInfo.getdCaculatestarttm();
+        Date endTime = planInfo.getdCaculateendtm();
         //查询模型边界关联表
         List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(modelParamVo.getIdmodelId());
         //查询边界详细数据表
@@ -354,18 +383,929 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         for (YwkModelBoundaryBasicRl modelboundary:modelBoundaryList) {
             stcdList.add(modelboundary.getStcd());
         }
-        List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdIn(stcdList);
+        List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdInOrderByStcd(stcdList);
         //封装边界流量数据
         for (YwkBoundaryBasic ywkBoundaryBasic:boundaryBasicList) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("boundary",ywkBoundaryBasic);
-            jsonObject.put("dataList",new ArrayList<>());
+            List<Object> dataList = new ArrayList<>();
+            int count = 0;
+            for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextHour(startTime, count)) {
+                JSONObject dataJsonObj = new JSONObject();
+                dataJsonObj.put("time",DateUtil.dateToStringNormal3(time));
+                dataJsonObj.put("boundaryData",0.0);
+                dataList.add(dataJsonObj);
+                count++;
+            }
+            jsonObject.put("dataList",dataList);
             list.add(jsonObject);
         }
         return list;
     }
 
+    /**
+     * 下载边界数据模板
+     * @param planId
+     * @param modelId
+     * @return
+     */
+    @Override
+    public Workbook exportDutyTemplate(String planId,String modelId) {
+        //查询模型边界关联表
+        List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(modelId);
+        //查询边界详细数据表
+        List<String> stcdList = new ArrayList<>();
+        stcdList.add(StrUtil.getUUID());
+        for (YwkModelBoundaryBasicRl modelboundary:modelBoundaryList) {
+            stcdList.add(modelboundary.getStcd());
+        }
+        List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdInOrderByStcd(stcdList);
+        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+        //封装边界模板数据
+        XSSFWorkbook workbook = new XSSFWorkbook();
+
+        //设置样式
+        XSSFFont font = workbook.createFont();
+        font.setFontHeightInPoints((short) 11);//字体高度
+        font.setFontName("宋体");//字体
+        XSSFCellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setFont(font);
+        style.setWrapText(true);//自动换行
+        XSSFSheet sheet = workbook.createSheet("边界数据导入模板");
+        //填充表头
+        //第一行
+        XSSFRow row = sheet.createRow(0);
+        XSSFCell cell = row.createCell(0);
+        cell.setCellStyle(style);
+        cell.setCellValue("时间/边界值");
+        //设置自动列宽
+        sheet.setColumnWidth(0, 5100);
+
+        for (int i = 0; i < boundaryBasicList.size(); i++) {
+            sheet.setColumnWidth(i+1, 4000);
+            YwkBoundaryBasic ywkBoundaryBasic = boundaryBasicList.get(i);
+            String dataType = "0".equals(ywkBoundaryBasic.getBoundaryDataType())?"水位":"流量";
+            XSSFCell cells = row.createCell(i+1);
+            cells.setCellStyle(style);
+            cells.setCellValue(ywkBoundaryBasic.getBoundarynm()+"("+dataType+")");
+        }
+        //封装时间列
+        Date startTime = planInfo.getdCaculatestarttm();
+        Date endTime = planInfo.getdCaculateendtm();
+        int beginLine = 1;
+        //封装数据
+        int count = 0;
+        for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextHour(startTime, count)) {
+            XSSFRow row1 = sheet.createRow(beginLine);
+            row1.createCell(0).setCellValue(DateUtil.dateToStringNormal3(time));
+            count++;
+            beginLine++;
+        }
+        return workbook;
+    }
+
+    @Override
+    public List<Object> importBoundaryData(MultipartFile mutilpartFile,String planId,String modelId) throws IOException {
+        List<Object> boundaryDataList = new ArrayList<>();
+        //查询模型边界关联表
+        List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(modelId);
+        //查询边界详细数据表
+        List<String> stcdList = new ArrayList<>();
+        stcdList.add(StrUtil.getUUID());
+        for (YwkModelBoundaryBasicRl modelboundary:modelBoundaryList) {
+            stcdList.add(modelboundary.getStcd());
+        }
+        List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdInOrderByStcd(stcdList);
+
+        //解析ecxel数据 不包含第一行
+        List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile,1);
+        // 判断有无数据 时间-每个边界的值集合
+        Map<String,List<String>> dataMap = new HashMap<>();
+        if (excelList != null && excelList.size() > 0) {
+            // 遍历每行数据（除了标题）
+            for (int i = 0; i < excelList.size(); i++) {
+                String[] strings = excelList.get(i);
+                if (strings != null && strings.length > 0) {
+                    // 封装每列（每个指标项数据）
+                    List<String> dataList= new ArrayList<>(Arrays.asList(strings));
+                    dataMap.put((strings[0]+"").trim(),dataList.subList(0,dataList.size()));
+                }
+            }
+        }
+        //封装边界流量数据
+        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+        //封装时间列
+        Date startTime = planInfo.getdCaculatestarttm();
+        Date endTime = planInfo.getdCaculateendtm();
+        for (int i = 0; i < boundaryBasicList.size(); i++) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("boundary",boundaryBasicList.get(i));
+            //封装时间数据
+            List<Object> dataList = new ArrayList<>();
+            int count = 0;
+            for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextHour(startTime, count)) {
+                String timeStr = DateUtil.dateToStringNormal3(time);
+                List<String> strings = dataMap.get(timeStr);
+                JSONObject dataTimeObj = new JSONObject();
+                dataTimeObj.put("time",timeStr);
+                try{
+                    dataTimeObj.put("boundaryData",Double.parseDouble(strings.get(i+1)));
+                }catch (Exception e){
+                    dataTimeObj.put("boundaryData",0.0);
+                }
+                dataList.add(dataTimeObj);
+                count++;
+            }
+            jsonObject.put("dataList",dataList);
+            boundaryDataList.add(jsonObject);
+        }
+        //存入缓存
+        CacheUtil.saveOrUpdate("modelBoundaryData", planId,boundaryDataList);
+
+        return boundaryDataList;
+    }
+
+    @Override
+    @Transactional
+    public List<YwkPlanInfoBoundaryDto> savePlanBoundaryData(List<YwkPlanInfoBoundaryDto> ywkPlanInfoBoundaryDtoList,String planId) {
+        //根据方案id删除边界条件信息
+        ywkPlaninFloodBoundaryDao.deleteByPlanId(planId);
+        //封装新数据
+        YwkPlaninfo planinfo = ywkPlaninfoDao.findOneById(planId);
+        //输出步长
+        Date startTime = planinfo.getdCaculatestarttm();
+        Long step = planinfo.getnOutputtm();
+        //封装边界条件数据
+        List<YwkPlaninFloodBoundary> planBoundaryList = new ArrayList<>();
+        for (YwkPlanInfoBoundaryDto ywkPlanInfoBoundaryDto:ywkPlanInfoBoundaryDtoList) {
+            YwkBoundaryBasicDto boundary = ywkPlanInfoBoundaryDto.getBoundary();
+            List<YwkBoundaryDataDto> dataList = ywkPlanInfoBoundaryDto.getDataList();
+            for (YwkBoundaryDataDto ywkBoundaryDataDto:dataList){
+                Date time = ywkBoundaryDataDto.getTime();
+                YwkPlaninFloodBoundary ywkPlaninFloodBoundary = new YwkPlaninFloodBoundary();
+                ywkPlaninFloodBoundary.setId(StrUtil.getUUID());
+                ywkPlaninFloodBoundary.setPlanId(planId);
+                ywkPlaninFloodBoundary.setStcd(boundary.getStcd());
+                ywkPlaninFloodBoundary.setAbsoluteTime(time);
+                int i = DateUtil.dValueOfTime(startTime, time);
+                ywkPlaninFloodBoundary.setRelativeTime(Long.parseLong(i+""));
+                if("0".equals(boundary.getBoundaryDataType())){
+                    ywkPlaninFloodBoundary.setZ(ywkBoundaryDataDto.getBoundaryData());
+                }else{
+                    ywkPlaninFloodBoundary.setQ(ywkBoundaryDataDto.getBoundaryData());
+                }
+                planBoundaryList.add(ywkPlaninFloodBoundary);
+            }
+        }
+        ywkPlaninFloodBoundaryDao.saveAll(planBoundaryList);
+        //更新缓存
+        //存入缓存
+        CacheUtil.saveOrUpdate("modelBoundaryData", planId,ywkPlanInfoBoundaryDtoList);
+
+        return ywkPlanInfoBoundaryDtoList;
+    }
+
+    @Override
+    public List<YwkBreakBasicDto> getBreakList(String modelId) {
+
+        List<YwkBreakBasic> ywkBreakBasics = ywkBreakBasicDao.findsByModelId(modelId);
+        List<YwkBreakBasicDto> results = new ArrayList<>();
+        for (YwkBreakBasic source : ywkBreakBasics){
+            YwkBreakBasicDto target = new YwkBreakBasicDto();
+            BeanUtils.copyProperties(source,target);
+            results.add(target);
+        }
+        return results;
+    }
 
 
+    @Override
+    @Transactional
+    public BreakVo savePlanBreak(BreakVo breakDto) {
+        //根据方案id删除旧数据
+        ywkPlaninFloodBreakDao.deleteByNPlanid(breakDto.getnPlanid());
+        //保存记录
+        YwkPlaninFloodBreak target = new YwkPlaninFloodBreak();
+        BeanUtils.copyProperties(breakDto,target);
+        target.setId(StrUtil.getUUID());
+        ywkPlaninFloodBreakDao.save(target);
+        return breakDto;
+    }
 
+
+    @Override
+    public void callMode(String planId) {
+
+        YwkPlaninfo planInfo = ywkPlaninfoDao.findOne(planId);
+        if (planInfo == null){
+            System.out.println("计划planid没有找到记录");
+            return;
+        }
+        String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
+
+        String hsfx_model_template_output = hsfx_path +
+                File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                + File.separator + planId; //输出的地址
+
+
+        String hsfx_model_template = hsfx_path +
+                File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");//默认文件对位置
+
+        String hsfx_model_template_input = hsfx_model_template
+                + File.separator + "INPUT"+File.separator+planId; //输入的地址
+
+        String hsfx_model_template_run = hsfx_path +
+                File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
+
+        String hsfx_model_template_run_plan = hsfx_model_template_run + File.separator + planId;
+        //List<YwkPlanOutputGridProcess> results = analysisOfGridProcessCSV(hsfx_model_template_output,planinfo);
+
+        File inputyiweiPath = new File(hsfx_model_template_input+File.separator+"yiwei");
+        File inputerweiPath = new File(hsfx_model_template_input+File.separator+"erwei");
+
+        File outyiweiPath = new File(hsfx_model_template_output+File.separator+"yiwei");
+        File outerweiPath = new File(hsfx_model_template_output+File.separator+"erwei");
+        File runPath = new File(hsfx_model_template_run_plan);
+        inputyiweiPath.mkdirs();
+        inputerweiPath.mkdirs();
+        outyiweiPath.mkdirs();
+        outerweiPath.mkdirs();
+        runPath.mkdirs();
+
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date startTime = planInfo.getdCaculatestarttm();
+        Date endTime = planInfo.getdCaculateendtm();
+        String startTimeStr = format1.format(startTime);
+        String endTimeStr = format1.format(endTime);
+
+
+        //获取模型边界基本信息表对所有数据
+        List<Map<String,Object>> BndDatas = new ArrayList<>();//表头13个的里程
+        List<String> BndList = new ArrayList<>();//点位数据
+        List<Map<String,Object>> breakList = new ArrayList<>();//洪道开始结束俩个点的里程
+        Map<String,List<Map<String,Object>>> channels = new HashMap<>();//点位数据
+        getBndCsvChanelDatas(breakList,channels,planId);//获取分洪道数据
+        getBndCsvBoundaryDatas(BndDatas,BndList,planInfo,breakList,channels);//获取边界数据
+
+        //写入边界条件成功
+        int result0 = writeDataToInputBNDCsv(hsfx_model_template_input, BndDatas,BndList);
+        if (result0 == 0 ){
+            System.out.println("水动力模型计算:边界BND.csv输入文件写入成功。。。");
+            return ;
+        }
+
+        List<YwkPlaninRiverRoughness> ctrCsvDatas = getCTRCsvDatas(planId);
+        int result1 = writeDataToInputCTRCsv(hsfx_model_template,hsfx_model_template_input,ctrCsvDatas,planInfo,BndList.size());
+
+        if (result1 == 0){
+            System.out.println("水动力模型计算:溃口CTR.csv输入文件写入失败。。。");
+            return ;
+        }
+        int result2 = writeDataToInputBDCsv(hsfx_model_template,hsfx_model_template_input,planInfo,BndList.size());
+
+        if (result2 == 0){
+            System.out.println("水动力模型计算:溃口通道BD.csv输入文件写入失败。。。");
+            return ;
+        }
+
+        int result3 = writeDataToInputWGCsv(hsfx_model_template,hsfx_model_template_input,planInfo);
+
+        if (result3 == 0){
+            System.out.println("水动力模型计算:糙率WG.csv输入文件写入失败。。。");
+            return ;
+        }
+
+        int result4 = copyOtherCsv(hsfx_model_template,hsfx_model_template_input);
+        if (result4 == 0){
+            System.out.println("水动力模型计算:复制其他.csv输入文件写入失败。。。");
+            return ;
+        }
+        int result5 = copyExeFile(hsfx_model_template_run,hsfx_model_template_run_plan);
+        if (result5 == 0){
+            System.out.println("水动力模型计算:复制执行文件与config文件写入失败。。。");
+            return ;
+        }
+
+        int result6 = writeDataToConfig(hsfx_model_template_run_plan, hsfx_model_template_input, hsfx_model_template_output);
+        if (result6 == 0){
+            System.out.println("水动力模型计算:config文件写入失败。。。");
+            return ;
+        }
+
+        runModelExe(hsfx_model_template_run_plan + File.separator + "startUp.bat");
+
+    }
+
+    private void runModelExe(String modelRunPath) {
+        BufferedReader br = null;
+        BufferedReader brError = null;
+        try {
+            // 执行exe cmd可以为字符串(exe存放路径)也可为数组，调用exe时需要传入参数时，可以传数组调用(参数有顺序要求)
+            Process p = Runtime.getRuntime().exec(modelRunPath);
+            String line = null;
+            br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            brError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+            // while ((line = br.readLine()) != null || (line = brError.readLine()) != null)
+            // {
+            while ((line = brError.readLine()) != null) {
+                // 输出exe输出的信息以及错误信息
+                System.out.println(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        System.out.println("水动力调度模型调用成功！");
+    }
+
+    private int copyExeFile(String hsfx_model_template_run, String hsfx_model_template_run_plan) {
+
+        String exeUrl = hsfx_model_template_run + File.separator + "HSFXYB_MODEL.exe";
+        String exeInputUrl = hsfx_model_template_run_plan + File.separator + "HSFXYB_MODEL.exe";
+        String batUrl = hsfx_model_template_run + File.separator + "startUp.bat";
+        String batInputUrl = hsfx_model_template_run_plan + File.separator + "startUp.bat";
+        try {
+            FileUtil.copyFile(exeUrl,exeInputUrl,true);
+            FileUtil.copyFile(batUrl,batInputUrl,true);
+            System.err.println("水动力模型计算：copy执行文件exe,bat文件成功");
+            return 1;
+        }catch (Exception e){
+            System.err.println("水动力模型计算：copy执行文件exe,bat文件错误" + e.getMessage());
+            return 0;
+        }
+    }
+
+    private int writeDataToConfig(String hsfx_model_template_run_plan, String hsfx_model_template_input, String hsfx_model_template_output) {
+
+
+        List<String> finals = new ArrayList<>();
+
+        //String configUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"config.txt";
+
+        String configUrl = hsfx_model_template_run_plan + File.separator + "config.txt";
+
+        String erweiInputBDUrl = "BD&&" + hsfx_model_template_input + File.separator + "erwei" + File.separator + "BD.csv";
+        String erweiInputINUrl = "IN&&" + hsfx_model_template_input + File.separator + "erwei" + File.separator + "IN.csv";
+        String erweiInputWGUrl = "WG&&" + hsfx_model_template_input + File.separator + "erwei" + File.separator + "WG.csv";
+        String erweiInputTDUrl = "TD&&" + hsfx_model_template_input + File.separator + "erwei" + File.separator + "TD.csv";
+        String erweiInputJDUrl = "JD&&" + hsfx_model_template_input + File.separator + "erwei" + File.separator + "JD.csv";
+        String erweiInputResultUrl = "result&&" + hsfx_model_template_output + File.separator + "erwei" + File.separator + "result.csv";//输出
+        String erweiInputProcessUrl = "process&&" + hsfx_model_template_output + File.separator + "erwei" + File.separator + "process.csv";//输出
+        String erweiInputOverflowUrl = "overflow&&" + hsfx_model_template_output + File.separator + "erwei" + File.separator + "overflow.csv";//输出
+        String erweiInputKuikouUrl = "kuikou&&" + hsfx_model_template_output + File.separator + "erwei" + File.separator + "kuikou.csv";//输出
+        String yiweiInputBNDUrl = "BND&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "BND.csv";
+        String yiweiInputINIUrl = "INI&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "INI.csv";
+        String yiweiInputSECUrl = "SEC&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC.csv";
+        String yiweiInputCTRUrl = "CTR&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "CTR.csv";
+        String yiweiInputDischargeUrl = "Discharge&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Discharge.csv";//输出
+        String yiweiInputWaterlevelUrl = "Waterlevel&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterlevel.csv";//输出
+        String yiweiInputWaterdepthUrl = "Waterdepth&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterdepth.csv";//输出
+        String JinduUrl = "jindu&&" + hsfx_model_template_output + File.separator + "jindu.txt";//输出
+        String errorUrl = "error&&" + hsfx_model_template_output + File.separator + "error.txt";//输出
+
+        finals.add(erweiInputBDUrl);
+        finals.add(erweiInputINUrl);
+        finals.add(erweiInputWGUrl);
+        finals.add(erweiInputTDUrl);
+        finals.add(erweiInputJDUrl);
+        finals.add(erweiInputResultUrl);
+        finals.add(erweiInputProcessUrl);
+        finals.add(erweiInputOverflowUrl);
+        finals.add(erweiInputKuikouUrl);
+        finals.add(yiweiInputBNDUrl);
+        finals.add(yiweiInputINIUrl);
+        finals.add(yiweiInputSECUrl);
+        finals.add(yiweiInputCTRUrl);
+        finals.add(yiweiInputDischargeUrl);
+        finals.add(yiweiInputWaterlevelUrl);
+        finals.add(yiweiInputWaterdepthUrl);
+        finals.add(JinduUrl);
+        finals.add(errorUrl);
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, false)); // 附加
+            // 添加新的数据行
+            for (int i=0;i<finals.size();i++){
+                String s = finals.get(i);
+                if (i==finals.size()-1){
+                    bw.write(s);
+                }else {
+                    bw.write(s);
+                    bw.newLine();
+                }
+            }
+            bw.close();
+            System.out.println("写入水动力模型config成功");
+            return 1;
+        } catch (FileNotFoundException e) {
+            // File对象的创建过程中的异常捕获
+            System.out.println("写入水动力模型config失败");
+            e.printStackTrace();
+            return 0;
+        } catch (IOException e) {
+            // BufferedWriter在关闭对象捕捉异常
+            System.out.println("写入水动力模型config失败");
+            e.printStackTrace();
+            return 0;
+        }
+
+    }
+
+    private int copyOtherCsv(String hsfx_model_template, String hsfx_model_template_input) {
+        String INIUrl = hsfx_model_template+File.separator+"yiwei"+File.separator+"INI.csv";
+        String INIInputUrl = hsfx_model_template_input+File.separator+"yiwei"+File.separator+"INI.csv";
+
+        String SecUrl = hsfx_model_template+File.separator+"yiwei"+File.separator+"SEC.csv";
+        String SecInputUrl = hsfx_model_template_input+File.separator+"yiwei"+File.separator+"SEC.csv";
+
+        String shujuUrl = hsfx_model_template+File.separator+"erwei"+File.separator+"数据.xls";
+        String shujuInputUrl = hsfx_model_template_input+File.separator+"erwei"+File.separator+"数据.xls";
+
+        String InUrl = hsfx_model_template+File.separator+"erwei"+File.separator+"IN.csv";
+        String InInputUrl = hsfx_model_template_input+File.separator+"erwei"+File.separator+"IN.csv";
+
+        String JDUrl = hsfx_model_template+File.separator+"erwei"+File.separator+"JD.csv";
+        String JDInputUrl = hsfx_model_template_input+File.separator+"erwei"+File.separator+"JD.csv";
+
+        String TDUrl = hsfx_model_template+File.separator+"erwei"+File.separator+"TD.csv";
+        String TDInputUrl = hsfx_model_template_input+File.separator+"erwei"+File.separator+"TD.csv";
+
+        try {
+            FileUtil.copyFile(INIUrl,INIInputUrl,true); //一维的
+            FileUtil.copyFile(SecUrl,SecInputUrl,true); //一维的
+            FileUtil.copyFile(shujuUrl,shujuInputUrl,true); //二维的
+            FileUtil.copyFile(InUrl,InInputUrl,true); //二维的
+            FileUtil.copyFile(JDUrl,JDInputUrl,true); //二维的
+            FileUtil.copyFile(TDUrl,TDInputUrl,true); //二维的
+            System.err.println("水动力模型计算：copy输入文件成功");
+            return 1;
+        }catch (Exception e){
+            System.err.println("水动力模型计算：copy输入文件错误" + e.getMessage());
+            return 0;
+        }
+
+    }
+
+    private int writeDataToInputWGCsv(String hsfx_model_template,String hsfx_model_template_input, YwkPlaninfo planInfo) {
+
+        List<YwkPlaninFloodRoughness> byPlanId = ywkPlaninFloodRoughnessDao.findByPlanId(planInfo.getnPlanid());
+        //String WGInputUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"WG.csv";
+        String WGInputUrl = hsfx_model_template_input+File.separator+"erwei"+File.separator+"WG.csv";
+        //String WGInputReadUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh2_Xinhecun_50/erwei" + File.separator+"WG.csv";
+        String WGInputReadUrl =  hsfx_model_template +File.separator+"erwei"+ File.separator+"WG.csv";
+
+        List<List<String>> readDatas = new ArrayList();
+        /* 读取数据 */
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(WGInputReadUrl)), "UTF-8"));
+            String lineTxt = null;
+            while ((lineTxt = br.readLine()) != null) {
+                List<String> split = Arrays.asList(lineTxt.split(","));
+                readDatas.add(split);
+            }
+        } catch (Exception e) {
+            System.err.println("水动力模型计算：WG.csv输入文件读取错误:read errors :" + e);
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            //BufferedWriter bw = new BufferedWriter(new FileWriter(WGInputUrl, false)); // 附加
+            BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (WGInputUrl,false),"UTF-8"));
+            for (int i = 1;i < readDatas.size();i++){
+                readDatas.get(i).set(4,byPlanId.get(0).getGridSynthesizeRoughness()+"");
+            }
+            for (int i = 0 ; i < readDatas.size();i++){
+                List<String> strings = readDatas.get(i);
+                String line = "";
+                for (String s :strings){
+                    line = line+s+",";
+                }
+                line = line.substring(0,line.length()-1);
+                bw.write(line);
+                bw.newLine();
+            }
+            bw.close();
+            System.out.println("水动力模型计算：WG.csv输入文件写入成功");
+            return 1;
+        }
+        catch (FileNotFoundException e) {
+            // File对象的创建过程中的异常捕获
+            System.out.println("水动力模型计算：WG.csv输入文件写入失败");
+            e.printStackTrace();
+            return 0;
+        }
+        catch (IOException e) {
+            // BufferedWriter在关闭对象捕捉异常
+            System.out.println("水动力模型计算：WG.csv输入文件写入失败");
+            e.printStackTrace();
+            return 0;
+        }
+
+    }
+
+    private int writeDataToInputBDCsv(String hsfx_model_template,String hsfx_model_template_input, YwkPlaninfo planInfo,int size) {
+
+        //获取溃口入参数据
+        YwkPlaninFloodBreak floodBreak = ywkPlaninFloodBreakDao.findByNPlanid(planInfo.getnPlanid());
+        //溃口基本信息表
+        YwkBreakBasic breakBasic = ywkBreakBasicDao.findById(floodBreak.getBreakId()).get();
+
+        //String BDInputUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"BD.csv";
+        String BDInputUrl = hsfx_model_template_input+File.separator+"erwei"+File.separator+"BD.csv";
+        //String BDInputReadUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh2_Xinhecun_50/erwei" + File.separator+"BD.csv";
+        String BDInputReadUrl = hsfx_model_template + File.separator+"erwei"+File.separator+"BD.csv";
+
+        List<List<String>> readDatas = new ArrayList();
+        /* 读取数据 */
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(BDInputReadUrl)), "UTF-8"));
+            String lineTxt = null;
+            while ((lineTxt = br.readLine()) != null) {
+                List<String> split = Arrays.asList(lineTxt.split(","));
+                readDatas.add(split);
+            }
+        } catch (Exception e) {
+            System.err.println("水动力模型计算：BD.csv输入文件读取错误:read errors :" + e);
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            //BufferedWriter bw = new BufferedWriter(new FileWriter(BDInputUrl, false)); // 附加
+            BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (BDInputUrl,false),"UTF-8"));
+            readDatas.get(1).set(3,breakBasic.getBreakNo()+"");//设置溃口通道编号
+            readDatas.get(3).set(3,size+"");//设置计算结束时间
+            for (int i=0 ; i < readDatas.size();i++){
+                List<String> strings = readDatas.get(i);
+                String line = "";
+                for (String s :strings){
+                    line = line+s+",";
+                }
+                line = line.substring(0,line.length()-1);
+                bw.write(line);
+                bw.newLine();
+            }
+            bw.close();
+            System.out.println("水动力模型计算：BD.csv输入文件写入成功");
+            return 1;
+        }
+        catch (FileNotFoundException e) {
+            // File对象的创建过程中的异常捕获
+            System.out.println("水动力模型计算：BD.csv输入文件写入失败");
+            e.printStackTrace();
+            return 0;
+        }
+        catch (IOException e) {
+            // BufferedWriter在关闭对象捕捉异常
+            System.out.println("水动力模型计算：BD.csv输入文件写入失败");
+            e.printStackTrace();
+            return 0;
+        }
+
+    }
+
+    private List<YwkPlaninRiverRoughness> getCTRCsvDatas(String planId) {
+        List<YwkPlaninFloodRoughness> byPlanId = ywkPlaninFloodRoughnessDao.findByPlanId(planId);
+        YwkPlaninFloodRoughness ywkPlaninFloodRoughness = byPlanId.get(0);
+        //查出结果集
+        List<YwkPlaninRiverRoughness> byPlanRoughnessId = ywkPlaninRiverRoughnessDao.findByPlanRoughnessIdOrderByMileageAsc(ywkPlaninFloodRoughness.getPlanRoughnessid());
+
+        return byPlanRoughnessId;
+    }
+
+    private int writeDataToInputCTRCsv(String hsfx_model_template,String hsfx_model_template_input, List<YwkPlaninRiverRoughness> ctrCsvDatas,YwkPlaninfo planInfo,int size) {
+
+        String CTRInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "CTR.csv";
+        //String CTRInputUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"CTR.csv";
+        String CTRInputReadUrl = hsfx_model_template +File.separator+"yiwei"+File.separator + "CTR.csv";
+        //String CTRInputReadUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh2_Xinhecun_50/yiwei" + File.separator+"CTR.csv";
+
+        List<List<String>> readDatas = new ArrayList();
+        /* 读取数据 */
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(CTRInputReadUrl)), "UTF-8"));
+            String lineTxt = null;
+            while ((lineTxt = br.readLine()) != null) {
+                List<String> split = Arrays.asList(lineTxt.split(","));
+                readDatas.add(split);
+            }
+            } catch (Exception e) {
+                System.err.println("水动力模型计算：CTR.csv输入文件读取错误:read errors :" + e);
+            } finally {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        try {
+            //获取溃口入参数据
+            YwkPlaninFloodBreak floodBreak = ywkPlaninFloodBreakDao.findByNPlanid(planInfo.getnPlanid());
+            //溃口基本信息表
+            YwkBreakBasic breakBasic = ywkBreakBasicDao.findById(floodBreak.getBreakId()).get();
+
+            //BufferedWriter bw = new BufferedWriter(new FileWriter(CTRInputUrl, false)); // 附加
+            BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (CTRInputUrl,false),"UTF-8"));
+            //数据小于等于excel的个数
+            if (ctrCsvDatas.size() <= readDatas.size()-1){//9个数据，7个excel 1个表头 TODO 这个if已经测试了 但是else没有测试呢
+
+                for (int i = 0 ; i < ctrCsvDatas.size(); i++){
+                    List<String> strings = readDatas.get(i+1);
+                    YwkPlaninRiverRoughness ywkPlaninRiverRoughness = ctrCsvDatas.get(i);//数据是从0开始
+                    strings.set(2,ywkPlaninRiverRoughness.getMileage()+"");
+                    strings.set(3,ywkPlaninRiverRoughness.getRoughness()+"");
+                }
+                for (int i = 1;i < readDatas.size();i++){
+                    List<String> strings = readDatas.get(i);
+                    if (i == 2){
+                        strings.set(1,size-1+"") ;//模拟时间
+                    }else if (i == 4 ){
+                        strings.set(1,planInfo.getnOutputtm()+"");//输出时间步长
+                    }else if (i == 8){ //溃口里程
+                        strings.set(1,breakBasic.getBreakMileage()+"");
+                    }else if (i == 9){//溃口底高程
+                        strings.set(1,floodBreak.getBreakBottomElevation()+"");
+                    }else if (i == 10){//溃口宽度
+                        strings.set(1,floodBreak.getBreakWidth()+"");
+                    }else if (i == 12){//起溃水位
+                        strings.set(1,floodBreak.getStartZ()+"");
+                    }
+                }
+                //还要去除原来的csv里面的里程数据
+                for (int i = ctrCsvDatas.size()+1; i < readDatas.size();i++){
+                    List<String> strings = readDatas.get(i);
+                    if (strings.size() == 4){
+                        strings.set(2,"");
+                        strings.set(3,"");
+                    }
+                }
+            }else{//数据大于excel的个数
+                for (int i = 1;i < readDatas.size();i++){
+                    YwkPlaninRiverRoughness ywkPlaninRiverRoughness = ctrCsvDatas.get(i-1);//数据是从0开始
+                    List<String> strings = readDatas.get(i);
+                    strings.set(2,ywkPlaninRiverRoughness.getMileage()+"");
+                    strings.set(3,ywkPlaninRiverRoughness.getRoughness()+"");
+                    if (i == 2){
+                        strings.set(1,size-1+"") ;//模拟时间 比数据的个数少1
+                    }else if (i == 4 ){
+                        strings.set(1,planInfo.getnOutputtm()+"");//输出时间步长
+                    }else if (i == 8){ //溃口里程
+                        strings.set(1,breakBasic.getBreakMileage()+"");
+                    }else if (i == 9){//溃口底高程
+                        strings.set(1,floodBreak.getBreakBottomElevation()+"");
+                    }else if (i == 10){//溃口宽度
+                        strings.set(1,floodBreak.getBreakWidth()+"");
+                    }else if (i == 12){//起溃水位
+                        strings.set(1,floodBreak.getStartZ()+"");
+                    }
+                }
+                for (int i=readDatas.size()-1;i < ctrCsvDatas.size();i++){
+                    List list = new ArrayList();
+                    list.add("");
+                    list.add("");
+                    YwkPlaninRiverRoughness ywkPlaninRiverRoughness = ctrCsvDatas.get(i);//数据是从0开始
+                    list.set(2,ywkPlaninRiverRoughness.getMileage()+"");
+                    list.set(3,ywkPlaninRiverRoughness.getRoughness()+"");
+                    readDatas.add(list);
+                }
+            }//组装完数据
+
+            for (int i=0 ; i < readDatas.size();i++){
+                List<String> strings = readDatas.get(i);
+                String line = "";
+                for (String s :strings){
+                    line = line+s+",";
+                }
+                line = line.substring(0,line.length()-1);
+                bw.write(line);
+                bw.newLine();
+            }
+            bw.close();
+            System.out.println("水动力模型计算：溃口CTR.csv输入文件写入成功");
+            return 1;
+        } catch (FileNotFoundException e) {
+            // File对象的创建过程中的异常捕获
+            System.out.println("水动力模型计算：溃口CTR.csv输入文件写入失败");
+            e.printStackTrace();
+            return 0;
+        } catch (IOException e) {
+            // BufferedWriter在关闭对象捕捉异常
+            System.out.println("水动力模型计算：溃口CTR.csv输入文件写入失败");
+            e.printStackTrace();
+            return 0;
+        }
+
+
+    }
+
+    private void getBndCsvChanelDatas(List<Map<String, Object>> breakList,Map<String,List<Map<String,Object>>> channels,String planId) {
+
+        //一个计划id关联俩个，入点跟出点。一个入点对应数据有多条
+        YwkPlaninFloodBreak floodBreak = ywkPlaninFloodBreakDao.findByNPlanid(planId);
+
+        //通过breakId 查出起始点跟结束点数据，1是入流，-1是出流。里程
+        List<YwkFloodChannelBasic> byBreakIdOrderByOutflowAndInflowType = ywkFloodChannelBasicDao.findByBreakIdOrderByOutflowAndInflowTypeDesc(floodBreak.getBreakId());
+        Map<String,Object> entranceMap = new HashMap();
+        entranceMap.put("stcd","entrance");
+        entranceMap.put("mileage",byBreakIdOrderByOutflowAndInflowType.get(0).getMileage());
+        Map<String,Object> exportMap = new HashMap<>();
+        exportMap.put("stcd","export");
+        exportMap.put("mileage",byBreakIdOrderByOutflowAndInflowType.get(1).getMileage());
+        breakList.add(entranceMap);
+        breakList.add(exportMap);
+
+        List<String> breakIds = byBreakIdOrderByOutflowAndInflowType.stream().map(YwkFloodChannelBasic::getFloodChannelId).collect(Collectors.toList());
+        //通过起始点跟结束点查某个区间范围点数据
+        List<YwkFloodChannelFlow> byChannelBasicIds = ywkFloodChannelFlowDao.findByChannelBasicIds(breakIds);
+        //按照channelBasicIds分组
+        Map<String, List<YwkFloodChannelFlow>> channelCollect = byChannelBasicIds.stream().collect(Collectors.groupingBy(YwkFloodChannelFlow::getFloodChannelId));
+        List<Map<String,Object>> entrance = poToListMap(channelCollect.get(byBreakIdOrderByOutflowAndInflowType.get(0).getFloodChannelId()));
+        List<Map<String,Object>> export = poToListMap(channelCollect.get(byBreakIdOrderByOutflowAndInflowType.get(1).getFloodChannelId()));
+        channels.put("entrance",entrance);
+        channels.put("export",export);
+    }
+
+    public <T> List<Map<String, Object>> poToListMap(List<T> source){
+        List<Map<String,Object>> target = new ArrayList<>();
+        if (CollectionUtils.isEmpty(source)){
+            return target;
+        }
+        for (Object s :source){
+            Map  map = JSON.parseObject(JSON.toJSONString(s), Map.class);
+            target.add(map);
+        }
+        return target;
+    }
+
+    private void getBndCsvBoundaryDatas(List<Map<String, Object>> bndDatas, List<String> bndList, YwkPlaninfo planInfo,List<Map<String,Object>> breakIds,Map<String, List<Map<String,Object>>> channels) {
+
+        List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(planInfo.getnModelid());//基本信息中间表
+        List<String> collectStcd = modelBoundaryList.stream().map(YwkModelBoundaryBasicRl::getStcd).collect(Collectors.toList());//中间表的stcd集合
+        //上游、下游，根据stcd集合获取上游下游的列表
+        List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdInOrderByBoundaryType(collectStcd);
+        Map upperMap = new HashMap(); //上游
+        upperMap.put("stcd",boundaryBasicList.get(0).getStcd());
+        upperMap.put("mileage",1);
+        Map downMap = new HashMap();//下游
+        downMap.put("stcd",boundaryBasicList.get(1).getStcd());
+        downMap.put("mileage",0);
+        bndDatas.add(upperMap);
+        bndDatas.add(downMap);
+        //截取非上下游的其他数据
+        List<YwkBoundaryBasic> newBoundaryBasicList = new ArrayList(boundaryBasicList.subList(2,boundaryBasicList.size()));
+        List<Map<String,Object>> newBoundaryBasics = poToListMap(newBoundaryBasicList);
+
+        //在这个地方把溃口堆进来
+        newBoundaryBasics.addAll(breakIds);
+        //按照历程排序从小到大
+        Collections.sort(newBoundaryBasics, new Comparator<Map<String,Object>>() {
+            @Override
+            public int compare(Map<String,Object> o1, Map<String,Object> o2) {
+                Double mileage1 = Double.parseDouble(o1.get("mileage")+"");
+                Double mileage2 = Double.parseDouble(o2.get("mileage")+"");
+                return mileage1.compareTo(mileage2);//降序
+            }
+        });
+
+        bndDatas.addAll(newBoundaryBasics);
+
+        //TODO 获取里程的入参信息
+        List<YwkPlaninFloodBoundary> byPlanIds = ywkPlaninFloodBoundaryDao.findByPlanId(planInfo.getnPlanid());
+        //按照stcd分组。
+        Map<String, List<YwkPlaninFloodBoundary>> groupCollect = byPlanIds.stream().collect(Collectors.groupingBy(YwkPlaninFloodBoundary::getStcd));
+        for (Map.Entry<String,List<YwkPlaninFloodBoundary>> entry : groupCollect.entrySet()){
+            List<YwkPlaninFloodBoundary> value = entry.getValue();
+            for (int i=0;i<value.size();i++){
+                bndList.add(""); //初始化list
+            }
+            break;
+        }
+        Map<String,List<Map<String,Object>>> planinFloodBoundaryMap = new HashMap<>();
+        for (Map.Entry<String,List<YwkPlaninFloodBoundary>> entry : groupCollect.entrySet()){
+            String key = entry.getKey();
+            List<YwkPlaninFloodBoundary> value = entry.getValue();
+            List<Map<String,Object>> list = poToListMap(value);
+            planinFloodBoundaryMap.put(key,list);
+        }
+        planinFloodBoundaryMap.putAll(channels);
+        for (int i = 0; i < bndDatas.size(); i++){
+            Map<String, Object> map = bndDatas.get(i);
+            String stcd = map.get("stcd")+"";//下游水文，其他流量
+            //TODO 这个地方个数必须正确
+            List<Map<String,Object>> listMap = planinFloodBoundaryMap.get(stcd);
+            //按照时间排序
+            Collections.sort(listMap, new Comparator<Map<String,Object>>() {
+                @Override
+                public int compare(Map<String,Object> o1, Map<String,Object> o2) {
+                    Long relativeTime = Long.parseLong(o1.get("relativeTime")+"");
+                    Long relativeTime1 = Long.parseLong(o2.get("relativeTime")+"");
+                    return relativeTime.compareTo(relativeTime1);
+                }
+            });//TODO 这个地方目前是根据上游点时间点个数写点
+            int size = planinFloodBoundaryMap.get(bndDatas.get(1).get("stcd")).size();
+            if (listMap.size()<size){
+                for (int z=0;z<size-listMap.size();z++){
+                    Map<String,Object> m = new HashMap<>();
+                    m.put("q",listMap.get(listMap.size()-1).get("q"));
+                    listMap.add(m);
+                }
+            }else {
+                listMap = listMap.subList(0,size);
+            }
+            //TODO 这个地方如果是24个点的话，不够24个的以最后一个点的值补够24个点
+
+            for (int j=0;j<listMap.size();j++){
+                Map<String,Object> boundryMap = listMap.get(j);
+                String s = bndList.get(j);
+                Double q;
+                if (i==1){///下游水文，其他流量
+                    q = Double.parseDouble(boundryMap.get("z")+"");
+                }else {
+                    q = Double.parseDouble(boundryMap.get("q")+"");
+                }
+                if (StringUtils.isEmpty(s)){// bw.write("\"time\"" + "," + "\"pcp\"");
+                    s = j+","+q+"";
+                }else {
+                    s = s+","+j+","+q;
+                }
+                bndList.set(j,s);
+            }
+        }
+    }
+
+    private int writeDataToInputBNDCsv(String hsfx_model_template_input, List<Map<String, Object>> datas, List<String> list) {
+        String BndInputUrl = hsfx_model_template_input + File.separator + "yiwei"+File.separator+"BND.csv";
+
+        try {
+            //BufferedWriter bw = new BufferedWriter(new FileWriter(BndInputUrl, false)); // 附加
+            BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (BndInputUrl,false),"UTF-8"));
+
+            //BufferedWriter bw = new BufferedWriter(new FileWriter("/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本/yiwei/BND.csv", false)); // 附加
+            // 添加新的数据行
+
+            String head = "\"上边界条件\"" + "," + "\"\""+",";
+            head = head +"\"下边界条件\"" + "," + "\"\"";
+
+            Map<String, Object> map1 = datas.get(0);
+            Map<String, Object> map2 = datas.get(1);
+            int size = list.size();
+            String flood_boundary = size+","+map1.get("mileage")+","+size+","+map2.get("mileage");
+            for (int i=2;i<datas.size();i++){
+                Map map = datas.get(i);
+                String stcd = map.get("stcd")+"";
+                if ("entrance".equals(stcd)){
+                    head = head + "," + "\"分洪道入流\"" + "," + "\"\"";
+                }else if ("export".equals(stcd)){
+                    head = head + "," + "\"分洪道出流\"" + "," + "\"\"";
+                }else {
+                    head = head + "," + "\"侧向集中入流条件\"" + "," + "\"\"";
+                }
+                flood_boundary = flood_boundary + "," + size +","+datas.get(i).get("mileage");
+            }
+            bw.write(head);
+            bw.newLine();
+            bw.write(flood_boundary);
+            bw.newLine();
+            for (int i = 0; i < list.size(); i++) {
+                String str = list.get(i);
+                bw.write(str);
+                bw.newLine();
+            }
+            bw.close();
+            System.out.println("水动力模型边界条件输入文件写入成功");
+            return 1;
+        } catch (FileNotFoundException e) {
+            // File对象的创建过程中的异常捕获
+            System.out.println("水动力模型边界条件输入文件写入失败");
+            e.printStackTrace();
+            return 0;
+        } catch (IOException e) {
+            // BufferedWriter在关闭对象捕捉异常
+            System.out.println("水动力模型边界条件输入文件写入失败");
+            e.printStackTrace();
+            return 0;
+        }
+
+    }
 }

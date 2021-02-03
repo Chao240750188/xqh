@@ -2,20 +2,11 @@ package com.essence.business.xqh.service.hsfxtk;
 
 import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
 import com.essence.business.xqh.api.hsfxtk.ModelParamHsfxtkService;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkModelRoughnessParamDto;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkParamVo;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkRiverRoughnessParamDto;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkRoughnessVo;
+import com.essence.business.xqh.api.hsfxtk.dto.*;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
-import com.essence.business.xqh.dao.dao.hsfxtk.YwkModelRiverRoughnessRlDao;
-import com.essence.business.xqh.dao.dao.hsfxtk.YwkModelRoughnessParamDao;
-import com.essence.business.xqh.dao.dao.hsfxtk.YwkRiverRoughnessBasicDao;
-import com.essence.business.xqh.dao.dao.hsfxtk.YwkRiverRoughnessParamDao;
+import com.essence.business.xqh.dao.dao.hsfxtk.*;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
-import com.essence.business.xqh.dao.entity.hsfxtk.YwkModelRiverRoughnessRl;
-import com.essence.business.xqh.dao.entity.hsfxtk.YwkModelRoughnessParam;
-import com.essence.business.xqh.dao.entity.hsfxtk.YwkRiverRoughnessBasic;
-import com.essence.business.xqh.dao.entity.hsfxtk.YwkRiverRoughnessParam;
+import com.essence.business.xqh.dao.entity.hsfxtk.*;
 import com.essence.framework.util.StrUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +36,12 @@ public class ModelParamHsfxtkServiceImpl implements ModelParamHsfxtkService {
 
     @Autowired
     YwkRiverRoughnessBasicDao ywkRiverRoughnessBasicDao;//河道操率基本信息表
+
+    @Autowired
+    YwkBreakBasicDao ywkBreakBasicDao;//溃口基本信息表
+
+    @Autowired
+    YwkPlaninFloodBreakDao ywkPlaninFloodBreakDao;//溃口方案表
 
     @Override
     public List<YwkModelDto> getModelList() {
@@ -154,4 +151,5 @@ public class ModelParamHsfxtkServiceImpl implements ModelParamHsfxtkService {
         ywkModelRoughnessParamDao.deleteById(roughness);
         ywkRiverRoughnessParamDao.deleteByRoughnessParamid(roughness);
     }
+
 }

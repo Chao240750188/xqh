@@ -3,9 +3,7 @@ package com.essence.business.xqh.web.hsfxtk.controller;
 
 import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
 import com.essence.business.xqh.api.hsfxtk.ModelParamHsfxtkService;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkModelRoughnessParamDto;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkParamVo;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkRiverRoughnessParamDto;
+import com.essence.business.xqh.api.hsfxtk.dto.*;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -98,7 +96,7 @@ public class ModelParamHsfxtkController {
            }
 
        /**
-        * 保存参数入库
+        * 保存参数入库 TODO 已测试
         * @param
         * @return
         */
@@ -117,7 +115,7 @@ public class ModelParamHsfxtkController {
 
 
 
-    /**
+    /**  TODO 以测试
      * 删除模型参数跟河道参数列表
      * @param
      * @return
@@ -128,12 +126,11 @@ public class ModelParamHsfxtkController {
             modelParamHsfxtkService.deleteRoughness(roughness);
             return SystemSecurityMessage.getSuccessMsg("删除洪水风险调控模型操率参数列表成功");
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("删除洪水风险调控模型操率参数列表失败！");
 
         }
     }
-
 
 }

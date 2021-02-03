@@ -1,30 +1,26 @@
-package com.essence.business.xqh.dao.entity.hsfxtk;
+package com.essence.business.xqh.api.hsfxtk.dto;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
 
-@Entity
-@Table(name = "YWK_BREAK_BASIC", schema = "XQH", catalog = "")
-public class YwkBreakBasicEntity {
-    @Id
-    @Column(name = "BREAK_ID")
+
+public class YwkBreakBasicDto {
     private String breakId;
-    @Column(name = "BREAK_NO")
+    private String idModelId;
     private Long breakNo;
-    @Column(name = "BREAK_MILEAGE")
     private Double breakMileage;
-    @Column(name = "BREAK_BOTTOM_ELEVATION")
     private Double breakBottomElevation;
-    @Column(name = "BREAK_WIDTH")
     private Double breakWidth;
-    @Column(name = "START_Z")
     private Double startZ;
-    @Column(name = "LGTD")
     private Double lgtd;
-    @Column(name = "LTTD")
     private Double lttd;
+
+
+    public String getIdModelId() {
+        return idModelId;
+    }
+
+    public void setIdModelId(String idModelId) {
+        this.idModelId = idModelId;
+    }
 
     public String getBreakId() {
         return breakId;

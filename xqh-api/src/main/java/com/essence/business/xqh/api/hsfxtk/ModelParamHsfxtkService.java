@@ -1,9 +1,7 @@
 package com.essence.business.xqh.api.hsfxtk;
 
 import com.essence.business.xqh.api.fhybdd.dto.YwkModelDto;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkModelRoughnessParamDto;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkParamVo;
-import com.essence.business.xqh.api.hsfxtk.dto.YwkRiverRoughnessParamDto;
+import com.essence.business.xqh.api.hsfxtk.dto.*;
 
 import java.util.List;
 import java.util.Map;
@@ -54,4 +52,5 @@ public interface ModelParamHsfxtkService {
      * @param roughness
      */
     void deleteRoughness(String roughness);
+
 }
