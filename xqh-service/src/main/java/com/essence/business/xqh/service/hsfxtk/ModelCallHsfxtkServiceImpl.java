@@ -1368,6 +1368,8 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         jsonObject.put("runStatus",1);
         //运行时间
         jsonObject.put("time",0);
+        //描述
+        jsonObject.put("describ","模型运行出现异常！");
 
         String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
         String hsfx_model_template_output = hsfx_path +
@@ -1376,6 +1378,8 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         //判断是否有error文件
         String errorPath = hsfx_model_template_output + File.separator + "error.txt";
         String processPath = hsfx_model_template_output + File.separator + "jindu.txt";
+        String picPath = hsfx_model_template_output + File.separator + "pic.txt";
+        File picFile = new File(picPath);
         File errorFile = new File(errorPath);
         //存在表示执行失败
         if (errorFile.exists()){
@@ -1389,6 +1393,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             jsonObject.put("runStatus",0);
             //运行时间
             jsonObject.put("time",0);
+            jsonObject.put("describ","模型运行准备中！");
             return jsonObject;
         }else{
             //运行状态 1运行结束 0运行中
@@ -1407,13 +1412,21 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
                     String[] split = lineTxt2.split("&&");
                     //运行进度
                     double process = Double.parseDouble(split[1] + "");
-                    jsonObject.put("process",process);
-                    if(process==100.0)
+                    jsonObject.put("process",process*0.97);
+                    if(process==100.0){
+                        jsonObject.put("describ","水深过程渲染效果图生成中！");
+                    }else{
+                        jsonObject.put("describ","模型运行中！");
+                    }
+                    if(picFile.exists()){
+                        jsonObject.put("process",100.0);
                         jsonObject.put("runStatus",1);
+                        jsonObject.put("describ","模型运行结束！");
+                    }
                 }
                return jsonObject;
             } catch (Exception e) {
-                System.err.println("进度文件读取错误！" + e.getMessage());
+                System.err.println("进度读取错误！" + e.getMessage());
             } finally {
                 try {
                     br.close();
