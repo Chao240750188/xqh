@@ -1,13 +1,10 @@
 package com.essence.business.xqh.api.hsfxtk;
 
-import com.essence.business.xqh.api.hsfxtk.dto.*;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 方案结果列表相关业务层
@@ -19,4 +16,12 @@ public interface PlanInfoManageService {
      * @return
      */
     Paginator getPlanList(PaginatorParam paginatorParam);
+
+
+    /**
+     * 根据方案id获取边界信息
+     * @param planId
+     * @return
+     */
+    List<Map> getAllBoundaryByPlanId(String planId);
 }
