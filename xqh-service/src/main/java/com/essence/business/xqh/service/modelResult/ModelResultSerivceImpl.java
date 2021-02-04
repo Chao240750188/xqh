@@ -120,19 +120,20 @@ public class ModelResultSerivceImpl implements ModelResultService {
                     processDirFile.mkdirs();
                 }
                 //参数1：dbf生成路径   参数2：dbf文件名称  参数3：随意  参数4：随意
-                 exportMethodResultDto = GisUtil.exportToPicture(dbfFilePath, fileName, mxdTemplateAbsolutePath, maxDepth, exportPictureFormate, processOutputAbsolutePath, processNum + "");//水深过程数据
+//                 exportMethodResultDto = GisUtil.exportToPicture(dbfFilePath, fileName, mxdTemplateAbsolutePath, maxDepth, exportPictureFormate, processOutputAbsolutePath, processNum + "");//水深过程数据
             }else {
                 //复制shp模板文件
                 CopyFile.copyShpFiles(shpTemplatePath, dbfFilePath, "maxDepth" ); //重命名的文件格式：
                 //参数1：dbf生成路径   参数2：dbf文件名称  参数3：随意  参数4：随意
-                exportMethodResultDto = GisUtil.exportToPicture(dbfFilePath, fileName, mxdTemplateAbsolutePath, maxDepth, exportPictureFormate, outputAbsolutePath, "maxDepth");//最大水深
+//                exportMethodResultDto = GisUtil.exportToPicture(dbfFilePath, fileName, mxdTemplateAbsolutePath, maxDepth, exportPictureFormate, outputAbsolutePath, "maxDepth");//最大水深
             }
             //获取生成图片的状态
             if (null!=exportMethodResultDto){
                 boolean flag=false;
                 String status="";
                 while (flag){
-                    String exportToPictureStatus = GisUtil.getExportToPictureStatus(exportMethodResultDto);
+//                    String exportToPictureStatus = GisUtil.getExportToPictureStatus(exportMethodResultDto);
+                    String exportToPictureStatus = "true";
                     status=exportToPictureStatus;
                     if ("true".equals(exportToPictureStatus)){
                         flag=true;

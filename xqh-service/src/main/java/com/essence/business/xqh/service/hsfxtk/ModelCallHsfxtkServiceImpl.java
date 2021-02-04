@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
 import com.essence.business.xqh.api.hsfxtk.dto.*;
+import com.essence.business.xqh.api.modelResult.dto.GridResultDto;
 import com.essence.business.xqh.common.util.*;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
@@ -12,6 +13,7 @@ import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
 import com.essence.business.xqh.dao.entity.hsfxtk.*;
 import com.essence.framework.util.StrUtil;
+import org.apache.poi.hssf.record.chart.LinkedDataRecord;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -693,8 +695,23 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             System.out.println("水动力模型计算:config文件写入失败。。。");
             return ;
         }
-
+        //调用模型计算
+        System.out.println("水动力模型计算:开始水动力模型计算。。。");
         runModelExe(hsfx_model_template_run_plan + File.separator + "startUp.bat");
+        System.out.println("水动力模型计算:水动力模型计算结束。。。");
+
+        //判断是否执行成功，是否有error文件
+        String errorStr = hsfx_model_template_output + File.separator + "error.txt";
+        File errorFile = new File(errorStr);
+        if (errorFile.exists()){//存在表示执行失败
+            planInfo.setnPlanstatus(-1L);
+        }else {
+            planInfo.setnPlanstatus(2L);
+        }
+        ywkPlaninfoDao.save(planInfo);
+
+        //解析模型结果调用GIS服务-生成图片
+
 
     }
 
@@ -1322,4 +1339,5 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         }
 
     }
+
 }

@@ -2,6 +2,7 @@ package com.essence.business.xqh.web.hsfxtk.controller;
 
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
 import com.essence.business.xqh.api.hsfxtk.dto.*;
+import com.essence.business.xqh.api.modelResult.PlanProcessDataService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.common.util.ExcelUtil;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -25,6 +26,8 @@ public class ModelHsfxtkController {
 
     @Autowired
     ModelCallHsfxtkService modelCallHsfxtkService;
+    @Autowired
+    PlanProcessDataService planProcessDataService;
 
     /**
      * 根据方案名称查询方案
@@ -238,11 +241,12 @@ public class ModelHsfxtkController {
 
         }
     }
-    @RequestMapping(value = "/test/{planId}", method = RequestMethod.GET)
-    public SystemSecurityMessage savePlanToDb(@PathVariable String planId) {
+    @RequestMapping(value = "/test/{modelId}/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage savePlanToDb(@PathVariable String modelId,@PathVariable String planId) {
         try {
-            modelCallHsfxtkService.test(planId);
-
+            String filePath = "D:\\XQH_HSFX_MODEL\\MODEL_OUT\\dbaad0ce662c4cd08b1521878e7a4152";
+            String dataType = "process";
+            planProcessDataService.readDepth2dCsvFile(filePath,dataType,modelId,planId);
             return SystemSecurityMessage.getSuccessMsg("洪水风险调控方案保存成功",planId);
 
         }catch (Exception e){
@@ -260,7 +264,7 @@ public class ModelHsfxtkController {
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage modelCall2(@PathVariable  String planId) {
         try {
-            modelCallHsfxtkService.callMode(planId);
+//            modelCallHsfxtkService.callMode(planId);
             return SystemSecurityMessage.getSuccessMsg("调用洪水风险调控模型成功！");
         }catch (Exception e){
             e.printStackTrace();
