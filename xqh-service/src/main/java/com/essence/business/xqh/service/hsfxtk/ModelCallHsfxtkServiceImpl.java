@@ -1325,49 +1325,4 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     }
 
-    public static void main(String[] args) {
-        String hsfx_model_template_output = "D:\\XQH_HSFX_MODEL\\MODEL_OUT\\dbaad0ce662c4cd08b1521878e7a4152";
-        //封装每个过程数据
-        Map<String,List<GridResultDto>> gridResultMap = new LinkedHashMap<>();
-        String grid_process_csv = hsfx_model_template_output+File.separator+"erwei"+File.separator+"process.csv";
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(grid_process_csv));//换成你的文件名
-            //第一行信息，为标题信息，不用，如果需要，注释掉
-            reader.readLine();
-            String line = null;
-            List<List<String>> datas = new ArrayList<>();
-            while((line=reader.readLine())!=null){
-                String item[] = line.split(",");//CSV格式文件为逗号分隔符文件，这里根据逗号切分
-                datas.add(Arrays.asList(item));
-            }
-            for (int i = 0; i < datas.size(); i++) {
-                //将行列数据封装成过程
-                List<String> rowDataList = datas.get(i);
-                //网格id
-                String gridId = rowDataList.get(0);
-                for (int j = 2; j < rowDataList.size(); j++) {
-                    List<GridResultDto> gridResultDtoList = gridResultMap.get((j-1) + "");
-                    if(gridResultDtoList==null){
-                        gridResultDtoList = new ArrayList<>();
-                    }
-                    String depth = rowDataList.get(j);
-                    GridResultDto gridResultDto = new GridResultDto(Long.parseLong(gridId),Double.parseDouble(depth));
-                    gridResultDtoList.add(gridResultDto);
-                    gridResultMap.put((j-1) + "",gridResultDtoList);
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("解析输出文件Grid process csv失败："+e.getMessage());
-            e.printStackTrace();
-        }
-
-        //
-        for(Map.Entry<String, List<GridResultDto>> entry : gridResultMap.entrySet()){
-            String mapKey = entry.getKey();
-            List<GridResultDto> list = entry.getValue();
-            System.out.println(mapKey+":"+mapKey);
-            System.out.println(mapKey+":"+list.toString());
-
-        }
-    }
 }
