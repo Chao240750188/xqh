@@ -32,4 +32,11 @@ public interface PlanInfoManageService {
      * @return
      */
     Map<String, Object> getAllRoughnessByPlanId(String planId);
+
+    /**
+     * 根据方案id获取溃口列表
+     * @param planId
+     * @return
+     */
+    Map<String, Object> getAllBreakByPlanId(String planId);
 }

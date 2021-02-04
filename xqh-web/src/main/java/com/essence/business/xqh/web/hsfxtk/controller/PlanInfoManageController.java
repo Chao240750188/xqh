@@ -71,4 +71,21 @@ public class PlanInfoManageController {
 
         }
     }
+
+    /**
+     * 根据方案id获取溃点位置
+     * @param planId
+     * @return
+     */
+    @RequestMapping(value = "/getAllBreakByPlanId/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getAllBreakByPlanId(@PathVariable String planId) {
+        try {
+            Map<String,Object> results = planInfoManageService.getAllBreakByPlanId(planId);
+            return SystemSecurityMessage.getSuccessMsg("获取溃点信息成功！",results);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("获取溃点信息失败！");
+
+        }
+    }
 }

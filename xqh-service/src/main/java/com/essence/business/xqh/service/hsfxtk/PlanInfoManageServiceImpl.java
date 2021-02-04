@@ -5,22 +5,16 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.essence.business.xqh.api.hsfxtk.PlanInfoManageService;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
-import com.essence.business.xqh.dao.dao.hsfxtk.YwkBoundaryBasicDao;
-import com.essence.business.xqh.dao.dao.hsfxtk.YwkModelRoughnessParamDao;
-import com.essence.business.xqh.dao.dao.hsfxtk.YwkPlaninFloodRoughnessDao;
-import com.essence.business.xqh.dao.dao.hsfxtk.YwkPlaninRiverRoughnessDao;
+import com.essence.business.xqh.dao.dao.hsfxtk.*;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
-import com.essence.business.xqh.dao.entity.hsfxtk.YwkModelRoughnessParam;
-import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlaninFloodRoughness;
-import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlaninRiverRoughness;
+import com.essence.business.xqh.dao.entity.hsfxtk.*;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -45,6 +39,12 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
     private YwkModelRoughnessParamDao ywkModelRoughnessParamDao; //糙率参数基本表
     @Autowired
     private YwkModelDao ywkModelDao; //YwkModelDao
+
+    @Autowired
+    YwkPlaninFloodBreakDao ywkPlaninFloodBreakDao;//溃口方案表
+
+    @Autowired
+    YwkBreakBasicDao ywkBreakBasicDao;//溃口基本信息表
 
     @Override
     public Paginator<YwkPlaninfo> getPlanList(PaginatorParam paginatorParam) {
@@ -85,8 +85,7 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
             resultMap.put("list",maps);
             boundaryResults.add(resultMap);
         }
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        List<Map> results = JSON.parseArray(JSON.toJSONString(boundaryResults, SerializerFeature.WriteDateUseDateFormat), Map.class);
+        List<Map> results = JSON.parseArray(JSON.toJSONString(boundaryResults, SerializerFeature.WriteDateUseDateFormat,SerializerFeature.WriteMapNullValue), Map.class);
         return results;
     }
 
@@ -110,6 +109,24 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
         resultMap.put("ywkPlaninFloodRoughness",floodRoughness);
         resultMap.put("ywkPlaninRiverRoughness",byPlanRoughnessIdOrderByMileageAsc);
         resultMap.put("model",model);
+        return resultMap;
+    }
+
+
+    @Override
+    public Map<String, Object> getAllBreakByPlanId(String planId) {
+
+        Map resultMap = new HashMap();
+
+        YwkPlaninFloodBreak ywkPlaninFloodBreak = ywkPlaninFloodBreakDao.findByNPlanid(planId);
+        if (ywkPlaninFloodBreak == null){
+            return new HashMap<>();
+        }
+        resultMap.put("ywkPlaninFloodBreak",ywkPlaninFloodBreak);
+        YwkBreakBasic ywkBreakBasic = ywkBreakBasicDao.findById(ywkPlaninFloodBreak.getBreakId()).get();
+
+        resultMap.put("ywkBreakBasic",ywkBreakBasic);
+
         return resultMap;
     }
 }
