@@ -1023,15 +1023,15 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
                 List<String> split = Arrays.asList(lineTxt.split(","));
                 readDatas.add(split);
             }
-            } catch (Exception e) {
-                System.err.println("水动力模型计算：CTR.csv输入文件读取错误:read errors :" + e);
-            } finally {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        } catch (Exception e) {
+            System.err.println("水动力模型计算：CTR.csv输入文件读取错误:read errors :" + e);
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+        }
 
         try {
             //获取溃口入参数据
