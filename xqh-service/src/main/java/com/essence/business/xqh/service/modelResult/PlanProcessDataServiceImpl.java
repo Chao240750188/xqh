@@ -74,6 +74,12 @@ public class PlanProcessDataServiceImpl implements PlanProcessDataService {
                     if (threadPoolExecutor.isTerminated()) {
                         System.out.println("线程全部运行结束了");
                         flag = false;
+                        //生成模型图片解析完成文件
+                        try{
+                            File file = new File(filePath+File.separator+"pic.txt");
+                            file.createNewFile();
+                        }catch (Exception e){
+                        }
                         break;
                     }
                     System.out.println("线程池中线程数目：" + threadPoolExecutor.getPoolSize() + "，队列中等待执行的任务数目：" + threadPoolExecutor.getQueue().size() + "，已执行完的任务数目：" + threadPoolExecutor.getCompletedTaskCount());
