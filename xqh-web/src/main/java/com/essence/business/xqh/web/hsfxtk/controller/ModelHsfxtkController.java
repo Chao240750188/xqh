@@ -145,7 +145,7 @@ public class ModelHsfxtkController {
      */
     @RequestMapping(value = "/exportBoundaryTemplate/{planId}/{modelId}", method = RequestMethod.GET)
     public void exportBoundaryTemplate(HttpServletRequest request, HttpServletResponse response,@PathVariable String planId,@PathVariable String modelId) {
-       try {
+        try {
             Workbook workbook = modelCallHsfxtkService.exportDutyTemplate(planId,modelId);
             //响应尾
             response.setContentType("applicationnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -274,3 +274,4 @@ public class ModelHsfxtkController {
     }
 
 }
+
