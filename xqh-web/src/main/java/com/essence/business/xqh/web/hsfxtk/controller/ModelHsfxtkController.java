@@ -275,6 +275,37 @@ public class ModelHsfxtkController {
         }
     }
 
+    /**
+     * 模型输出淹没历程-及最大水深图片列表
+     * @return
+     */
+    @RequestMapping(value = "/getModelProcessPicList/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getModelProcessPicList(@PathVariable  String planId) {
+        try {
+            Object object = modelCallHsfxtkService.getModelProcessPicList(planId);
+            return SystemSecurityMessage.getSuccessMsg("模型输出淹没历程-及最大水深图片列表成功！",object);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("模型输出淹没历程-及最大水深图片列表失败！");
+        }
+    }
+
+    /**
+     * 预览水深过程及最大水深文件
+     * @param planId
+     * @param picId
+     * @param request
+     * @param response
+     * @throws Exception
+     */
+    @RequestMapping(value = "/preview/{planId}/{picId}", method = RequestMethod.GET)
+    public @ResponseBody
+    void preview(@PathVariable(value="planId") String planId,@PathVariable(value="picId") String picId, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        modelCallHsfxtkService.previewPicFile(request,response,planId,picId);
+    }
+
+
+
     @RequestMapping(value = "/test/{modelId}/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage savePlanToDb(@PathVariable String modelId,@PathVariable String planId) {
         try {
