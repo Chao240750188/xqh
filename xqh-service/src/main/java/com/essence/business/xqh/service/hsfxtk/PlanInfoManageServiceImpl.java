@@ -14,6 +14,7 @@ import com.essence.framework.jpa.PaginatorParam;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -39,6 +40,9 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
     private YwkModelRoughnessParamDao ywkModelRoughnessParamDao; //糙率参数基本表
     @Autowired
     private YwkModelDao ywkModelDao; //YwkModelDao
+
+    @Autowired
+    private YwkPlaninFloodBoundaryDao ywkPlaninFloodBoundaryDao;
 
     @Autowired
     YwkPlaninFloodBreakDao ywkPlaninFloodBreakDao;//溃口方案表
@@ -128,5 +132,27 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
         resultMap.put("ywkBreakBasic",ywkBreakBasic);
 
         return resultMap;
+    }
+
+
+    @Transactional
+    @Override
+    public void deleteAllInputByPlanId(String planId) {
+
+        //删除边界条件
+        ywkPlaninFloodBoundaryDao.deleteByPlanId(planId);
+        //删除糙率
+        List<YwkPlaninFloodRoughness> byPlanId = ywkPlaninFloodRoughnessDao.findByPlanId(planId);
+        if (CollectionUtils.isEmpty(byPlanId)){
+            ywkPlaninRiverRoughnessDao.deleteByPlanRoughnessId(byPlanId.get(0).getPlanRoughnessid());
+        }
+        ywkPlaninFloodRoughnessDao.deleteByPlanId(planId);
+
+        //删除溃点
+        ywkPlaninFloodBreakDao.deleteByNPlanid(planId);
+
+        //删除方案基本信息
+        ywkPlaninfoDao.deleteById(planId);
+
     }
 }

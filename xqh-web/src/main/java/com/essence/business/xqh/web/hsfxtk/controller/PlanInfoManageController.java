@@ -88,4 +88,22 @@ public class PlanInfoManageController {
 
         }
     }
+
+
+    /**
+     * 删除方案以及方案下关联点所有入参
+     * @param planId
+     * @return
+     */
+    @RequestMapping(value = "/deleteAllInputByPlanId/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage deleteAllInputByPlanId(@PathVariable String planId) {
+        try {
+            planInfoManageService.deleteAllInputByPlanId(planId);
+            return SystemSecurityMessage.getSuccessMsg("删除方案信息成功！");
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("删除方案信息失败！");
+
+        }
+    }
 }

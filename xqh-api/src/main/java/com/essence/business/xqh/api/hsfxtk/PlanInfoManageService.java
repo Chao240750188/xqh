@@ -39,4 +39,12 @@ public interface PlanInfoManageService {
      * @return
      */
     Map<String, Object> getAllBreakByPlanId(String planId);
+
+
+    /**
+     * 删除方案以及方案下关联点所有入参
+     * @param planId
+     * @return
+     */
+    void deleteAllInputByPlanId(String planId);
 }
