@@ -158,18 +158,16 @@ public class PlanProcessDataServiceImpl implements PlanProcessDataService {
                 for (int i = 0; i < datas.size(); i++) {
                     //将行列数据封装成过程
                     List<String> rowDataList = datas.get(i);
+                    List<GridResultDto> gridResultDtoList = gridResultMap.get("1");
+                    if (gridResultDtoList == null) {
+                        gridResultDtoList = new ArrayList<>();
+                    }
                     //网格id
                     String gridId = rowDataList.get(0);
-                    for (int j = 2; j < rowDataList.size(); j++) {
-                        List<GridResultDto> gridResultDtoList = gridResultMap.get((j - 1) + "");
-                        if (gridResultDtoList == null) {
-                            gridResultDtoList = new ArrayList<>();
-                        }
-                        String depth = rowDataList.get(j);
-                        GridResultDto gridResultDto = new GridResultDto(Long.parseLong(gridId), Double.parseDouble(depth));
-                        gridResultDtoList.add(gridResultDto);
-                        gridResultMap.put((j - 1) + "", gridResultDtoList);
-                    }
+                    String depth = rowDataList.get(2);
+                    GridResultDto gridResultDto = new GridResultDto(Long.parseLong(gridId), Double.parseDouble(depth));
+                    gridResultDtoList.add(gridResultDto);
+                    gridResultMap.put("1", gridResultDtoList);
                 }
             }
         } catch (Exception e) {
