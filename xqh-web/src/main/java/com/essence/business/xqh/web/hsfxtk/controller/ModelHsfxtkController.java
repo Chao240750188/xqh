@@ -241,20 +241,6 @@ public class ModelHsfxtkController {
 
         }
     }
-    @RequestMapping(value = "/test/{modelId}/{planId}", method = RequestMethod.GET)
-    public SystemSecurityMessage savePlanToDb(@PathVariable String modelId,@PathVariable String planId) {
-        try {
-            String filePath = "D:\\XQH_HSFX_MODEL\\MODEL_OUT\\dbaad0ce662c4cd08b1521878e7a4152";
-            String dataType = "process";
-            planProcessDataService.readDepthCsvFile(filePath,dataType,modelId,planId);
-            return SystemSecurityMessage.getSuccessMsg("洪水风险调控方案保存成功",planId);
-
-        }catch (Exception e){
-            e.printStackTrace();
-            return SystemSecurityMessage.getFailMsg("洪水风险调控方案保存失败！",null);
-
-        }
-    }
 
 
     /**
@@ -288,5 +274,21 @@ public class ModelHsfxtkController {
 
         }
     }
+
+    @RequestMapping(value = "/test/{modelId}/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage savePlanToDb(@PathVariable String modelId,@PathVariable String planId) {
+        try {
+            String filePath = "D:\\XQH_HSFX_MODEL\\MODEL_OUT\\dbaad0ce662c4cd08b1521878e7a4152";
+            String dataType = "process";
+            planProcessDataService.readDepthCsvFile(filePath,dataType,modelId,planId);
+            return SystemSecurityMessage.getSuccessMsg("洪水风险调控方案保存成功",planId);
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("洪水风险调控方案保存失败！",null);
+
+        }
+    }
+
 }
 
