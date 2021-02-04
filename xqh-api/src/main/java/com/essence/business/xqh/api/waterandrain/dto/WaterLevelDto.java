@@ -11,17 +11,27 @@ public class WaterLevelDto {
     private String stnm;
     private BigDecimal maxWaterLevel;//最高水位
     private BigDecimal minWaterLevel;//最低水位
-    private double lgtd;//经度
-    private double lttd;//纬度
+    private Double lgtd;//经度
+    private Double lttd;//纬度
+    private String sttp;//站类
 
     public WaterLevelDto() {
     }
 
-    public WaterLevelDto(String stcd, String stnm, double lgtd, double lttd) {
+    public WaterLevelDto(String stcd, String stnm, Double lgtd, Double lttd, String sttp) {
         this.stcd = stcd;
         this.stnm = stnm;
         this.lgtd = lgtd;
         this.lttd = lttd;
+        this.sttp = sttp;
+    }
+
+    public String getSttp() {
+        return sttp;
+    }
+
+    public void setSttp(String sttp) {
+        this.sttp = sttp;
     }
 
     public String getStcd() {
@@ -56,19 +66,19 @@ public class WaterLevelDto {
         this.minWaterLevel = minWaterLevel;
     }
 
-    public double getLgtd() {
+    public Double getLgtd() {
         return lgtd;
     }
 
-    public void setLgtd(double lgtd) {
+    public void setLgtd(Double lgtd) {
         this.lgtd = lgtd;
     }
 
-    public double getLttd() {
+    public Double getLttd() {
         return lttd;
     }
 
-    public void setLttd(double lttd) {
+    public void setLttd(Double lttd) {
         this.lttd = lttd;
     }
 }

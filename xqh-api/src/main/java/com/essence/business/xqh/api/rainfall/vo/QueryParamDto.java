@@ -71,4 +71,9 @@ public class QueryParamDto implements Serializable {
      */
     private String sttp;
 
+    /**
+     * 步长
+     */
+    private Integer step;
+
 }
