@@ -2,6 +2,7 @@ package com.essence.business.xqh.web.hsfxtk.controller;
 
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
 import com.essence.business.xqh.api.hsfxtk.dto.*;
+import com.essence.business.xqh.api.modelResult.PlanProcessDataService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.common.util.ExcelUtil;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -25,6 +26,8 @@ public class ModelHsfxtkController {
 
     @Autowired
     ModelCallHsfxtkService modelCallHsfxtkService;
+    @Autowired
+    PlanProcessDataService planProcessDataService;
 
     /**
      * 根据方案名称查询方案
@@ -142,7 +145,7 @@ public class ModelHsfxtkController {
      */
     @RequestMapping(value = "/exportBoundaryTemplate/{planId}/{modelId}", method = RequestMethod.GET)
     public void exportBoundaryTemplate(HttpServletRequest request, HttpServletResponse response,@PathVariable String planId,@PathVariable String modelId) {
-       try {
+        try {
             Workbook workbook = modelCallHsfxtkService.exportDutyTemplate(planId,modelId);
             //响应尾
             response.setContentType("applicationnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -238,23 +241,10 @@ public class ModelHsfxtkController {
 
         }
     }
-    @RequestMapping(value = "/test/{planId}", method = RequestMethod.GET)
-    public SystemSecurityMessage savePlanToDb(@PathVariable String planId) {
-        try {
-            modelCallHsfxtkService.test(planId);
-
-            return SystemSecurityMessage.getSuccessMsg("洪水风险调控方案保存成功",planId);
-
-        }catch (Exception e){
-            e.printStackTrace();
-            return SystemSecurityMessage.getFailMsg("洪水风险调控方案保存失败！",null);
-
-        }
-    }
 
 
     /**
-     * 水文调度模型计算执行
+     * 洪水风险调度-调用方案计算
      * @return
      */
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
@@ -269,4 +259,67 @@ public class ModelHsfxtkController {
         }
     }
 
+    /**
+     * 洪水风险调度-获取方案计算进度
+     * @return
+     */
+    @RequestMapping(value = "/getHsfxModelRunStatus/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getHsfxModelRunStatus(@PathVariable  String planId) {
+        try {
+            Object object = modelCallHsfxtkService.getHsfxModelRunStatus(planId);
+            return SystemSecurityMessage.getSuccessMsg("洪水风险调度-获取方案计算进度成功！",object);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("洪水风险调度-获取方案计算进度失败！");
+
+        }
+    }
+
+    /**
+     * 模型输出淹没历程-及最大水深图片列表
+     * @return
+     */
+    @RequestMapping(value = "/getModelProcessPicList/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getModelProcessPicList(@PathVariable  String planId) {
+        try {
+            Object object = modelCallHsfxtkService.getModelProcessPicList(planId);
+            return SystemSecurityMessage.getSuccessMsg("模型输出淹没历程-及最大水深图片列表成功！",object);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("模型输出淹没历程-及最大水深图片列表失败！");
+        }
+    }
+
+    /**
+     * 预览水深过程及最大水深文件
+     * @param planId
+     * @param picId
+     * @param request
+     * @param response
+     * @throws Exception
+     */
+    @RequestMapping(value = "/preview/{planId}/{picId}", method = RequestMethod.GET)
+    public @ResponseBody
+    void preview(@PathVariable(value="planId") String planId,@PathVariable(value="picId") String picId, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        modelCallHsfxtkService.previewPicFile(request,response,planId,picId);
+    }
+
+
+
+    @RequestMapping(value = "/test/{modelId}/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage savePlanToDb(@PathVariable String modelId,@PathVariable String planId) {
+        try {
+            String filePath = "D:\\XQH_HSFX_MODEL\\MODEL_OUT\\dbaad0ce662c4cd08b1521878e7a4152";
+            String dataType = "process";
+            planProcessDataService.readDepthCsvFile(filePath,dataType,modelId,planId);
+            return SystemSecurityMessage.getSuccessMsg("洪水风险调控方案保存成功",planId);
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("洪水风险调控方案保存失败！",null);
+
+        }
+    }
+
 }
+

@@ -4,6 +4,8 @@ import com.essence.business.xqh.api.hsfxtk.dto.*;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
@@ -104,4 +106,27 @@ public interface ModelCallHsfxtkService {
      */
 
     void callMode(String planId);
+
+    /**
+     * 根据方案id获取洪水风险调控模型的计算进度
+     * @param planId
+     * @return
+     */
+    Object getHsfxModelRunStatus(String planId);
+
+    /**
+     * 模型输出淹没历程-及最大水深图片列表
+     * @param planId
+     * @return
+     */
+    Object getModelProcessPicList(String planId);
+
+    /**
+     * 预览图片
+     * @param request
+     * @param response
+     * @param planId
+     * @param picId
+     */
+    void previewPicFile(HttpServletRequest request, HttpServletResponse response, String planId, String picId);
 }

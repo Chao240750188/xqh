@@ -21,4 +21,12 @@ public class GridResultDto implements Serializable {
     public void setDepth(Double depth) {
         this.depth = depth;
     }
+
+    public GridResultDto() {
+    }
+
+    public GridResultDto(Long gridId, Double depth) {
+        this.gridId = gridId;
+        this.depth = depth;
+    }
 }
