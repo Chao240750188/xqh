@@ -1,4 +1,4 @@
-package com.essence.business.xqh.api.rainfall.dto.rainmonitoring;
+package com.essence.business.xqh.api.waterandrain.dto;
 
 import java.math.BigDecimal;
 

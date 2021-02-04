@@ -1,10 +1,20 @@
-package com.essence.business.xqh.web.rainfall.controller;
+package com.essence.business.xqh.web.waterandrain.controller;
 
-import com.essence.business.xqh.api.rainfall.service.RainMonitoringService;
+import com.essence.business.xqh.api.waterandrain.service.FloodWarningService;
+import com.essence.business.xqh.api.waterandrain.service.RainMonitoringService;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
+import com.essence.business.xqh.api.waterandrain.service.WaterBriefingService;
+import com.essence.business.xqh.api.waterandrain.service.WaterLevelRangeService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
+import com.essence.business.xqh.common.util.DateUtil;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URLEncoder;
 
 /**
  * @author fengpp
@@ -15,6 +25,12 @@ import org.springframework.web.bind.annotation.*;
 public class RainMonitoringController {
     @Autowired
     RainMonitoringService rainMonitoringService;
+    @Autowired
+    WaterBriefingService waterBriefingService;
+    @Autowired
+    WaterLevelRangeService waterLevelRangeService;
+    @Autowired
+    FloodWarningService floodWarningService;
 
     /**
      * 实时监测-雨情监测-雨情概况
@@ -160,7 +176,7 @@ public class RainMonitoringController {
     @PostMapping(value = "/getSluiceFloodWarning")
     public SystemSecurityMessage getSluiceFloodWarning(@RequestBody QueryParamDto dto) {
         try {
-            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getSluiceFloodWarning(dto));
+            return new SystemSecurityMessage("ok", "查询成功", floodWarningService.getSluiceFloodWarning(dto));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询失败");
         }
@@ -175,7 +191,7 @@ public class RainMonitoringController {
     @PostMapping(value = "/getTideFloodWarning")
     public SystemSecurityMessage getTideFloodWarning(@RequestBody QueryParamDto dto) {
         try {
-            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getTideFloodWarning(dto));
+            return new SystemSecurityMessage("ok", "查询成功", floodWarningService.getTideFloodWarning(dto));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询失败");
         }
@@ -190,7 +206,7 @@ public class RainMonitoringController {
     @PostMapping(value = "/getSluiceFloodWarningList")
     public SystemSecurityMessage getSluiceFloodWarningList(@RequestBody QueryParamDto dto) {
         try {
-            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getSluiceFloodWarningList(dto));
+            return new SystemSecurityMessage("ok", "查询成功", floodWarningService.getSluiceFloodWarningList(dto));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询失败");
         }
@@ -205,7 +221,7 @@ public class RainMonitoringController {
     @PostMapping(value = "/getTideFloodWarningList")
     public SystemSecurityMessage getTideFloodWarningList(@RequestBody QueryParamDto dto) {
         try {
-            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getTideFloodWarningList(dto));
+            return new SystemSecurityMessage("ok", "查询成功", floodWarningService.getTideFloodWarningList(dto));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询失败");
         }
@@ -214,15 +230,44 @@ public class RainMonitoringController {
     /**
      * 水情服务-水情简报表
      *
-     * @param dto
+     * @param year
+     * @param mth
      * @return
      */
-    @PostMapping(value = "/getList")
-    public SystemSecurityMessage getList(@RequestBody QueryParamDto dto) {
+    @GetMapping(value = "/getWaterBriefList/{year}/{mth}")
+    public SystemSecurityMessage getWaterBriefList(@PathVariable(name = "year") Integer year,
+                                                   @PathVariable(name = "mth") Integer mth) {
         try {
-            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getList(dto));
+            return new SystemSecurityMessage("ok", "查询成功", waterBriefingService.getWaterBriefList(year, mth));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水情服务-导出水情简报表
+     *
+     * @param year
+     * @param mth
+     * @return
+     */
+    @GetMapping(value = "/exportWaterBriefList/{year}/{mth}")
+    public void exportWaterBriefList(@PathVariable(name = "year") Integer year,
+                                     @PathVariable(name = "mth") Integer mth, HttpServletResponse response) {
+        try {
+            InputStream in = getClass().getResourceAsStream("/static/exceltemplate/briefTemplate.xlsx");
+            //生成数据
+            Workbook wb = waterBriefingService.exportWaterBriefList(year, mth,in);
+            //响应尾
+            String fileName = "水情简报表_" + year + mth + ".xlsx";
+            response.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            response.setContentType("content-type:octet-stream");
+            OutputStream ouputStream = response.getOutputStream();
+            wb.write(ouputStream);
+            ouputStream.flush();
+            ouputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -235,9 +280,35 @@ public class RainMonitoringController {
     @PostMapping(value = "/getRiverList")
     public SystemSecurityMessage getRiverList(@RequestBody QueryParamDto dto) {
         try {
-            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getRiverList(dto));
+            return new SystemSecurityMessage("ok", "查询成功", waterBriefingService.getRiverList(dto));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水情服务-导出河道水情表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/exportRiverList")
+    public void exportRiverList(@RequestBody QueryParamDto dto, HttpServletResponse response) {
+        try {
+            InputStream in = getClass().getResourceAsStream("/static/exceltemplate/riverTemplate.xlsx");
+            //生成数据
+            Workbook wb = waterBriefingService.exportRiverList(dto,in);
+            String time = DateUtil.dateToStringNormal3(dto.getEndTime());
+            //响应尾
+            String fileName = "河道水情表_" + time + ".xlsx";
+            response.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            response.setContentType("content-type:octet-stream");
+            OutputStream ouputStream = response.getOutputStream();
+            wb.write(ouputStream);
+            ouputStream.flush();
+            ouputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -250,7 +321,93 @@ public class RainMonitoringController {
     @PostMapping(value = "/getReservoirList")
     public SystemSecurityMessage getReservoirList(@RequestBody QueryParamDto dto) {
         try {
-            return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getReservoirList(dto));
+            return new SystemSecurityMessage("ok", "查询成功", waterBriefingService.getReservoirList(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水情服务-导出水库水情表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/exportReservoirList")
+    public void exportReservoirList(@RequestBody QueryParamDto dto,HttpServletResponse response) {
+        try {
+            InputStream in = getClass().getResourceAsStream("/static/exceltemplate/reservoirTemplate.xlsx");
+            //生成数据
+            Workbook wb = waterBriefingService.exportReservoirList(dto,in);
+            String time = DateUtil.dateToStringNormal3(dto.getEndTime());
+            //响应尾
+            String fileName = "河道水情表_" + time + ".xlsx";
+            response.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            response.setContentType("content-type:octet-stream");
+            OutputStream ouputStream = response.getOutputStream();
+            wb.write(ouputStream);
+            ouputStream.flush();
+            ouputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 水位变幅-水位变幅
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getWaterLevelRange")
+    public SystemSecurityMessage getWaterLevelRange(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", waterLevelRangeService.getWaterLevelRange(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水位变幅-最大变幅
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getWaterLevelMaxRange")
+    public SystemSecurityMessage getWaterLevelMaxRange(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", waterLevelRangeService.getWaterLevelMaxRange(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水位变幅-闸坝DD、河道ZZ、潮汐TT-模态框-最新
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getWaterLevelChange")
+    public SystemSecurityMessage getWaterLevelChange(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", waterLevelRangeService.getWaterLevelChange(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水位变幅-水库-模态框-最新
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getReservoirWaterLevelChange")
+    public SystemSecurityMessage getReservoirWaterLevelChange(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", waterLevelRangeService.getReservoirWaterLevelChange(dto));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询失败");
         }

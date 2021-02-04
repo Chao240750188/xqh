@@ -23,7 +23,14 @@ public interface TWasRDao extends EssenceJpaRepository<TWasR, String> {
     List<Map<String, Object>> getLastData();
 
 
-    @Query(value = "select t from TWasR t where t.stcd in (?1) and t.tm >=?2 and t.tm <=?3 order by t.tm desc")
-    List<TWasR> findByStcdAndTmBetweenAndOrderByTmDesc(List<String> stcdList, Date startTime, Date endTime);
+    List<TWasR> findByStcdInAndTmBetweenOrderByTmDesc(List<String> stcdList, Date startTime, Date endTime);
 
+    /**
+     * 最新两条数据
+     * @param stcdList
+     * @param endTime
+     * @return
+     */
+    @Query(value="SELECT * FROM (SELECT STCD,TM,UPZ WATERLEVEL,TGTQ FLOW,row_number() over(partition BY STCD ORDER BY TM DESC) rn FROM ST_WAS_R WHERE STCD IN (?1) AND TM<=?2) WHERE rn<3",nativeQuery=true)
+    List<Map<String,Object>> findSluiceLastData(List<String> stcdList,Date endTime);
 }

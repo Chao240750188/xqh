@@ -1,14 +1,12 @@
-package com.essence.business.xqh.api.rainfall.service;
+package com.essence.business.xqh.api.waterandrain.service;
 
-import com.essence.business.xqh.api.rainfall.dto.rainmonitoring.*;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
-import com.essence.business.xqh.api.realtimemonitor.dto.FloodWarningDto;
-import com.essence.business.xqh.api.realtimemonitor.dto.WaterWayFloodWarningCountDto;
+import com.essence.business.xqh.api.waterandrain.dto.*;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
+ * 实时监测service
  * @author fengpp
  * 2021/1/21 18:23
  */
@@ -85,62 +83,4 @@ public interface RainMonitoringService {
      * @return
      */
     TideTendencyDto getTideTendency(QueryParamDto dto);
-
-    /**
-     * 水雨情查询-洪水告警-闸坝
-     *
-     * @param dto
-     * @return
-     */
-    FloodWarningDto getSluiceFloodWarning(QueryParamDto dto);
-
-    /**
-     * 水雨情查询-洪水告警-潮汐
-     *
-     * @param dto
-     * @return
-     */
-    FloodWarningDto getTideFloodWarning(QueryParamDto dto);
-
-    /**
-     * 水雨情查询-洪水告警-模态框-闸坝
-     *
-     * @param dto
-     * @return
-     */
-    WaterWayFloodWarningCountDto getSluiceFloodWarningList(QueryParamDto dto);
-
-    /**
-     * 水雨情查询-洪水告警-模态框-潮汐
-     *
-     * @param dto
-     * @return
-     */
-    WaterWayFloodWarningCountDto getTideFloodWarningList(QueryParamDto dto);
-
-
-    /**
-     * 水情服务-水情简报表
-     *
-     * @param dto
-     * @return
-     */
-    List getList(QueryParamDto dto);
-
-    /**
-     * 水情服务-河道水情表
-     *
-     * @param dto
-     * @return
-     */
-    List getRiverList(QueryParamDto dto);
-
-    /**
-     * 水情服务-水库水情表
-     *
-     * @param dto
-     * @return
-     */
-    List<ReservoirListDto> getReservoirList(QueryParamDto dto);
-
 }
