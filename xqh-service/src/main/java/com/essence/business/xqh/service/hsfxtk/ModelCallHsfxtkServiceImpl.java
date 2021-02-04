@@ -1352,7 +1352,77 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             e.printStackTrace();
             return 0;
         }
+    }
 
+    /**
+     * 获取方案模型计算进度
+     * @param planId
+     * @return
+     */
+    @Override
+    public Object getHsfxModelRunStatus(String planId) {
+        JSONObject jsonObject = new JSONObject();
+        //运行进度
+        jsonObject.put("process",0.0);
+        //运行状态 1运行结束 0运行中
+        jsonObject.put("status",1);
+        //运行时间
+        jsonObject.put("time",0);
+
+        String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
+        String hsfx_model_template_output = hsfx_path +
+                File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                + File.separator + planId; //输出的地址
+        //判断是否有error文件
+        String errorPath = hsfx_model_template_output + File.separator + "error.txt";
+        String processPath = hsfx_model_template_output + File.separator + "jindu.txt";
+        File errorFile = new File(errorPath);
+        //存在表示执行失败
+        if (errorFile.exists()){
+            return jsonObject;
+        }
+        File jinduFile = new File(processPath);
+        if (!errorFile.exists()){
+            //运行进度
+            jsonObject.put("process",0.0);
+            //运行状态 1运行结束 0运行中
+            jsonObject.put("status",0);
+            //运行时间
+            jsonObject.put("time",0);
+            return jsonObject;
+        }else{
+            //运行状态 1运行结束 0运行中
+            jsonObject.put("status",0);
+            BufferedReader br = null;
+            try {
+                br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(processPath))));
+                String lineTxt = br.readLine();
+                if(lineTxt!=null){
+                    String[] split = lineTxt.split("&&");
+                    //运行时间
+                    jsonObject.put("time",Double.parseDouble(split[1]+""));
+                }
+                String lineTxt2 = br.readLine();
+                if(lineTxt2!=null){
+                    String[] split = lineTxt2.split("&&");
+                    //运行进度
+                    double process = Double.parseDouble(split[1] + "");
+                    jsonObject.put("process",process);
+                    if(process==100.0)
+                        jsonObject.put("status",1);
+                }
+               return jsonObject;
+            } catch (Exception e) {
+                System.err.println("进度文件读取错误！" + e.getMessage());
+            } finally {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return jsonObject;
     }
 
 }

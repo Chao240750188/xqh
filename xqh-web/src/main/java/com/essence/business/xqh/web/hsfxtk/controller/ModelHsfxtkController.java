@@ -258,13 +258,13 @@ public class ModelHsfxtkController {
 
 
     /**
-     * 水文调度模型计算执行
+     * 洪水风险调度-调用方案计算
      * @return
      */
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage modelCall2(@PathVariable  String planId) {
         try {
-//            modelCallHsfxtkService.callMode(planId);
+            modelCallHsfxtkService.callMode(planId);
             return SystemSecurityMessage.getSuccessMsg("调用洪水风险调控模型成功！");
         }catch (Exception e){
             e.printStackTrace();
@@ -273,5 +273,20 @@ public class ModelHsfxtkController {
         }
     }
 
+    /**
+     * 洪水风险调度-获取方案计算进度
+     * @return
+     */
+    @RequestMapping(value = "/getHsfxModelRunStatus/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getHsfxModelRunStatus(@PathVariable  String planId) {
+        try {
+            Object object = modelCallHsfxtkService.getHsfxModelRunStatus(planId);
+            return SystemSecurityMessage.getSuccessMsg("洪水风险调度-获取方案计算进度成功！",object);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("洪水风险调度-获取方案计算进度失败！");
+
+        }
+    }
 }
 
