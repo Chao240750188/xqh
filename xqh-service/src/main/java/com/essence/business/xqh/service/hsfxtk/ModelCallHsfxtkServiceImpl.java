@@ -1365,7 +1365,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         //运行进度
         jsonObject.put("process",0.0);
         //运行状态 1运行结束 0运行中
-        jsonObject.put("status",1);
+        jsonObject.put("runStatus",1);
         //运行时间
         jsonObject.put("time",0);
 
@@ -1382,17 +1382,17 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             return jsonObject;
         }
         File jinduFile = new File(processPath);
-        if (!errorFile.exists()){
+        if (!jinduFile.exists()){
             //运行进度
             jsonObject.put("process",0.0);
             //运行状态 1运行结束 0运行中
-            jsonObject.put("status",0);
+            jsonObject.put("runStatus",0);
             //运行时间
             jsonObject.put("time",0);
             return jsonObject;
         }else{
             //运行状态 1运行结束 0运行中
-            jsonObject.put("status",0);
+            jsonObject.put("runStatus",0);
             BufferedReader br = null;
             try {
                 br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(processPath))));
@@ -1409,7 +1409,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
                     double process = Double.parseDouble(split[1] + "");
                     jsonObject.put("process",process);
                     if(process==100.0)
-                        jsonObject.put("status",1);
+                        jsonObject.put("runStatus",1);
                 }
                return jsonObject;
             } catch (Exception e) {
