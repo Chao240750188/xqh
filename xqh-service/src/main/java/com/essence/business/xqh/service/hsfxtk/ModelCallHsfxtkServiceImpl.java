@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
 import com.essence.business.xqh.api.hsfxtk.dto.*;
 import com.essence.business.xqh.api.modelResult.PlanProcessDataService;
-import com.essence.business.xqh.api.modelResult.dto.GridResultDto;
 import com.essence.business.xqh.common.util.*;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
@@ -14,7 +13,6 @@ import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
 import com.essence.business.xqh.dao.entity.hsfxtk.*;
 import com.essence.framework.util.StrUtil;
-import org.apache.poi.hssf.record.chart.LinkedDataRecord;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -889,6 +887,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
     private int writeDataToInputWGCsv(String hsfx_model_template,String hsfx_model_template_input, YwkPlaninfo planInfo) {
 
         List<YwkPlaninFloodRoughness> byPlanId = ywkPlaninFloodRoughnessDao.findByPlanId(planInfo.getnPlanid());
+        if (CollectionUtils.isEmpty(byPlanId)){
+            return 0;
+        }
         //String WGInputUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"WG.csv";
         String WGInputUrl = hsfx_model_template_input+File.separator+"erwei"+File.separator+"WG.csv";
         //String WGInputReadUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh2_Xinhecun_50/erwei" + File.separator+"WG.csv";
@@ -953,8 +954,15 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
         //获取溃口入参数据
         YwkPlaninFloodBreak floodBreak = ywkPlaninFloodBreakDao.findByNPlanid(planInfo.getnPlanid());
+        if (floodBreak == null){
+            return 0;
+        }
         //溃口基本信息表
         YwkBreakBasic breakBasic = ywkBreakBasicDao.findById(floodBreak.getBreakId()).get();
+
+        if (breakBasic == null){
+            return 0;
+        }
 
         //String BDInputUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"BD.csv";
         String BDInputUrl = hsfx_model_template_input+File.separator+"erwei"+File.separator+"BD.csv";
@@ -1031,6 +1039,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     private List<YwkPlaninRiverRoughness> getCTRCsvDatas(String planId) {
         List<YwkPlaninFloodRoughness> byPlanId = ywkPlaninFloodRoughnessDao.findByPlanId(planId);
+        if (CollectionUtils.isEmpty(byPlanId)){
+            return new ArrayList<>();
+        }
         YwkPlaninFloodRoughness ywkPlaninFloodRoughness = byPlanId.get(0);
         //查出结果集
         List<YwkPlaninRiverRoughness> byPlanRoughnessId = ywkPlaninRiverRoughnessDao.findByPlanRoughnessIdOrderByMileageAsc(ywkPlaninFloodRoughness.getPlanRoughnessid());
@@ -1039,7 +1050,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
     }
 
     private int writeDataToInputCTRCsv(String hsfx_model_template,String hsfx_model_template_input, List<YwkPlaninRiverRoughness> ctrCsvDatas,YwkPlaninfo planInfo,int size) {
-
+        if (CollectionUtils.isEmpty(ctrCsvDatas)){
+            return 0;
+        }
         String CTRInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "CTR.csv";
         //String CTRInputUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"CTR.csv";
         String CTRInputReadUrl = hsfx_model_template +File.separator+"yiwei"+File.separator + "CTR.csv";
@@ -1068,8 +1081,14 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         try {
             //获取溃口入参数据
             YwkPlaninFloodBreak floodBreak = ywkPlaninFloodBreakDao.findByNPlanid(planInfo.getnPlanid());
+            if (floodBreak == null){
+                return 0;
+            }
             //溃口基本信息表
             YwkBreakBasic breakBasic = ywkBreakBasicDao.findById(floodBreak.getBreakId()).get();
+            if (breakBasic == null){
+                return 0;
+            }
 
             //BufferedWriter bw = new BufferedWriter(new FileWriter(CTRInputUrl, false)); // 附加
             BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (CTRInputUrl,false),"UTF-8"));
@@ -1172,24 +1191,30 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
         //通过breakId 查出起始点跟结束点数据，1是入流，-1是出流。里程
         List<YwkFloodChannelBasic> byBreakIdOrderByOutflowAndInflowType = ywkFloodChannelBasicDao.findByBreakIdOrderByOutflowAndInflowTypeDesc(floodBreak.getBreakId());
-        Map<String,Object> entranceMap = new HashMap();
-        entranceMap.put("stcd","entrance");
-        entranceMap.put("mileage",byBreakIdOrderByOutflowAndInflowType.get(0).getMileage());
-        Map<String,Object> exportMap = new HashMap<>();
-        exportMap.put("stcd","export");
-        exportMap.put("mileage",byBreakIdOrderByOutflowAndInflowType.get(1).getMileage());
-        breakList.add(entranceMap);
-        breakList.add(exportMap);
 
-        List<String> breakIds = byBreakIdOrderByOutflowAndInflowType.stream().map(YwkFloodChannelBasic::getFloodChannelId).collect(Collectors.toList());
-        //通过起始点跟结束点查某个区间范围点数据
-        List<YwkFloodChannelFlow> byChannelBasicIds = ywkFloodChannelFlowDao.findByChannelBasicIds(breakIds);
-        //按照channelBasicIds分组
-        Map<String, List<YwkFloodChannelFlow>> channelCollect = byChannelBasicIds.stream().collect(Collectors.groupingBy(YwkFloodChannelFlow::getFloodChannelId));
-        List<Map<String,Object>> entrance = poToListMap(channelCollect.get(byBreakIdOrderByOutflowAndInflowType.get(0).getFloodChannelId()));
-        List<Map<String,Object>> export = poToListMap(channelCollect.get(byBreakIdOrderByOutflowAndInflowType.get(1).getFloodChannelId()));
-        channels.put("entrance",entrance);
-        channels.put("export",export);
+        if ( !CollectionUtils.isEmpty(byBreakIdOrderByOutflowAndInflowType) && byBreakIdOrderByOutflowAndInflowType.size()==2 ){
+            Map<String,Object> entranceMap = new HashMap();
+            entranceMap.put("stcd","entrance");
+            entranceMap.put("mileage",byBreakIdOrderByOutflowAndInflowType.get(0).getMileage());
+            Map<String,Object> exportMap = new HashMap<>();
+            exportMap.put("stcd","export");
+            exportMap.put("mileage",byBreakIdOrderByOutflowAndInflowType.get(1).getMileage());
+            breakList.add(entranceMap);
+            breakList.add(exportMap);
+
+            List<String> breakIds = byBreakIdOrderByOutflowAndInflowType.stream().map(YwkFloodChannelBasic::getFloodChannelId).collect(Collectors.toList());
+            //通过起始点跟结束点查某个区间范围点数据
+            List<YwkFloodChannelFlow> byChannelBasicIds = ywkFloodChannelFlowDao.findByChannelBasicIds(breakIds);
+            //按照channelBasicIds分组
+            Map<String, List<YwkFloodChannelFlow>> channelCollect = byChannelBasicIds.stream().collect(Collectors.groupingBy(YwkFloodChannelFlow::getFloodChannelId));
+            List<Map<String,Object>> entrance = poToListMap(channelCollect.get(byBreakIdOrderByOutflowAndInflowType.get(0).getFloodChannelId()));
+            List<Map<String,Object>> export = poToListMap(channelCollect.get(byBreakIdOrderByOutflowAndInflowType.get(1).getFloodChannelId()));
+            channels.put("entrance",entrance);
+            channels.put("export",export);
+        }
+
+
+
     }
 
     public <T> List<Map<String, Object>> poToListMap(List<T> source){
@@ -1207,9 +1232,15 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
     private void getBndCsvBoundaryDatas(List<Map<String, Object>> bndDatas, List<String> bndList, YwkPlaninfo planInfo,List<Map<String,Object>> breakIds,Map<String, List<Map<String,Object>>> channels) {
 
         List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(planInfo.getnModelid());//基本信息中间表
+        if (CollectionUtils.isEmpty(modelBoundaryList)){
+            return;
+        }
         List<String> collectStcd = modelBoundaryList.stream().map(YwkModelBoundaryBasicRl::getStcd).collect(Collectors.toList());//中间表的stcd集合
         //上游、下游，根据stcd集合获取上游下游的列表
         List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdInOrderByBoundaryType(collectStcd);
+        if (CollectionUtils.isEmpty(boundaryBasicList)||boundaryBasicList.size()<2){
+            return;
+        }
         Map upperMap = new HashMap(); //上游
         upperMap.put("stcd",boundaryBasicList.get(0).getStcd());
         upperMap.put("mileage",1);
@@ -1223,7 +1254,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         List<Map<String,Object>> newBoundaryBasics = poToListMap(newBoundaryBasicList);
 
         //在这个地方把溃口堆进来
-        newBoundaryBasics.addAll(breakIds);
+        if ( !CollectionUtils.isEmpty(breakIds)){
+            newBoundaryBasics.addAll(breakIds);
+        }
         //按照历程排序从小到大
         Collections.sort(newBoundaryBasics, new Comparator<Map<String,Object>>() {
             @Override
@@ -1234,7 +1267,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             }
         });
 
-        bndDatas.addAll(newBoundaryBasics);
+        bndDatas.addAll(newBoundaryBasics);//表头
 
         //TODO 获取里程的入参信息
         List<YwkPlaninFloodBoundary> byPlanIds = ywkPlaninFloodBoundaryDao.findByPlanId(planInfo.getnPlanid());
@@ -1254,12 +1287,17 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             List<Map<String,Object>> list = poToListMap(value);
             planinFloodBoundaryMap.put(key,list);
         }
-        planinFloodBoundaryMap.putAll(channels);
+        if (!CollectionUtils.isEmpty(channels)){
+            planinFloodBoundaryMap.putAll(channels);
+        }
         for (int i = 0; i < bndDatas.size(); i++){
             Map<String, Object> map = bndDatas.get(i);
             String stcd = map.get("stcd")+"";//下游水文，其他流量
             //TODO 这个地方个数必须正确
             List<Map<String,Object>> listMap = planinFloodBoundaryMap.get(stcd);
+            if (CollectionUtils.isEmpty(listMap)){
+                continue;
+            }
             //按照时间排序
             Collections.sort(listMap, new Comparator<Map<String,Object>>() {
                 @Override
@@ -1268,7 +1306,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
                     Long relativeTime1 = Long.parseLong(o2.get("relativeTime")+"");
                     return relativeTime.compareTo(relativeTime1);
                 }
-            });//TODO 这个地方目前是根据上游点时间点个数写点
+            });//TODO 这个地方目前是根据上游点时间点个数写点,雄风的数据不能错，错了我也错了
             int size = planinFloodBoundaryMap.get(bndDatas.get(1).get("stcd")).size();
             if (listMap.size()<size){
                 for (int z=0;z<size-listMap.size();z++){
@@ -1279,7 +1317,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             }else {
                 listMap = listMap.subList(0,size);
             }
-            //TODO 这个地方如果是24个点的话，不够24个的以最后一个点的值补够24个点
+            //TODO 这个地方如果是24个点的话，不够24个的以最后一个点的值补够24个点 分洪道的
 
             for (int j=0;j<listMap.size();j++){
                 Map<String,Object> boundryMap = listMap.get(j);
@@ -1302,7 +1340,12 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     private int writeDataToInputBNDCsv(String hsfx_model_template_input, List<Map<String, Object>> datas, List<String> list) {
         String BndInputUrl = hsfx_model_template_input + File.separator + "yiwei"+File.separator+"BND.csv";
-
+        if (CollectionUtils.isEmpty(datas) || datas.size()<2){
+            return 0;
+        }
+        if (CollectionUtils.isEmpty(list)){
+            return 0;
+        }
         try {
             //BufferedWriter bw = new BufferedWriter(new FileWriter(BndInputUrl, false)); // 附加
             BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (BndInputUrl,false),"UTF-8"));
