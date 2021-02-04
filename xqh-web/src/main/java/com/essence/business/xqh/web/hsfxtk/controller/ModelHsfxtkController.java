@@ -264,7 +264,7 @@ public class ModelHsfxtkController {
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage modelCall2(@PathVariable  String planId) {
         try {
-//            modelCallHsfxtkService.callMode(planId);
+            modelCallHsfxtkService.callMode(planId);
             return SystemSecurityMessage.getSuccessMsg("调用洪水风险调控模型成功！");
         }catch (Exception e){
             e.printStackTrace();
