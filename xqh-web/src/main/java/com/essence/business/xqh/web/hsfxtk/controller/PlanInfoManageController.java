@@ -46,10 +46,28 @@ public class PlanInfoManageController {
     public SystemSecurityMessage getAllBoundaryByPlanId(@PathVariable String planId) {
         try {
             List<Map> results = planInfoManageService.getAllBoundaryByPlanId(planId);
-            return SystemSecurityMessage.getSuccessMsg("获取洪水风险调控模型方案列表成功！",results);
+            return SystemSecurityMessage.getSuccessMsg("获取边界列表成功！",results);
         }catch (Exception e){
             e.printStackTrace();
-            return SystemSecurityMessage.getFailMsg("获取洪水风险调控模型方案列表失败！");
+            return SystemSecurityMessage.getFailMsg("获取边界列表失败！");
+
+        }
+    }
+
+
+    /**
+     * 根据方案id获取防洪保护区设置
+     * @param planId
+     * @return
+     */
+    @RequestMapping(value = "/getAllRoughnessByPlanId/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getAllRoughnessByPlanId(@PathVariable String planId) {
+        try {
+            Map<String,Object> results = planInfoManageService.getAllRoughnessByPlanId(planId);
+            return SystemSecurityMessage.getSuccessMsg("获取防洪保护区列表成功！",results);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("获取防洪保护区列表失败！");
 
         }
     }
