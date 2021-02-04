@@ -104,4 +104,11 @@ public interface ModelCallHsfxtkService {
      */
 
     void callMode(String planId);
+
+    /**
+     * 根据方案id获取洪水风险调控模型的计算进度
+     * @param planId
+     * @return
+     */
+    Object getHsfxModelRunStatus(String planId);
 }
