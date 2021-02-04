@@ -125,7 +125,7 @@ public class ModelResultSerivceImpl implements ModelResultService {
                 //复制shp模板文件
                 CopyFile.copyShpFiles(shpTemplatePath, dbfFilePath, "maxDepth" ); //重命名的文件格式：
                 //参数1：dbf生成路径   参数2：dbf文件名称  参数3：随意  参数4：随意
-//                exportMethodResultDto = GisUtil.exportToPicture(dbfFilePath, fileName, mxdTemplateAbsolutePath, maxDepth, exportPictureFormate, outputAbsolutePath, "maxDepth");//最大水深
+                exportMethodResultDto = GisUtil.exportToPicture(dbfFilePath, fileName, mxdTemplateAbsolutePath, maxDepth, exportPictureFormate, outputAbsolutePath, "maxDepth");//最大水深
             }
             //获取生成图片的状态
             if (null!=exportMethodResultDto){

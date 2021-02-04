@@ -1,10 +1,8 @@
 package com.essence.business.xqh.api.hsfxtk.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.format.annotation.DateTimeFormat;
+
 
 import java.io.Serializable;
-import java.util.Date;
 
 public class ModelParamVo implements Serializable {
 

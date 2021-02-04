@@ -309,7 +309,7 @@ public class ModelHsfxtkController {
     @RequestMapping(value = "/test/{modelId}/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage savePlanToDb(@PathVariable String modelId,@PathVariable String planId) {
         try {
-            String filePath = "D:\\XQH_HSFX_MODEL\\MODEL_OUT\\dbaad0ce662c4cd08b1521878e7a4152";
+            String filePath = "D:\\XQH_HSFX_MODEL\\MODEL_OUT\\6868e40ae5cd4eab8d4b6141efd836868";
             String dataType = "process";
             planProcessDataService.readDepthCsvFile(filePath,dataType,modelId,planId);
             return SystemSecurityMessage.getSuccessMsg("洪水风险调控方案保存成功",planId);
