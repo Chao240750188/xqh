@@ -144,14 +144,14 @@ public class WaterBriefingServiceImpl implements WaterBriefingService {
                     TRiverR tRiverR = waterLevelMap.get(waterLevelSet.last());
                     dto.setMaxWaterLevel(new BigDecimal(tRiverR.getZ()));
                     dto.setMaxWaterLevelTm(tRiverR.getTm());
-                    BigDecimal avg = totalWaterLevel.divide(new BigDecimal(waterLevelCount)).setScale(2);
+                    BigDecimal avg = totalWaterLevel.divide(new BigDecimal(waterLevelCount),2,BigDecimal.ROUND_HALF_UP);
                     dto.setAvgWaterLevel(avg);
                 }
                 if (waterFlowSet.size() > 0) {
                     TRiverR tRiverR = waterFlowMap.get(waterFlowSet.last());
                     dto.setMaxFlow(new BigDecimal(tRiverR.getQ()));
                     dto.setMaxFlowTm(tRiverR.getTm());
-                    BigDecimal avg = totalWaterFlow.divide(new BigDecimal(waterFlowCount)).setScale(2);
+                    BigDecimal avg = totalWaterFlow.divide(new BigDecimal(waterFlowCount),2,BigDecimal.ROUND_HALF_UP);
                     dto.setAvgFlow(avg);
                 }
             }
@@ -212,14 +212,20 @@ public class WaterBriefingServiceImpl implements WaterBriefingService {
                     TRsvrR tRsvrR = waterLevelMap.get(waterLevelSet.last());
                     dto.setMaxWaterLevel(new BigDecimal(tRsvrR.getRz()));
                     dto.setMaxWaterLevelTm(tRsvrR.getTm());
-                    BigDecimal avg = totalWaterLevel.divide(new BigDecimal(waterLevelCount)).setScale(2);
+                    BigDecimal avg = new BigDecimal(0);
+                    if (waterLevelCount != 0) {
+                        avg = totalWaterLevel.divide(new BigDecimal(waterLevelCount),2,BigDecimal.ROUND_HALF_UP);
+                    }
                     dto.setAvgWaterLevel(avg);
                 }
                 if (waterFlowSet.size() > 0) {
                     TRsvrR tRsvrR = waterFlowMap.get(waterFlowSet.last());
                     dto.setMaxFlow(new BigDecimal(tRsvrR.getInq()));
                     dto.setMaxFlowTm(tRsvrR.getTm());
-                    BigDecimal avg = totalWaterFlow.divide(new BigDecimal(waterFlowCount)).setScale(2);
+                    BigDecimal avg = new BigDecimal(0);
+                    if (waterFlowCount > 0) {
+                        avg = totalWaterFlow.divide(new BigDecimal(waterFlowCount),2,BigDecimal.ROUND_HALF_UP);
+                    }
                     dto.setAvgFlow(avg);
                 }
             }
@@ -282,14 +288,20 @@ public class WaterBriefingServiceImpl implements WaterBriefingService {
                     TWasR wasR = waterLevelMap.get(waterLevelSet.last());
                     dto.setMaxWaterLevel(new BigDecimal(wasR.getUpz()));
                     dto.setMaxWaterLevelTm(wasR.getTm());
-                    BigDecimal avg = totalWaterLevel.divide(new BigDecimal(waterLevelCount)).setScale(2);
+                    BigDecimal avg=new BigDecimal(0);
+                    if (waterLevelCount>0){
+                         avg = totalWaterLevel.divide(new BigDecimal(waterLevelCount),2,BigDecimal.ROUND_HALF_UP);
+                    }
                     dto.setAvgWaterLevel(avg);
                 }
                 if (waterFlowSet.size() > 0) {
                     TWasR wasR = waterFlowMap.get(waterFlowSet.last());
                     dto.setMaxFlow(new BigDecimal(wasR.getTgtq()));
                     dto.setMaxFlowTm(wasR.getTm());
-                    BigDecimal avg = totalWaterFlow.divide(new BigDecimal(waterFlowCount)).setScale(2);
+                    BigDecimal avg=new BigDecimal(0);
+                    if (waterFlowCount>0){
+                        avg = totalWaterFlow.divide(new BigDecimal(waterFlowCount),2,BigDecimal.ROUND_HALF_UP);
+                    }
                     dto.setAvgFlow(avg);
                 }
             }
@@ -654,35 +666,35 @@ public class WaterBriefingServiceImpl implements WaterBriefingService {
                 XSSFRow row = sheet.createRow(i + 2);
                 row.createCell(0).setCellValue(i + 1);
 
-                String stnm = dto.getStnm()==null?"":dto.getStnm();
+                String stnm = dto.getStnm() == null ? "" : dto.getStnm();
                 row.createCell(1).setCellValue(stnm);
-                String rz = dto.getRz()==null?"":dto.getRz().toString();
+                String rz = dto.getRz() == null ? "" : dto.getRz().toString();
                 row.createCell(2).setCellValue(rz);
-                String inq = dto.getInq()==null?"":dto.getInq().toString();
+                String inq = dto.getInq() == null ? "" : dto.getInq().toString();
                 row.createCell(3).setCellValue(inq);
-                String otq = dto.getOtq()==null?"":dto.getOtq().toString();
+                String otq = dto.getOtq() == null ? "" : dto.getOtq().toString();
                 row.createCell(4).setCellValue(otq);
-                String w = dto.getW()==null?"":dto.getW().toString();
+                String w = dto.getW() == null ? "" : dto.getW().toString();
                 row.createCell(5).setCellValue(w);
-                String floodWaterLevel = dto.getFloodWaterLevel()==null?"":dto.getFloodWaterLevel().toString();
+                String floodWaterLevel = dto.getFloodWaterLevel() == null ? "" : dto.getFloodWaterLevel().toString();
                 row.createCell(6).setCellValue(floodWaterLevel);
-                String floodW = dto.getFloodW()==null?"":dto.getFloodW().toString();
+                String floodW = dto.getFloodW() == null ? "" : dto.getFloodW().toString();
                 row.createCell(7).setCellValue(floodW);
-                String normalWaterLevel = dto.getNormalWaterLevel()==null?"":dto.getNormalWaterLevel().toString();
+                String normalWaterLevel = dto.getNormalWaterLevel() == null ? "" : dto.getNormalWaterLevel().toString();
                 row.createCell(8).setCellValue(normalWaterLevel);
-                String normalW = dto.getNormalW()==null?"":dto.getNormalW().toString();
+                String normalW = dto.getNormalW() == null ? "" : dto.getNormalW().toString();
                 row.createCell(9).setCellValue(normalW);
-                String ddz = dto.getDdz()==null?"":dto.getDdz().toString();
+                String ddz = dto.getDdz() == null ? "" : dto.getDdz().toString();
                 row.createCell(10).setCellValue(ddz);
-                String fsltdz = dto.getFsltdz()==null?"":dto.getFsltdz().toString();
+                String fsltdz = dto.getFsltdz() == null ? "" : dto.getFsltdz().toString();
                 row.createCell(11).setCellValue(fsltdz);
-                String normz = dto.getNormz()==null?"":dto.getNormz().toString();
+                String normz = dto.getNormz() == null ? "" : dto.getNormz().toString();
                 row.createCell(12).setCellValue(normz);
-                String rwptn = dto.getRwptn()==null?"":dto.getRwptn().toString();
+                String rwptn = dto.getRwptn() == null ? "" : dto.getRwptn().toString();
                 row.createCell(13).setCellValue(rwptn);
-                String hnnm = dto.getHnnm()==null?"":dto.getHnnm();
+                String hnnm = dto.getHnnm() == null ? "" : dto.getHnnm();
                 row.createCell(14).setCellValue(hnnm);
-                String stcd = dto.getStcd()==null?"":dto.getStcd();
+                String stcd = dto.getStcd() == null ? "" : dto.getStcd();
                 row.createCell(15).setCellValue(stcd);
 
                 for (Cell cell : row) {

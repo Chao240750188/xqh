@@ -1,10 +1,7 @@
 package com.essence.business.xqh.web.waterandrain.controller;
 
-import com.essence.business.xqh.api.waterandrain.service.FloodWarningService;
-import com.essence.business.xqh.api.waterandrain.service.RainMonitoringService;
+import com.essence.business.xqh.api.waterandrain.service.*;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
-import com.essence.business.xqh.api.waterandrain.service.WaterBriefingService;
-import com.essence.business.xqh.api.waterandrain.service.WaterLevelRangeService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.common.util.DateUtil;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -31,6 +28,8 @@ public class RainMonitoringController {
     WaterLevelRangeService waterLevelRangeService;
     @Autowired
     FloodWarningService floodWarningService;
+    @Autowired
+    RainfallSearchService rainfallSearchService;
 
     /**
      * 实时监测-雨情监测-雨情概况
@@ -384,15 +383,15 @@ public class RainMonitoringController {
     }
 
     /**
-     * 水位变幅-闸坝DD、河道ZZ、潮汐TT-模态框-最新
+     * 最大变幅-水库、河道、闸坝、潮汐-模态框-最新
      *
      * @param dto
      * @return
      */
-    @PostMapping(value = "/getWaterLevelChange")
-    public SystemSecurityMessage getWaterLevelChange(@RequestBody QueryParamDto dto) {
+    @PostMapping(value = "/getWaterLevelMaxChange")
+    public SystemSecurityMessage getWaterLevelMaxChange(@RequestBody QueryParamDto dto) {
         try {
-            return new SystemSecurityMessage("ok", "查询成功", waterLevelRangeService.getWaterLevelChange(dto));
+            return new SystemSecurityMessage("ok", "查询成功", waterLevelRangeService.getWaterLevelMaxChange(dto));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询失败");
         }
@@ -408,6 +407,149 @@ public class RainMonitoringController {
     public SystemSecurityMessage getReservoirWaterLevelChange(@RequestBody QueryParamDto dto) {
         try {
             return new SystemSecurityMessage("ok", "查询成功", waterLevelRangeService.getReservoirWaterLevelChange(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水位变幅-闸坝，潮汐，河道-模态框-最新
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getWaterLevelChange")
+    public SystemSecurityMessage getWaterLevelChange(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", waterLevelRangeService.getWaterLevelChange(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+
+    /**
+     * 日雨量
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getDayRainfall")
+    public SystemSecurityMessage getDayRainfall(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getDayRainfall(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 时段雨量
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getTimeRainfall")
+    public SystemSecurityMessage getTimeRainfall(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getDayRainfall(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 旬雨量
+     *
+     * @param year
+     * @param mth
+     * @param prdtp
+     * @return
+     */
+    @GetMapping(value = "/getTenDaysRainfall/{year}/{mth}/{prdtp}")
+    public SystemSecurityMessage getTenDaysRainfall(@PathVariable(name = "year") Integer year,
+                                                    @PathVariable(name = "mth") Integer mth,
+                                                    @PathVariable(name = "prdtp") Integer prdtp) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getMonthRainfall(year, mth, prdtp));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 月雨量
+     *
+     * @param year
+     * @param mth
+     * @return
+     */
+    @GetMapping(value = "/getMonthRainfall/{year}/{mth}")
+    public SystemSecurityMessage getMonthRainfall(@PathVariable(name = "year") Integer year,
+                                                  @PathVariable(name = "mth") Integer mth) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getMonthRainfall(year, mth, 4));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+
+    /**
+     * 日雨量-单个站点雨量过程线
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getDayRainfallTendency")
+    public SystemSecurityMessage getDayRainfallTendency(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getDayRainfallTendency(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 时段雨量-单个站点雨量过程线
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getTimeRainfallTendency")
+    public SystemSecurityMessage getTimeRainfallTendency(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getTimeRainfallTendency(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 旬雨量-单个站点雨量过程线
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getTenDaysRainfallTendency")
+    public SystemSecurityMessage getTenDaysRainfallTendency(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getTenDaysRainfallTendency(dto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 月雨量-单个站点雨量过程线
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getMonthRainfallTendency")
+    public SystemSecurityMessage getMonthRainfallTendency(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getMonthRainfallTendency(dto));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询失败");
         }

@@ -158,7 +158,7 @@ public class WaterLevelRangeServiceImpl implements WaterLevelRangeService {
             Map<String, List<TRsvrR>> map = rsvrRList.stream().collect(Collectors.groupingBy(TRsvrR::getStcd));
             for (StStbprpB stStbprpB : stbprpBList) {
                 String stcd = stStbprpB.getStcd();
-                WaterLevelDto dto = new WaterLevelDto(stcd, stStbprpB.getStnm(), stStbprpB.getLgtd(), stStbprpB.getLttd());
+                WaterLevelDto dto = new WaterLevelDto(stcd, stStbprpB.getStnm(), stStbprpB.getLgtd(), stStbprpB.getLttd(), "RR");
                 if (map.containsKey(stcd)) {
                     List<TRsvrR> values = map.get(stcd);
                     if ("range".equals(flag)) {
@@ -228,7 +228,7 @@ public class WaterLevelRangeServiceImpl implements WaterLevelRangeService {
 
             for (StStbprpB stStbprpB : stbprpBList) {
                 String stcd = stStbprpB.getStcd();
-                WaterLevelDto dto = new WaterLevelDto(stcd, stStbprpB.getStnm(), stStbprpB.getLgtd(), stStbprpB.getLttd());
+                WaterLevelDto dto = new WaterLevelDto(stcd, stStbprpB.getStnm(), stStbprpB.getLgtd(), stStbprpB.getLttd(), "ZZ");
                 if (map.containsKey(stcd)) {
                     List<TRiverR> values = map.get(stcd);
                     if ("range".equals(flag)) {
@@ -294,7 +294,7 @@ public class WaterLevelRangeServiceImpl implements WaterLevelRangeService {
 
             for (StStbprpB stStbprpB : stbprpBList) {
                 String stcd = stStbprpB.getStcd();
-                WaterLevelDto dto = new WaterLevelDto(stcd, stStbprpB.getStnm(), stStbprpB.getLgtd(), stStbprpB.getLttd());
+                WaterLevelDto dto = new WaterLevelDto(stcd, stStbprpB.getStnm(), stStbprpB.getLgtd(), stStbprpB.getLttd(), "DD");
                 if (map.containsKey(stcd)) {
                     List<TWasR> values = map.get(stcd);
                     if ("range".equals(flag)) {
@@ -359,7 +359,7 @@ public class WaterLevelRangeServiceImpl implements WaterLevelRangeService {
             Map<String, List<TTideR>> map = tideRList.stream().collect(Collectors.groupingBy(TTideR::getStcd));
             for (StStbprpB stStbprpB : stbprpBList) {
                 String stcd = stStbprpB.getStcd();
-                WaterLevelDto dto = new WaterLevelDto(stcd, stStbprpB.getStnm(), stStbprpB.getLgtd(), stStbprpB.getLttd());
+                WaterLevelDto dto = new WaterLevelDto(stcd, stStbprpB.getStnm(), stStbprpB.getLgtd(), stStbprpB.getLttd(), "TT");
                 if (map.containsKey(stcd)) {
                     List<TTideR> values = map.get(stcd);
                     if ("range".equals(flag)) {
@@ -439,7 +439,7 @@ public class WaterLevelRangeServiceImpl implements WaterLevelRangeService {
         List<WaterLevelDto> resultList = new ArrayList<>();
         for (StStbprpB stStbprpB : list) {
             String stcd = stStbprpB.getStcd();
-            WaterLevelDto dto = new WaterLevelDto(stcd, stStbprpB.getStnm(), stStbprpB.getLgtd(), stStbprpB.getLttd());
+            WaterLevelDto dto = new WaterLevelDto(stcd, stStbprpB.getStnm(), stStbprpB.getLgtd(), stStbprpB.getLttd(), sttp);
             if (map.containsKey(stcd)) {
                 BigDecimal maxWaterLevel = null;//最高水位
                 BigDecimal minWaterLevel = null;//最低水位
@@ -489,13 +489,13 @@ public class WaterLevelRangeServiceImpl implements WaterLevelRangeService {
 
 
     /**
-     * 水位变幅-闸坝、河道、潮汐-模态框
+     * 最大变幅-闸坝、潮汐、河道、水库-模态框
      *
      * @param paramDto
      * @return
      */
     @Override
-    public List<WaterLevelChangeDto> getWaterLevelChange(QueryParamDto paramDto) {
+    public List<WaterLevelMaxChangeDto> getWaterLevelMaxChange(QueryParamDto paramDto) {
         String sttp = paramDto.getSttp();
         //查询站点
         List<StStbprpB> stbprpBList = new ArrayList<>();
@@ -520,13 +520,15 @@ public class WaterLevelRangeServiceImpl implements WaterLevelRangeService {
             list = tideRDao.findTideLastData(stcdList, paramDto.getEndTime());
         } else if ("ZZ".equals(sttp)) {//河道
             list = riverRODao.findRiverLastData(stcdList, paramDto.getEndTime());
+        }else if ("RR".equals(sttp)){
+            list=rsvrRDao.findReservoirLastData(stcdList,paramDto.getEndTime());
         }
         Map<String, LinkedList<Map<String, Object>>> map = this.handle(list);
 
         //拼接返回值
-        List<WaterLevelChangeDto> resultList = new ArrayList<>();
+        List<WaterLevelMaxChangeDto> resultList = new ArrayList<>();
         for (StStbprpB stStbprpB : stbprpBList) {
-            WaterLevelChangeDto dto = new WaterLevelChangeDto();
+            WaterLevelMaxChangeDto dto = new WaterLevelMaxChangeDto();
             String stcd = stStbprpB.getStcd();
             dto.setStcd(stcd);
             dto.setStnm(stStbprpB.getStnm());
@@ -566,7 +568,6 @@ public class WaterLevelRangeServiceImpl implements WaterLevelRangeService {
                     maxWaterLevel = oldWaterLevel;
                     maxWaterLevelTm = oldTm;
                 } else if (newWaterLevel != null && oldWaterLevel != null) {
-                    maxChange = newWaterLevel.subtract(oldWaterLevel);
                     if (newWaterLevel.compareTo(oldWaterLevel) == 1) {
                         maxWaterLevel = newWaterLevel;
                         maxWaterLevelTm = newTm;
@@ -583,6 +584,7 @@ public class WaterLevelRangeServiceImpl implements WaterLevelRangeService {
                         minWaterLevel = newWaterLevel;
                         minWaterLevelTm = newTm;
                     }
+                    maxChange = maxWaterLevel.subtract(minWaterLevel);
                 }
                 dto.setMaxWaterLevel(maxWaterLevel);
                 dto.setMaxWaterLevelTm(maxWaterLevelTm);
@@ -681,5 +683,91 @@ public class WaterLevelRangeServiceImpl implements WaterLevelRangeService {
             }
         }
         return map;
+    }
+
+    /**
+     * 水位变幅-闸坝，潮汐，河道-模态框-最新
+     *
+     * @param paramDto
+     * @return
+     */
+    @Override
+    public List<WaterLevelChangeDto> getWaterLevelChange(QueryParamDto paramDto) {
+        String sttp = paramDto.getSttp();
+        //查询站点
+        List<StStbprpB> stbprpBList = new ArrayList<>();
+        if ("ZZ".equals(sttp)) {//河道
+            List<String> sttpList = new ArrayList<>();
+            sttpList.add("ZZ");
+            sttpList.add("ZQ");
+            stbprpBList = stStbprpBDao.findBySttpInAndUsfl(sttpList, "1");
+        } else {//闸坝和潮汐
+            stbprpBList = stStbprpBDao.findBySttp(sttp);
+        }
+        //站点编码
+        List<String> stcdList = new ArrayList<>();
+        stbprpBList.forEach(it -> {
+            stcdList.add(it.getStcd());
+        });
+        //最新两条数据，不同参数查不同的数据表
+        List<Map<String, Object>> list = new ArrayList<>();
+        if ("DD".equals(sttp)) {//闸坝
+            list = wasRDao.findSluiceLastData(stcdList, paramDto.getEndTime());
+        } else if ("TT".equals(sttp)) {//潮汐
+            list = tideRDao.findTideLastData(stcdList, paramDto.getEndTime());
+        } else if ("ZZ".equals(sttp)) {//河道
+            list = riverRODao.findRiverLastData(stcdList, paramDto.getEndTime());
+        }
+        Map<String, LinkedList<Map<String, Object>>> map = this.handle(list);
+
+        List<WaterLevelChangeDto> resultList = new ArrayList<>();
+        for (StStbprpB stStbprpB : stbprpBList) {
+            WaterLevelChangeDto dto = new WaterLevelChangeDto();
+            String stcd = stStbprpB.getStcd();
+            String stnm = stStbprpB.getStnm();
+            dto.setStcd(stcd);
+            dto.setStnm(stnm);
+            if (map.containsKey(stcd)) {
+                LinkedList<Map<String, Object>> values = map.get(stcd);
+                Map<String, Object> newValue = values.get(0);
+                Date tm = null;
+                BigDecimal waterLevel = null;
+                BigDecimal flow = null;
+                BigDecimal waterLevelChange = null;//水位变幅
+                int rwptn = 6;//水势 落 4 涨 5 平 6
+                if (newValue.get("WATERLEVEL") != null) {
+                    waterLevel = new BigDecimal(newValue.get("WATERLEVEL").toString());
+                }
+                if (newValue.get("TM") != null) {
+                    tm = (Date) newValue.get("TM");
+                }
+                if (newValue.get("FLOW") != null) {
+                    flow = new BigDecimal(newValue.get("FLOW").toString());
+                }
+
+                dto.setTm(tm);
+                dto.setWaterLevel(waterLevel);
+                dto.setFlow(flow);
+                if (values.size() > 1) {
+                    Map<String, Object> oldValue = values.get(1);
+                    BigDecimal oldWaterLevel = null;
+                    if (oldValue.get("WATERLEVEL") != null) {
+                        oldWaterLevel = new BigDecimal(oldValue.get("WATERLEVEL").toString());
+                    }
+                    if (waterLevel != null && oldWaterLevel != null) {
+                        waterLevelChange = waterLevel.subtract(oldWaterLevel);
+                        if (waterLevel.compareTo(oldWaterLevel) == 1) {
+                            rwptn = 4;
+                        } else if (waterLevel.compareTo(oldWaterLevel) == -1) {
+                            rwptn = 5;
+                        }
+                    }
+                }
+                dto.setWaterLevelChange(waterLevelChange);
+                dto.setRwptn(rwptn);
+            }
+            resultList.add(dto);
+        }
+        return resultList;
     }
 }
