@@ -954,7 +954,21 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             BufferedWriter bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (BDInputUrl,false),"UTF-8"));
             readDatas.get(1).set(3,breakBasic.getBreakNo()+"");//设置溃口通道编号
             readDatas.get(3).set(3,size+"");//设置计算结束时间
+            for (int i=0;i < readDatas.size();i++){
+                List<String> strings = readDatas.get(i);
+                int sizeList = strings.size();
+                if (sizeList < 4){//TODO 写死4列 不能多不能少
+                    List<String> newList = new ArrayList<>();
+                    newList.addAll(strings);
+                    for (int j=sizeList;j<4;j++){
+                        newList.add("");
+                    }
+                    readDatas.set(i,newList);
+                }
+            }
+
             for (int i=0 ; i < readDatas.size();i++){
+
                 List<String> strings = readDatas.get(i);
                 String line = "";
                 for (String s :strings){
