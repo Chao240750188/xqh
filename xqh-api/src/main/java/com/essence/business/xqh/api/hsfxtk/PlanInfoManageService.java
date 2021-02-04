@@ -24,4 +24,12 @@ public interface PlanInfoManageService {
      * @return
      */
     List<Map> getAllBoundaryByPlanId(String planId);
+
+
+    /**
+     * 根据方案id获取防洪保护区信息
+     * @param planId
+     * @return
+     */
+    Map<String, Object> getAllRoughnessByPlanId(String planId);
 }

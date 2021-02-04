@@ -5,7 +5,11 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.essence.business.xqh.api.hsfxtk.PlanInfoManageService;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
 import com.essence.business.xqh.dao.dao.hsfxtk.YwkBoundaryBasicDao;
+import com.essence.business.xqh.dao.dao.hsfxtk.YwkPlaninFloodRoughnessDao;
+import com.essence.business.xqh.dao.dao.hsfxtk.YwkPlaninRiverRoughnessDao;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
+import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlaninFloodRoughness;
+import com.essence.business.xqh.dao.entity.hsfxtk.YwkPlaninRiverRoughness;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
 import org.apache.commons.collections.CollectionUtils;
@@ -25,7 +29,13 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
     YwkPlaninfoDao ywkPlaninfoDao;
 
     @Autowired
-    private YwkBoundaryBasicDao ywkBoundaryBasicDao;
+    private YwkBoundaryBasicDao ywkBoundaryBasicDao;//13个基本信息
+
+    @Autowired
+    private YwkPlaninFloodRoughnessDao ywkPlaninFloodRoughnessDao;//糙率信息
+
+    @Autowired
+    private YwkPlaninRiverRoughnessDao ywkPlaninRiverRoughnessDao;//河道糙率信息
 
     @Override
     public Paginator<YwkPlaninfo> getPlanList(PaginatorParam paginatorParam) {
@@ -71,4 +81,21 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
         return results;
     }
 
+
+    @Override
+    public Map<String, Object> getAllRoughnessByPlanId(String planId) {
+
+        List<YwkPlaninFloodRoughness> byPlanId = ywkPlaninFloodRoughnessDao.findByPlanId(planId);
+        if (CollectionUtils.isEmpty(byPlanId)){
+            return null;
+        }
+        YwkPlaninFloodRoughness floodRoughness = byPlanId.get(0);
+
+        List<YwkPlaninRiverRoughness> byPlanRoughnessIdOrderByMileageAsc = ywkPlaninRiverRoughnessDao.findByPlanRoughnessIdOrderByMileageAsc(floodRoughness.getPlanRoughnessid());
+
+        Map resultMap = new HashMap();
+        resultMap.put("ywkPlaninFloodRoughness",floodRoughness);
+        resultMap.put("ywkPlaninRiverRoughness",byPlanRoughnessIdOrderByMileageAsc);
+        return resultMap;
+    }
 }
