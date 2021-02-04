@@ -341,7 +341,7 @@ public class RainMonitoringController {
             Workbook wb = waterBriefingService.exportReservoirList(dto,in);
             String time = DateUtil.dateToStringNormal3(dto.getEndTime());
             //响应尾
-            String fileName = "河道水情表_" + time + ".xlsx";
+            String fileName = "水库水情表_" + time + ".xlsx";
             response.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
             response.setContentType("content-type:octet-stream");
             OutputStream ouputStream = response.getOutputStream();
