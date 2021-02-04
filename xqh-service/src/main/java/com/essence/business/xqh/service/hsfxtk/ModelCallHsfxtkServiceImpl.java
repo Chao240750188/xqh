@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
 import com.essence.business.xqh.api.hsfxtk.dto.*;
+import com.essence.business.xqh.api.modelResult.PlanProcessDataService;
 import com.essence.business.xqh.api.modelResult.dto.GridResultDto;
 import com.essence.business.xqh.common.util.*;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
@@ -68,6 +69,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     @Autowired
     YwkFloodChannelFlowDao ywkFloodChannelFlowDao;//分洪道数据表
+
+    @Autowired
+    PlanProcessDataService planProcessDataService;//模型结果解析
     /**
      * 根据方案名称校验方案是否存在
      * @param planName
@@ -710,7 +714,18 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         }
         ywkPlaninfoDao.save(planInfo);
 
-        //解析模型结果调用GIS服务-生成图片
+        //解析模型结果调用GIS服务-生成图片 -存在表示执行失败
+        if (!errorFile.exists()){
+            try{
+                //如果模型运行成功-解析过程文件
+                planProcessDataService.readDepthCsvFile(hsfx_model_template_output,"process",planInfo.getnModelid(),planId);
+                //解析最大水深文件
+                planProcessDataService.readDepthCsvFile(hsfx_model_template_output,"maxDepth",planInfo.getnModelid(),planId);
+            }catch (Exception e){
+                System.out.println("模型结果解析失败！");
+            }
+
+        }
 
 
     }

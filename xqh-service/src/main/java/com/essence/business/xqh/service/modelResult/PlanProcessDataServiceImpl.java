@@ -32,7 +32,7 @@ public class PlanProcessDataServiceImpl implements PlanProcessDataService {
      */
 
     @Override
-    public void readDepth2dCsvFile(String filePath, String dataType, String modelId, String planId) throws Exception {
+    public void readDepthCsvFile(String filePath, String dataType, String modelId, String planId) throws Exception {
         Integer corePoolSize = 4; //主线程数 ，设置为4
         Integer maxPoolSize = 5;   //线程池最大线程数量，设置为5
         Integer queueCapacity = 300; //队列中的线程数，设置为300
@@ -140,10 +140,9 @@ public class PlanProcessDataServiceImpl implements PlanProcessDataService {
      */
 
     private Map<String, List<GridResultDto>> readModelMaxDepthCsvFileData(String hsfx_model_template_output) {
-//        String hsfx_model_template_output = "D:\\XQH_HSFX_MODEL\\MODEL_OUT\\dbaad0ce662c4cd08b1521878e7a4152";
         //封装每个过程数据
         Map<String, List<GridResultDto>> gridResultMap = new LinkedHashMap<>();
-        String grid_process_csv = hsfx_model_template_output + File.separator + "erwei" + File.separator + "process.csv";
+        String grid_process_csv = hsfx_model_template_output + File.separator + "erwei" + File.separator + "result.csv";
         try {
             FileReader fileReader = new FileReader(grid_process_csv);
             if (fileReader != null) {

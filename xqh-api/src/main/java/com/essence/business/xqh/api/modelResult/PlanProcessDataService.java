@@ -8,5 +8,5 @@ public interface PlanProcessDataService {
      * @param dataType
      * @throws Exception
      */
-    public void readDepth2dCsvFile(String filePath,String dataType,String modelId,String planId) throws Exception;
+    public void readDepthCsvFile(String filePath,String dataType,String modelId,String planId) throws Exception;
 }
