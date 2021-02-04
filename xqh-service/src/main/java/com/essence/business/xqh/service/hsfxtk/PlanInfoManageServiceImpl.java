@@ -143,7 +143,7 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
         ywkPlaninFloodBoundaryDao.deleteByPlanId(planId);
         //删除糙率
         List<YwkPlaninFloodRoughness> byPlanId = ywkPlaninFloodRoughnessDao.findByPlanId(planId);
-        if (CollectionUtils.isEmpty(byPlanId)){
+        if (!CollectionUtils.isEmpty(byPlanId)){
             ywkPlaninRiverRoughnessDao.deleteByPlanRoughnessId(byPlanId.get(0).getPlanRoughnessid());
         }
         ywkPlaninFloodRoughnessDao.deleteByPlanId(planId);
