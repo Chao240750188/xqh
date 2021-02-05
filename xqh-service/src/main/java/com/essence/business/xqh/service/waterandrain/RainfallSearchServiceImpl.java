@@ -255,10 +255,10 @@ public class RainfallSearchServiceImpl implements RainfallSearchService {
             }
         }
 
-        List<RainfallTendencyDto> resultList = new ArrayList<>();
+        List<RainfallTimeTendencyDto> resultList = new ArrayList<>();
         TreeSet<BigDecimal> set = new TreeSet<>();
         while (startTime.getTime() <= endTime.getTime()) {
-            RainfallTendencyDto dto = new RainfallTendencyDto();
+            RainfallTimeTendencyDto dto = new RainfallTimeTendencyDto();
             dto.setTm(startTime);
             dto.setShowTm(DateUtil.dateToStringNormal3(startTime));
             BigDecimal total = map.get(startTime) == null ? new BigDecimal(0) : map.get(startTime);
@@ -274,6 +274,7 @@ public class RainfallSearchServiceImpl implements RainfallSearchService {
             }
             set.add(total);
             dto.setRainfall(total);
+            dto.setStep(step);
             resultList.add(dto);
             startTime = DateUtil.getNextHour(startTime, step);
         }
