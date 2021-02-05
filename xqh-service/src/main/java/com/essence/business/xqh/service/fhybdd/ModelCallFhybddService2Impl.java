@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.io.*;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -401,6 +402,7 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
 
     @Override
     public Object getModelResultQ(String planId) {
+        DecimalFormat df = new DecimalFormat("#.00");
         JSONArray list = new JSONArray();
 
         YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);
@@ -458,7 +460,7 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
                         try{
                             JSONObject dataObj = new JSONObject();
                             dataObj.put("time",DateUtil.dateToStringNormal3(time));
-                            dataObj.put("q",dataList.get(index));
+                            dataObj.put("q",df.format(Double.parseDouble(dataList.get(index)+"")));
                             valList.add(dataObj);
                             count+=step;
                             index++;
