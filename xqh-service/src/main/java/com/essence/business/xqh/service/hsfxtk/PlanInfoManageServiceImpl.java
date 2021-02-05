@@ -9,6 +9,7 @@ import com.essence.business.xqh.dao.dao.hsfxtk.*;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
 import com.essence.business.xqh.dao.entity.hsfxtk.*;
+import com.essence.framework.jpa.Criterion;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
 import org.apache.commons.collections.CollectionUtils;
@@ -52,6 +53,15 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
 
     @Override
     public Paginator<YwkPlaninfo> getPlanList(PaginatorParam paginatorParam) {
+        List<Criterion> orders = paginatorParam.getOrders();
+        if(orders==null){
+            orders = new ArrayList<>();
+        }
+        Criterion criterion = new Criterion();
+        criterion.setFieldName("nCreatetime");
+        criterion.setOperator(Criterion.DESC);
+        orders.add(criterion);
+        paginatorParam.setOrders(orders);
         Paginator<YwkPlaninfo> all = ywkPlaninfoDao.findAll(paginatorParam);
         return all;
     }
