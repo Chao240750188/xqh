@@ -1418,7 +1418,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
                     String[] split = lineTxt2.split("&&");
                     //运行进度
                     double process = Double.parseDouble(split[1] + "");
-                    jsonObject.put("process", process * 0.97);
+                    jsonObject.put("process", process * 0.94);
                     if (process == 100.0) {
                         jsonObject.put("describ", "水深过程渲染效果图生成中！");
                     } else {

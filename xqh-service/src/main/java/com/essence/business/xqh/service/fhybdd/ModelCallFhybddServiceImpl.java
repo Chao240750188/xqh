@@ -509,7 +509,7 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
             BigDecimal bigDecimal = stPptnRMap.get(hourStart);
             startTime = DateUtil.getNextHour(startTime, step.intValue());
             result.put("i", i);
-            result.put("sum", bigDecimal);
+            result.put("sum", bigDecimal==null?0.0:bigDecimal);
             i++;
             results.add(result);
         }
