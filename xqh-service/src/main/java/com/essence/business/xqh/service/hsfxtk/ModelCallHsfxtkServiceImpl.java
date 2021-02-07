@@ -398,6 +398,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             stcdList.add(modelboundary.getStcd());
         }
         List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdInOrderByStcd(stcdList);
+
         //封装边界流量数据
         for (YwkBoundaryBasic ywkBoundaryBasic : boundaryBasicList) {
             JSONObject jsonObject = new JSONObject();
