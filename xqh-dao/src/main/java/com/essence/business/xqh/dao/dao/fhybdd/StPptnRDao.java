@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @Repository
-public interface StPptnRDao extends EssenceJpaRepository<StPptnR,String > {
+public interface StPptnRDao extends EssenceJpaRepository<StPptnR, String> {
 
 
     @Query(value = "select TO_CHAR(TM,'yyyy-mm-dd hh24') tm ,STCD," +
@@ -20,8 +20,8 @@ public interface StPptnRDao extends EssenceJpaRepository<StPptnR,String > {
             "TM BETWEEN to_date(?1,'yyyy-mm-dd hh24:mi:ss')  " +
             "and to_date(?2,'yyyy-mm-dd hh24:mi:ss') \n" +
             "\n" +
-            "GROUP BY TO_CHAR(TM,'yyyy-mm-dd hh24'),STCD ORDER BY tm asc",nativeQuery = true)
-    public List<Map<String,Object>> findStPptnRByStartTimeAndEndTime(String startTime, String endTIme);
+            "GROUP BY TO_CHAR(TM,'yyyy-mm-dd hh24'),STCD ORDER BY tm asc", nativeQuery = true)
+    public List<Map<String, Object>> findStPptnRByStartTimeAndEndTime(String startTime, String endTIme);
 
 
 
@@ -73,4 +73,10 @@ public interface StPptnRDao extends EssenceJpaRepository<StPptnR,String > {
 
     List<THdmisTotalRainfallDto> queryByStcdInAndTmBetween(List<String> stcdList, Date startTime, Date endTime);
 
+
+    @Query(value = "SELECT B.STCD,SUM(B.DRP) total FROM ST_PPTN_R B WHERE STCD IN(?1) AND TM >=?2 AND TM <=?3 GROUP BY STCD", nativeQuery = true)
+    List<Map<String, Object>> findByStcdInAndTmBetween(List<String> stcdList, Date startTime, Date endTime);
+
+    @Query(value = "SELECT B.STCD,B.DRP,B.TM FROM ST_PPTN_R B WHERE STCD= ?1 AND TM >=?2 AND TM <=?3 ", nativeQuery = true)
+    List<Map<String, Object>> findDataByStcdAndTmBetween(String stcd, Date startTime, Date endTime);
 }

@@ -142,4 +142,12 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
             "LEFT JOIN ST_RVFCCH_B r ON b.STCD = r.STCD WHERE b.STTP = ?1 AND b.USFL = '1'",nativeQuery=true)
     List<Map<String,Object>> getFloodWarningInfo(String sttp);
 
+    List<StStbprpB> findBySttpInAndUsfl(List<String> sttpList, String usfl);
+
+    /**
+     * 查询记录雨量的站点信息
+     * @return
+     */
+    @Query(value="SELECT b.STCD,b.STNM,b.LGTD,b.LTTD  FROM ST_STBPRP_B B LEFT JOIN ST_STSMTASK_B M ON B.STCD = M.STCD WHERE B.USFL = '1' AND M.PFL = '1'",nativeQuery=true)
+    List<Map<String,Object>> findUseRainStbprpb();
 }

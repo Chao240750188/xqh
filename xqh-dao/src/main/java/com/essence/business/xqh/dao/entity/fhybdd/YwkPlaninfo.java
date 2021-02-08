@@ -1,5 +1,8 @@
 package com.essence.business.xqh.dao.entity.fhybdd;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.*;
 import java.util.Date;
 
@@ -15,12 +18,22 @@ public class YwkPlaninfo {
     private String cMikescenariocode;
     @Column(name = "N_CREATEUSER")
     private String nCreateuser;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @Column(name = "N_PLANCURRENTTIME")
     private Date nPlancurrenttime;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @Column(name = "D_CACULATESTARTTM")
     private Date dCaculatestarttm;
+
     @Column(name = "D_CACULATEENDTM")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date dCaculateendtm;
+
     @Column(name = "N_TOTALRAINFALL")
     private Double nTotalrainfall;
     @Column(name = "N_OUTPUTTM")
@@ -35,18 +48,34 @@ public class YwkPlaninfo {
     private String cComment;
     @Column(name = "N_MODELID")
     private String nModelid;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @Column(name = "D_RAINSTARTTIME")
     private Date dRainstarttime;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @Column(name = "D_RAINENDTIME")
     private Date dRainendtime;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @Column(name = "D_OPENSOURCESTARTTIME")
     private Date dOpensourcestarttime;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @Column(name = "D_OPENSOURCEENDTIME")
     private Date dOpensourceendtime;
+
     @Column(name = "C_DERIVEPLANTYPE")
     private String cDeriveplantype;
     @Column(name = "N_DERIVEPLANTORDER")
     private Double nDeriveplantorder;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @Column(name = "N_CREATETIME")
     private Date nCreatetime;
 

@@ -49,4 +49,15 @@ public class RiverWayDataDto implements Serializable {
 
     private String sttp;
 
+    public RiverWayDataDto() {
+    }
+
+    public RiverWayDataDto(String stcd, String stnm, Double lgtd, Double lttd, String rvnm, String sttp) {
+        this.stcd = stcd;
+        this.stnm = stnm;
+        this.lgtd = lgtd;
+        this.lttd = lttd;
+        this.rvnm = rvnm;
+        this.sttp = sttp;
+    }
 }

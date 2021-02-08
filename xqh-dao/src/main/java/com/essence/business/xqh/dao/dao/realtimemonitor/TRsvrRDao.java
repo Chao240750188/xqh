@@ -2,7 +2,6 @@ package com.essence.business.xqh.dao.dao.realtimemonitor;
 
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRiverR;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRsvrR;
-import com.essence.business.xqh.dao.entity.realtimemonitor.TRvfcchB;
 import com.essence.framework.jpa.EssenceJpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,4 +32,18 @@ public interface TRsvrRDao extends EssenceJpaRepository<TRsvrR, String> {
     List<Map<String,Object>> getWaterLevelMaxByTime(@Param(value = "startTime") Date startTime, @Param(value = "endTime") Date endTime);
 
     List<TRsvrR> findByTmBetweenOrderByTmDesc(Date startTime, Date endTime);
+
+
+    List<TRsvrR> findByStcdInAndTmBetweenOrderByTmDesc(List<String> stcdList,Date startTime,Date endTime);
+
+
+    /**
+     * 查询最新的两条数据
+     * @param stcdList
+     * @param endTime
+     * @return
+     */
+    @Query(value="SELECT * FROM (SELECT STCD,TM,RZ WATERLEVEL,INQ FLOW ,OTQ OUTFLOW,row_number() over(partition BY STCD ORDER BY TM DESC) rn FROM ST_RSVR_R  WHERE STCD IN (?1) AND TM <= ?2) WHERE rn<3",nativeQuery=true)
+    List<Map<String,Object>> findReservoirLastData(List<String> stcdList,Date endTime);
+
 }

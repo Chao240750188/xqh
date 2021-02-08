@@ -22,6 +22,8 @@ public interface TTideRDao extends EssenceJpaRepository<TTideR, String> {
             " where rn = 1  order by stcd desc ", nativeQuery = true)
     List<Map<String, Object>> getLastData();
 
-    @Query(value = "select t FROM TTideR t WHERE t.stcd in (?1) and t.tm >=?2 and t.tm <=?3 ORDER BY t.tm DESC ")
-    List<TTideR> findDataByStcdAndTime(List<String> stcdList, Date startTime, Date endTime);
+    List<TTideR> findByStcdInAndTmBetweenOrderByTmDesc(List<String> stcdList,Date startTime,Date endTime);
+
+    @Query(value="SELECT * FROM (SELECT STCD,TM,TDZ WATERLEVEL,row_number() over(partition BY STCD ORDER BY TM DESC) rn FROM ST_TIDE_R WHERE STCD IN (?1) AND TM<=?2) WHERE rn<3",nativeQuery=true)
+    List<Map<String,Object>> findTideLastData(List<String> stcdList,Date endTime);
 }

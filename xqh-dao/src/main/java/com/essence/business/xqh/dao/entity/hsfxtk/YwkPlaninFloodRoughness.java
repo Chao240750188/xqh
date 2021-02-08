@@ -13,11 +13,14 @@ public class YwkPlaninFloodRoughness {
     private String planRoughnessid;
     @Column(name = "ROUGHNESS_PARAMID")
     private String roughnessParamid;
+
+    @Column(name = "N_PLANID")
+    private String planId;
+
     @Column(name = "ROUGHNESS_PARAMNM")
     private String roughnessParamnm;
     @Column(name = "GRID_SYNTHESIZE_ROUGHNESS")
     private Double gridSynthesizeRoughness;
-
 
     public String getPlanRoughnessid() {
         return planRoughnessid;
@@ -33,6 +36,14 @@ public class YwkPlaninFloodRoughness {
 
     public void setRoughnessParamid(String roughnessParamid) {
         this.roughnessParamid = roughnessParamid;
+    }
+
+    public String getPlanId() {
+        return planId;
+    }
+
+    public void setPlanId(String planId) {
+        this.planId = planId;
     }
 
     public String getRoughnessParamnm() {

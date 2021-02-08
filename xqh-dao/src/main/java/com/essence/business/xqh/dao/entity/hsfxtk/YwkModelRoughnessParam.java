@@ -1,10 +1,8 @@
 package com.essence.business.xqh.dao.entity.hsfxtk;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Entity
 @Table(name = "YWK_MODEL_ROUGHNESS_PARAM", schema = "XQH", catalog = "")
@@ -22,6 +20,20 @@ public class YwkModelRoughnessParam {
     private String comments;
     @Column(name = "MODITIME")
     private Timestamp moditime;
+
+    /**
+     * 详情数据
+     */
+    @Transient
+    private List<YwkRiverRoughnessParam> paramList;
+
+    public List<YwkRiverRoughnessParam> getParamList() {
+        return paramList;
+    }
+
+    public void setParamList(List<YwkRiverRoughnessParam> paramList) {
+        this.paramList = paramList;
+    }
 
     public String getRoughnessParamid() {
         return roughnessParamid;

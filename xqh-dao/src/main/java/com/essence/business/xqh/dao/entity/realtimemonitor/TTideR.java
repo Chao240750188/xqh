@@ -35,37 +35,37 @@ public class TTideR  implements Serializable {
 	/**
 	 * 时间
 	 */
-   	@Column(name = "时间" )
+   	@Column(name = "TM" )
 	private Date tm;
 
 	/**
 	 * 潮位：潮位站的潮水位，计量单位为m。
 	 */
-   	@Column(name = "潮位" )
+   	@Column(name = "TDZ" )
 	private String tdz;
 
 	/**
 	 * 气压：潮位站的大气压力，计量单位为102Pa。
 	 */
-   	@Column(name = "气压" )
+   	@Column(name = "AIRP" )
 	private String airp;
 
 	/**
 	 * 潮水特征码：潮水的特征描述，同6.5节中“河水特征码”字段。
 	 */
-   	@Column(name = "潮水特征码" )
+   	@Column(name = "TDCHRCD" )
 	private String tdchrcd;
 
 	/**
 	 * 潮势：潮位变化的趋势，同6.5节中“水势”字段。
 	 */
-   	@Column(name = "潮势" )
+   	@Column(name = "TDPTN" )
 	private String tdptn;
 
 	/**
 	 * 高低潮标志：描述潮位在一日中高低潮的情况，高低潮标志及其代码应按表49确定。
 	 */
-   	@Column(name = "高低潮标志" )
+   	@Column(name = "HLTDMK" )
 	private String hltdmk;
 
 }
