@@ -8,6 +8,7 @@ import com.essence.business.xqh.api.realtimemonitor.service.RealTimeMonitorServi
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.common.util.ConfigurationUtil;
 import com.essence.business.xqh.common.util.HttpClientUtil;
+import com.essence.business.xqh.common.util.ObtainQixiangImage;
 import com.essence.business.xqh.common.util.QixiangImageDto;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -320,8 +321,10 @@ public class RealTimeMonitorController {
     public SystemSecurityMessage obtainRadarMapQX() {
         try {
             //调用远程接口
-            List<QixiangImageDto> obtainRadarMap = getObtainRadarMap();
-            return new SystemSecurityMessage("ok", "获取雷达回波图成功！", obtainRadarMap);
+//            List<QixiangImageDto> obtainRadarMap = getObtainRadarMap();
+            ObtainQixiangImage obtainQixiangImage = new ObtainQixiangImage();
+            List<QixiangImageDto> qixiangImageDtos = obtainQixiangImage.ObtainRadarMap();
+            return new SystemSecurityMessage("ok", "获取雷达回波图成功！", qixiangImageDtos);
         } catch (Exception e) {
             e.printStackTrace();
             return new SystemSecurityMessage("error", "获取雷达回波图失败!");
@@ -339,8 +342,10 @@ public class RealTimeMonitorController {
     @RequestMapping(value = "/obtainSatellitCloudImageQX", method = RequestMethod.GET)
     public SystemSecurityMessage obtainSatellitCloudImageQX() {
         try {
-            List<QixiangImageDto> obtainSatellitCloudImage = getObtainSatellitCloudImage();
-            return new SystemSecurityMessage("ok", "获取卫星云图成功！", obtainSatellitCloudImage);
+//            List<QixiangImageDto> obtainSatellitCloudImage = getObtainSatellitCloudImage();
+            ObtainQixiangImage obtainQixiangImage = new ObtainQixiangImage();
+            List<QixiangImageDto> qixiangImageDtos = obtainQixiangImage.ObtainSatellitCloudImage();
+            return new SystemSecurityMessage("ok", "获取卫星云图成功！", qixiangImageDtos);
         } catch (Exception e) {
             e.printStackTrace();
             return new SystemSecurityMessage("error", "获取卫星云图失败!");
