@@ -59,10 +59,11 @@ public class PlanProcessDataServiceImpl implements PlanProcessDataService {
                     public void run() {
                         if ("process".equals(dataType)) {
                             System.out.println("处理过程数据：第" + processNum + "个过程生成过程图片开始");
+                            modelResultService.getResultMaxDepthToPicture(list, modelId, planId, processNum);
                         } else {
                             System.out.println("处理最大水深数据,成过最大水深图片开始");
+                            modelResultService.getResultMaxDepthToPicture(list, modelId, planId, null);
                         }
-                        modelResultService.getResultMaxDepthToPicture(list, modelId, planId, processNum);
                     }
                 });
             }
@@ -173,7 +174,7 @@ public class PlanProcessDataServiceImpl implements PlanProcessDataService {
                     String depth = rowDataList.get(2);
                     GridResultDto gridResultDto = new GridResultDto(Long.parseLong(gridId), Double.parseDouble(depth));
                     gridResultDtoList.add(gridResultDto);
-                    gridResultMap.put("1", gridResultDtoList);
+                    gridResultMap.put("maxDepth", gridResultDtoList);
                 }
             }
         } catch (Exception e) {
