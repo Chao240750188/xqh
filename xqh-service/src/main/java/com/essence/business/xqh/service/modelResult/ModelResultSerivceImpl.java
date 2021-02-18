@@ -129,16 +129,16 @@ public class ModelResultSerivceImpl implements ModelResultService {
             }
             //获取生成图片的状态
             if (null!=exportMethodResultDto){
-                boolean flag=false;
+                boolean flag=true;
                 String status="";
                 while (flag){
                     String exportToPictureStatus = GisUtil.getExportToPictureStatus(exportMethodResultDto);
                     status=exportToPictureStatus;
                     if ("true".equals(exportToPictureStatus)){
-                        flag=true;
+                        flag=false;
                     }
                     if ("failed".equals(exportToPictureStatus)){
-                        flag=true;
+                        flag=false;
 
                     }
                     Thread.sleep(2000);
@@ -150,6 +150,8 @@ public class ModelResultSerivceImpl implements ModelResultService {
                     new RuntimeException("图片导出失败!");
                 }
 
+            }else{
+                new RuntimeException("图片导出失败!");
             }
 
             //删除过程数据的excel文件
