@@ -46,16 +46,18 @@ public class ModelResultSerivceImpl implements ModelResultService {
 
         try {
             System.out.println("当前过程数:" + processNum);
-            String dbfFilePath = GisPathConfigurationUtil.getModelGridDbfFilesPath() + "/" + modelId +"/"+planId+ "/" + processNum;//生成shp后的存储路径
+            String dbfFilePath ="";
+            String fileName ="";
+            if (null!=processNum && !StrUtil.isEmpty(processNum.toString())){//水深过程数据
+                dbfFilePath = GisPathConfigurationUtil.getModelGridDbfFilesPath() + "/" + modelId +"/"+planId+ "/" + processNum;//生成shp后的存储路径
+                fileName = "elements_depth_" + processNum;
+            }else {//最大水深
+                dbfFilePath = GisPathConfigurationUtil.getModelGridDbfFilesPath() + "/" + modelId +"/"+planId+ "/maxDepth";//生成shp后的存储路径
+                fileName ="elements_maxDepth";
+            }
             File filePathFile = new File(dbfFilePath);
             if (!filePathFile.exists()) {
                 filePathFile.mkdirs();
-            }
-            String fileName ="";
-            if (null!=processNum && !StrUtil.isEmpty(processNum.toString())){//水深过程数据
-                fileName = "elements_depth_" + processNum;
-            }else {//最大水深
-                fileName ="elements_maxDepth";
             }
 
             //过程数据文件的名称
