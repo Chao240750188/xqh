@@ -131,6 +131,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
      * @return
      */
     @Override
+    @Transactional
     public Integer saveGridProcessToDb(String planId) {
 
         YwkPlaninfo planinfo = ywkPlaninfoDao.findOne(planId);
@@ -205,6 +206,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
      * @param planId
      * @return
      */
+    @Transactional
     public List<YwkPlanOutputGridMax> saveGridMaxToDb(String planId) throws FileNotFoundException {
         List<YwkPlanOutputGridMax> list = new ArrayList<>();
         //查询方案基本信息
@@ -727,7 +729,12 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         //解析模型结果调用GIS服务-生成图片 -存在表示执行失败
         if (!errorFile.exists()) {
             try {
-                //如果模型运行成功-解析过程文件
+                //解析淹没过程文件数据入库
+               // saveGridProcessToDb(planId);
+                //解析最大水深文件数据入库
+                //saveGridMaxToDb(planId);
+
+                //如果模型运行成功-解析过程文件生成图片
                 planProcessDataService.readDepthCsvFile(hsfx_model_template_output, "process", planInfo.getnModelid(), planId);
                 //解析最大水深文件
                 planProcessDataService.readDepthCsvFile(hsfx_model_template_output, "maxDepth", planInfo.getnModelid(), planId);
