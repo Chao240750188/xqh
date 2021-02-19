@@ -43,6 +43,7 @@ public class GisUtil {
         HttpPost httppost = new HttpPost("http://"+ GisPathConfigurationUtil.getArcGISServerHostIP()+":6080/arcgis/rest/services/xqh/exportToPicture/GPServer/exportToPicture/submitJob");
 
         // 创建参数队列
+        System.out.println("封装调用图片参数……");
         // 创建参数队列
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         params.add(new BasicNameValuePair("env:outSR", ""));
@@ -75,6 +76,7 @@ public class GisUtil {
             HttpEntity responseEntity = response.getEntity();
             if (responseEntity != null) {
                 String responseContent = EntityUtils.toString(responseEntity, "UTF-8");
+                System.out.println("调用GIS生成图片返回"+responseContent);
                 if(responseContent.contains("esriJobSubmitted")){
 
                     JSONObject json= JSONObject.fromObject(responseContent);
@@ -87,6 +89,7 @@ public class GisUtil {
             }
             resultInfo.setJobId(jobId);
         } catch (Exception e) {
+            System.out.println("生成图片工具类报错");
             e.printStackTrace();
         } finally {
             // 关闭连接,释放资源

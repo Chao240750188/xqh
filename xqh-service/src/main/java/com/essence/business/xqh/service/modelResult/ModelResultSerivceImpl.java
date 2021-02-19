@@ -93,7 +93,6 @@ public class ModelResultSerivceImpl implements ModelResultService {
                     shpTemplatePath = GisPathConfigurationUtil.getHsfx02ModelShpTempletePath();
                     break;
             }
-
             //调用GIS生成图片
             String mxdTemplateAbsolutePath= GisPathConfigurationUtil.getMxdTemplateAbsolutePath(); //mxd文件的文件夹路径
             String exportPictureFormate = GisPathConfigurationUtil.getExportPictureFormate(); //导出图片格式：png
@@ -151,6 +150,7 @@ public class ModelResultSerivceImpl implements ModelResultService {
                 }
 
             }else{
+                System.out.println("导出图片失败了");
                 new RuntimeException("图片导出失败!");
             }
 
@@ -158,6 +158,8 @@ public class ModelResultSerivceImpl implements ModelResultService {
             //CopyFile.deleteSpecialFile(dbfFilePath,processNum); //删除过程数据的shp(包括dbf)文件
 
         } catch (Exception e) {
+            System.out.println("导出图片报错了");
+            System.out.println(e.getMessage());
             e.printStackTrace();
         }
     }

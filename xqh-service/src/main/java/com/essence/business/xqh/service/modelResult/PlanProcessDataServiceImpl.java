@@ -58,10 +58,10 @@ public class PlanProcessDataServiceImpl implements PlanProcessDataService {
                     @Override
                     public void run() {
                         if ("process".equals(dataType)) {
-                            System.out.println("处理过程数据：第" + processNum + "个过程生成过程图片开始");
+                            System.out.println("处理过程数据：第" + processNum + "个过程开始");
                             modelResultService.getResultMaxDepthToPicture(list, modelId, planId, processNum);
                         } else {
-                            System.out.println("处理最大水深数据,成过最大水深图片开始");
+                            System.out.println("处理最大水深数据,处理最大水深开始");
                             modelResultService.getResultMaxDepthToPicture(list, modelId, planId, null);
                         }
                     }
