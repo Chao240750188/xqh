@@ -79,6 +79,10 @@ public class ModelResultSerivceImpl implements ModelResultService {
             DBFUtils.close(writer);
             System.out.println("过程" + processNum + "的dbf文件生成成功");
 
+            //调用GIS生成图片
+            String mxdTemplateAbsolutePath= GisPathConfigurationUtil.getMxdTemplateAbsolutePath(); //mxd文件的文件夹路径
+            String exportPictureFormate = GisPathConfigurationUtil.getExportPictureFormate(); //导出图片格式：png
+            String maxDepthTemplate = ""; //水深 mxd的文件名
             //shp模板路径
             String shpTemplatePath="";
             switch (modelId){
@@ -90,15 +94,14 @@ public class ModelResultSerivceImpl implements ModelResultService {
                     break;
                 case "MODEL_HSFX_01"://防洪保护区1
                     shpTemplatePath = GisPathConfigurationUtil.getHsfx01ModelShpTempletePath();
+                    maxDepthTemplate=GisPathConfigurationUtil.getMxdTemplateHSFX01();
                     break;
                 case "MODEL_HSFX_02"://防洪保护区2
                     shpTemplatePath = GisPathConfigurationUtil.getHsfx02ModelShpTempletePath();
+                    maxDepthTemplate=GisPathConfigurationUtil.getMxdTemplateHSFX02();
                     break;
             }
-            //调用GIS生成图片
-            String mxdTemplateAbsolutePath= GisPathConfigurationUtil.getMxdTemplateAbsolutePath(); //mxd文件的文件夹路径
-            String exportPictureFormate = GisPathConfigurationUtil.getExportPictureFormate(); //导出图片格式：png
-            String maxDepth = "gridDepth"; //水深 mxd的文件名
+
 
             //图片导出路径
             String outputAbsolutePath = GisPathConfigurationUtil.getOutputPictureAbsolutePath()+"/"+modelId+"/"+planId;
@@ -121,12 +124,12 @@ public class ModelResultSerivceImpl implements ModelResultService {
                     processDirFile.mkdirs();
                 }
                 //参数1：dbf生成路径   参数2：dbf文件名称  参数3：随意  参数4：随意
-                 exportMethodResultDto = GisUtil.exportToPicture(dbfFilePath, fileName, mxdTemplateAbsolutePath, maxDepth, exportPictureFormate, processOutputAbsolutePath, processNum + "");//水深过程数据
+                 exportMethodResultDto = GisUtil.exportToPicture(dbfFilePath, fileName, mxdTemplateAbsolutePath, maxDepthTemplate, exportPictureFormate, processOutputAbsolutePath, processNum + "");//水深过程数据
             }else {
                 //复制shp模板文件
                 CopyFile.copyShpFiles(shpTemplatePath, dbfFilePath, "maxDepth" ); //重命名的文件格式：
                 //参数1：dbf生成路径   参数2：dbf文件名称  参数3：随意  参数4：随意
-                exportMethodResultDto = GisUtil.exportToPicture(dbfFilePath, fileName, mxdTemplateAbsolutePath, maxDepth, exportPictureFormate, outputAbsolutePath, "maxDepth");//最大水深
+                exportMethodResultDto = GisUtil.exportToPicture(dbfFilePath, fileName, mxdTemplateAbsolutePath, maxDepthTemplate, exportPictureFormate, outputAbsolutePath, "maxDepth");//最大水深
             }
             //获取生成图片的状态
             if (null!=exportMethodResultDto){

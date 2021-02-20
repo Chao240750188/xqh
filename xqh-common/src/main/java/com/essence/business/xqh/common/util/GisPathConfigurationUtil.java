@@ -89,6 +89,22 @@ public class GisPathConfigurationUtil {
     }
 
 
+    /**
+     * 模型MODEL_HSFX_01的mxd模板名称
+     * @return
+     */
+    public  static String getMxdTemplateHSFX01(){
+        return props.getProperty("mxdTemplateHSFX01");
+    }
+
+    /**
+     * 模型MODEL_HSFX_02的mxd模板名称
+     * @return
+     */
+    public  static String getMxdTemplateHSFX02(){
+        return props.getProperty("mxdTemplateHSFX02");
+    }
+
 
     /**
      * 获取导出图片的格式
