@@ -615,7 +615,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     @Override
     public void callMode(String planId) {
-
+        //调用模型计算
         YwkPlaninfo planInfo = ywkPlaninfoDao.findOne(planId);
         if (planInfo == null) {
             System.out.println("计划planid没有找到记录");
