@@ -165,7 +165,7 @@ public class PlanProcessDataServiceImpl implements PlanProcessDataService {
                 for (int i = 0; i < datas.size(); i++) {
                     //将行列数据封装成过程
                     List<String> rowDataList = datas.get(i);
-                    List<GridResultDto> gridResultDtoList = gridResultMap.get("1");
+                    List<GridResultDto> gridResultDtoList = gridResultMap.get("maxDepth");
                     if (gridResultDtoList == null) {
                         gridResultDtoList = new ArrayList<>();
                     }
