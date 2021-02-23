@@ -79,6 +79,10 @@ public class YwkPlaninfo {
     @Column(name = "N_CREATETIME")
     private Date nCreatetime;
 
+    //方案所属系统标识
+    @Column(name = "C_PLAN_SYSTEM")
+    private String planSystem;
+
     @Transient
    private  String riverId;
 
@@ -256,5 +260,13 @@ public class YwkPlaninfo {
 
     public void setnCreatetime(Date nCreatetime) {
         this.nCreatetime = nCreatetime;
+    }
+
+    public String getPlanSystem() {
+        return planSystem;
+    }
+
+    public void setPlanSystem(String planSystem) {
+        this.planSystem = planSystem;
     }
 }

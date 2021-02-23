@@ -424,6 +424,7 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
     @Override
     public String savePlanWithCache(ModelCallBySWDDVo vo) {
 
+        String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("XT_SWYB");
 
         Map<String, String> id_name = skProperties.getID_NAME();
         Date startTime = vo.getStartTime(); //开始时间
@@ -437,6 +438,7 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         //方案基本信息入库
         YwkPlaninfo ywkPlaninfo = new YwkPlaninfo();
         ywkPlaninfo.setnPlanid(UuidUtil.get32UUIDStr());
+        ywkPlaninfo.setPlanSystem(planSystem);
         ywkPlaninfo.setcPlanname(vo.getcPlanname());
         ywkPlaninfo.setnCreateuser("user");
         ywkPlaninfo.setnPlancurrenttime(new Date());

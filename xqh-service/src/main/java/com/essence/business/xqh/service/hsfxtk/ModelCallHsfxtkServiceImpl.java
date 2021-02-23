@@ -93,6 +93,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
      */
     @Override
     public String savePlanToDb(PlanInfoHsfxtkVo vo) {
+
+        String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("XT_HSFX");
+
         if (StrUtil.isEmpty(vo.getnPlanid())) {
             vo.setnPlanid(StrUtil.getUUID());
         }
@@ -107,6 +110,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         //方案基本信息入库
         YwkPlaninfo ywkPlaninfo = new YwkPlaninfo();
         ywkPlaninfo.setnPlanid(vo.getnPlanid());
+        ywkPlaninfo.setPlanSystem(planSystem);
         ywkPlaninfo.setcPlanname(vo.getcPlanname());
         ywkPlaninfo.setnCreateuser("user");
         ywkPlaninfo.setnPlancurrenttime(new Date());
@@ -615,7 +619,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     @Override
     public void callMode(String planId) {
-
+        //调用模型计算
         YwkPlaninfo planInfo = ywkPlaninfoDao.findOne(planId);
         if (planInfo == null) {
             System.out.println("计划planid没有找到记录");
