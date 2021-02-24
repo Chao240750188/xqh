@@ -402,7 +402,7 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
 
     @Override
     public Object getModelResultQ(String planId) {
-        DecimalFormat df = new DecimalFormat("#.00");
+        DecimalFormat df = new DecimalFormat("0.00");
         JSONArray list = new JSONArray();
 
         YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);
