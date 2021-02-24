@@ -625,6 +625,8 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             System.out.println("计划planid没有找到记录");
             return;
         }
+        String modelid = planInfo.getnModelid();
+
         String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
 
         String hsfx_model_template_output = hsfx_path +
@@ -635,7 +637,17 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         String hsfx_model_template = hsfx_path +
                 File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");//默认文件对位置
 
-        String hsfx_model_template_input = hsfx_model_template
+        if ("MODEL_HSFX_01".equals(modelid)){
+            hsfx_model_template = hsfx_model_template + File.separator + "FHBHQ1";
+        }else if ("MODEL_HSFX_02".equals(modelid)){
+            hsfx_model_template = hsfx_model_template + File.separator + "FHBHQ2";
+        }else {
+            System.out.println("水动力模型的模型id值不对");
+            return;
+        }
+
+        String hsfx_model_template_input = hsfx_path +
+                File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE")
                 + File.separator + "INPUT" + File.separator + planId; //输入的地址
 
         String hsfx_model_template_run = hsfx_path +
@@ -717,6 +729,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         }
         //调用模型计算
         System.out.println("水动力模型计算:开始水动力模型计算。。。");
+        System.out.println("水动力模型计算路径为。。。"+hsfx_model_template_run_plan + File.separator + "startUp.bat");
         runModelExe(hsfx_model_template_run_plan + File.separator + "startUp.bat");
         System.out.println("水动力模型计算:水动力模型计算结束。。。");
 
@@ -766,7 +779,13 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
                 // 输出exe输出的信息以及错误信息
                 System.out.println(line);
             }
+            if (brError.readLine() != null){
+                System.out.println("水动力调度模型调用失败！");
+            }else {
+                System.out.println("水动力调度模型调用成功！");
+            }
         } catch (Exception e) {
+            System.out.println("水动力调度模型调用失败！");
             e.printStackTrace();
         } finally {
             if (br != null) {
@@ -777,7 +796,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
                 }
             }
         }
-        System.out.println("水动力调度模型调用成功！");
+
     }
 
     private int copyExeFile(String hsfx_model_template_run, String hsfx_model_template_run_plan) {
