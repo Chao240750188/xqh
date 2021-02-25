@@ -80,7 +80,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
      */
     @Override
     public Integer getPlanInfoByName(String planName) {
-        List<YwkPlaninfo> byCPlanname = ywkPlaninfoDao.findByCPlanname(planName);
+        String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("XT_HSFX");
+
+        List<YwkPlaninfo> byCPlanname = ywkPlaninfoDao.findByCPlannameAndPlanSystem(planName,planSystem);
         return byCPlanname.size();
     }
 

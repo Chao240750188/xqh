@@ -18,9 +18,9 @@ public interface YwkPlaninfoDao extends EssenceJpaRepository<YwkPlaninfo,String 
     YwkPlaninfo findOneById(String planId);
 
     /**
-     * 根据方案名称查询
+     * 根据方案名称和所属系统查询方案
      * @param planName
      * @return
      */
-    List<YwkPlaninfo> findByCPlanname(String planName);
+    List<YwkPlaninfo> findByCPlannameAndPlanSystem(String planName,String planSystem);
 }
