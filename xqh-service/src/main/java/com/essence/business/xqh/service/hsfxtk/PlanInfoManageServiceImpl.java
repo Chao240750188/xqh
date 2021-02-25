@@ -96,6 +96,14 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
             resultMap.put("stcd",maps.get(0).get("STCD"));
             resultMap.put("name",maps.get(0).get("BOUNDARYNM"));
             resultMap.put("mileage",maps.get(0).get("MILEAGE"));
+            Collections.sort(maps, new Comparator<Map<String, Object>>() {
+                @Override
+                public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+                    Integer relative_time1 = Integer.parseInt(o1.get("RELATIVE_TIME")+"");
+                    Integer relative_time2 = Integer.parseInt(o2.get("RELATIVE_TIME")+"");
+                    return relative_time1-relative_time2;
+                }
+            });
             resultMap.put("list",maps);
             boundaryResults.add(resultMap);
         }
