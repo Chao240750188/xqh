@@ -4,6 +4,8 @@ import com.essence.business.xqh.api.fbc.dto.PlanInfoFbcVo;
 import com.essence.business.xqh.api.fbc.dto.YwkFbcPlanInfoBoundaryDto;
 import com.essence.business.xqh.api.hsfxtk.dto.ModelParamVo;
 import com.essence.business.xqh.dao.entity.fbc.FbcHdpHhtdzW;
+import com.essence.framework.jpa.Paginator;
+import com.essence.framework.jpa.PaginatorParam;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -73,4 +75,32 @@ public interface ModelCallFbcService {
      * @return
      */
     Object getModelResultTdz(String planId);
+
+    /**
+     * 获取方案列表
+     * @return
+     */
+    Paginator getPlanList(PaginatorParam paginatorParam);
+
+    /**
+     * 根据方案id获取方案详细信息
+     * @param planId
+     * @return
+     */
+    Object getPlanInfoByPlanId(String planId);
+
+
+    /**
+     *  * 根据方案id获取水位/流量数据显示
+     *    * @param planId
+     * @return
+     */
+    Object getBoundaryZqByPlanId(String planId);
+
+
+    /**
+     * 根据方案id删除所有信息
+     * @param planId
+     */
+    void deleteAllInputByPlanId(String planId);
 }

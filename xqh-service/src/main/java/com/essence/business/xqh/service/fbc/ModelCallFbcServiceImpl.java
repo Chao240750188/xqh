@@ -14,6 +14,9 @@ import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
 import com.essence.business.xqh.dao.entity.fbc.*;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
+import com.essence.framework.jpa.Criterion;
+import com.essence.framework.jpa.Paginator;
+import com.essence.framework.jpa.PaginatorParam;
 import com.essence.framework.util.StrUtil;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
@@ -21,11 +24,12 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.transaction.Transactional;
 import java.io.*;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -683,5 +687,165 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
     @Override
     public Object getModelResultTdz(String planId) {
         return fbcHdpHhtdzWDao.findByNPlanidOrderByAbsoluteTime(planId);
+    }
+
+
+    @Override
+    public Paginator getPlanList(PaginatorParam paginatorParam) {
+
+        String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("XT_FBC");
+
+        List<Criterion> orders = paginatorParam.getOrders();
+        if(orders==null){
+            orders = new ArrayList<>();
+        }
+        Criterion criterion = new Criterion();
+        criterion.setFieldName("nCreatetime");
+        criterion.setOperator(Criterion.DESC);
+        orders.add(criterion);
+
+        List<Criterion> conditions = paginatorParam.getConditions();
+        if(conditions==null) {
+            conditions = new ArrayList<>();
+            paginatorParam.setConditions(conditions);
+        }
+        Criterion criterion1 = new Criterion();
+        criterion1.setFieldName("planSystem");
+        criterion1.setOperator(Criterion.EQ);
+        criterion1.setValue(planSystem);
+        conditions.add(criterion1);
+        Paginator<YwkPlaninfo> all = ywkPlaninfoDao.findAll(paginatorParam);
+        return all;
+    }
+
+
+    @Override
+    public Object getPlanInfoByPlanId(String planId) {
+        YwkPlaninfo oneById = ywkPlaninfoDao.findOneById(planId);
+        return oneById;
+    }
+
+    @Override
+    public Object getBoundaryZqByPlanId(String planId) {
+        List<FbcBoundaryZ> fbcBoundaryZ = fbcBoundaryZDao.findByNPlanidOrderByAbsoluteTime(planId);
+        List<FbcBoundaryQ> fbcBoundaryQ = fbcBoundaryQDao.findByNPlanidOrderByAbsoluteTime(planId);
+        List<FbcWindDirection> fbcWindDirection = fbcWindDirectionDao.findByNPlanidOrderByAbsoluteTime(planId);
+        List<FbcWindSpeed> fbcWindSpeed = fbcWindSpeedDao.findByNPlanidOrderByAbsoluteTime(planId);
+        List<FbcWindPressure> fbcWindPressure = fbcWindPressureDao.findByNPlanidOrderByAbsoluteTime(planId);
+        List<FbcWindMinimumPressure> fbcWindMinimumPressure = fbcWindMinimumPressureDao.findByNPlanidOrderByAbsoluteTime(planId);
+        List<FbcWindMaximumSpeed> fbcWindMaximumSpeed = fbcWindMaximumSpeedDao.findByNPlanidOrderByAbsoluteTime(planId);
+
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        List<JSONObject> results = new ArrayList<>();
+        JSONObject obj1 = new JSONObject();
+        obj1.put("boundaryData","boundaryData1");
+        List<Map<String,Object>> datas1 = new ArrayList();
+        for (FbcBoundaryZ boundaryZ : fbcBoundaryZ){
+            Map map1 = new HashMap();
+            Double z = boundaryZ.getZ();
+            Date absoluteTime = boundaryZ.getAbsoluteTime();
+            map1.put("boundaryData",z);
+            map1.put("time",format.format(absoluteTime));
+            datas1.add(map1);
+        }
+        obj1.put("dataList",datas1);
+        //----------------------------------
+        JSONObject obj2 = new JSONObject();
+        obj2.put("boundaryData","boundaryData2");
+        List<Map<String,Object>> datas2 = new ArrayList();
+        for (FbcBoundaryQ boundaryQ : fbcBoundaryQ){
+            Map map2 = new HashMap();
+            Double q = boundaryQ.getQ();
+            Date absoluteTime = boundaryQ.getAbsoluteTime();
+            map2.put("boundaryData",q);
+            map2.put("time",format.format(absoluteTime));
+            datas2.add(map2);
+        }
+        obj2.put("dataList",datas2);
+        //-----------------------------------------
+        JSONObject obj3 = new JSONObject();
+        obj3.put("boundaryData","boundaryData3");
+        List<Map<String,Object>> datas3 = new ArrayList();
+        for (FbcWindDirection f : fbcWindDirection){
+            Map map3 = new HashMap();
+            String direction = f.getDirection();
+            Date absoluteTime = f.getAbsoluteTime();
+            map3.put("boundaryData",direction);
+            map3.put("time",format.format(absoluteTime));
+            datas3.add(map3);
+        }
+        obj3.put("dataList",datas3);
+        //------------------------------------
+        JSONObject obj4 = new JSONObject();
+        obj4.put("boundaryData","boundaryData4");
+        List<Map<String,Object>> datas4 = new ArrayList();
+        for (FbcWindSpeed f : fbcWindSpeed){
+            Map map4 = new HashMap();
+            Double speed = f.getSpeed();
+            Date absoluteTime = f.getAbsoluteTime();
+            map4.put("boundaryData",speed);
+            map4.put("time",format.format(absoluteTime));
+            datas4.add(map4);
+        }
+        obj4.put("dataList",datas4);
+        //--------------
+        JSONObject obj5 = new JSONObject();
+        obj5.put("boundaryData","boundaryData5");
+        List<Map<String,Object>> datas5 = new ArrayList();
+        for (FbcWindPressure f : fbcWindPressure){
+            Map map5 = new HashMap();
+            Double pressure = f.getPressure();
+            Date absoluteTime = f.getAbsoluteTime();
+            map5.put("boundaryData",pressure);
+            map5.put("time",format.format(absoluteTime));
+            datas5.add(map5);
+        }
+        obj5.put("dataList",datas5);
+        //-------------------------------
+        JSONObject obj6 = new JSONObject();
+        obj6.put("boundaryData","boundaryData6");
+        List<Map<String,Object>> datas6 = new ArrayList();
+        for (FbcWindMinimumPressure f : fbcWindMinimumPressure){
+            Map map6 = new HashMap();
+            Double pressure = f.getPressure();
+            Date absoluteTime = f.getAbsoluteTime();
+            map6.put("boundaryData",pressure);
+            map6.put("time",format.format(absoluteTime));
+            datas6.add(map6);
+        }
+        obj6.put("dataList",datas6);
+
+        JSONObject obj7 = new JSONObject();
+        obj7.put("boundaryData","boundaryData7");
+        List<Map<String,Object>> datas7 = new ArrayList();
+        for (FbcWindMaximumSpeed f : fbcWindMaximumSpeed){
+            Map map7 = new HashMap();
+            Double speed = f.getSpeed();
+            Date absoluteTime = f.getAbsoluteTime();
+            map7.put("boundaryData",speed);
+            map7.put("time",format.format(absoluteTime));
+            datas7.add(map7);
+        }
+        obj7.put("dataList",datas7);
+        results.add(obj1);
+        results.add(obj2);
+        results.add(obj3);
+        results.add(obj4);
+        results.add(obj5);
+        results.add(obj6);
+        results.add(obj7);
+        return results;
+    }
+
+    @Transactional
+    @Override
+    public void deleteAllInputByPlanId(String planId) {
+        fbcBoundaryZDao.deleteByNPlanid(planId);
+        fbcBoundaryQDao.deleteByNPlanid(planId);
+        fbcWindDirectionDao.deleteByNPlanid(planId);
+        fbcWindSpeedDao.deleteByNPlanid(planId);
+        fbcWindPressureDao.deleteByNPlanid(planId);
+        fbcWindMinimumPressureDao.deleteByNPlanid(planId);
+        fbcWindMaximumSpeedDao.deleteByNPlanid(planId);
     }
 }

@@ -3,6 +3,7 @@ package com.essence.business.xqh.service.hsfxtk;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.essence.business.xqh.api.hsfxtk.PlanInfoManageService;
+import com.essence.business.xqh.common.util.PropertiesUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
 import com.essence.business.xqh.dao.dao.hsfxtk.*;
@@ -53,15 +54,29 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
 
     @Override
     public Paginator<YwkPlaninfo> getPlanList(PaginatorParam paginatorParam) {
+        String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("XT_HSFX");
+
         List<Criterion> orders = paginatorParam.getOrders();
         if(orders==null){
             orders = new ArrayList<>();
         }
+
         Criterion criterion = new Criterion();
         criterion.setFieldName("nCreatetime");
         criterion.setOperator(Criterion.DESC);
         orders.add(criterion);
         paginatorParam.setOrders(orders);
+
+        List<Criterion> conditions = paginatorParam.getConditions();
+        if(conditions==null) {
+            conditions = new ArrayList<>();
+            paginatorParam.setConditions(conditions);
+        }
+        Criterion criterion1 = new Criterion();
+        criterion1.setFieldName("planSystem");
+        criterion1.setOperator(Criterion.EQ);
+        criterion1.setValue(planSystem);
+        conditions.add(criterion1);
         Paginator<YwkPlaninfo> all = ywkPlaninfoDao.findAll(paginatorParam);
         return all;
     }

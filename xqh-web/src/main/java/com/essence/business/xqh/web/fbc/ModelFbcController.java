@@ -9,6 +9,8 @@ import com.essence.business.xqh.api.hsfxtk.dto.YwkPlanInfoBoundaryDto;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.common.util.ExcelUtil;
 import com.essence.business.xqh.dao.entity.fbc.FbcHdpHhtdzW;
+import com.essence.framework.jpa.Paginator;
+import com.essence.framework.jpa.PaginatorParam;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -183,6 +185,73 @@ public class ModelFbcController {
         Object results = modelCallFbcService.getModelResultTdz(planId);
         return SystemSecurityMessage.getSuccessMsg("获取模型计算结果潮位数据成功",results);
 
+    }
+
+    /**
+     * 获取方案列表成功
+     * @return
+     */
+    @RequestMapping(value = "/getPlanList", method = RequestMethod.POST)
+    public SystemSecurityMessage getPlanList(@RequestBody PaginatorParam paginatorParam) {
+        try {
+            Paginator planList = modelCallFbcService.getPlanList(paginatorParam);
+            return SystemSecurityMessage.getSuccessMsg("获取风暴潮方案列表成功！", planList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("获取风暴潮方案列表失败！");
+
+        }
+    }
+
+    /**
+     * 根据某个id查询方案的详细信息
+     * @return
+     */
+    @RequestMapping(value = "/getPlanInfoByPlanId/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getPlanInfoByPlanId(@PathVariable String planId) {
+        try {
+            Object planInfo = modelCallFbcService.getPlanInfoByPlanId(planId);
+            return SystemSecurityMessage.getSuccessMsg("根据方案id获取方案信息成功！", planInfo);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("根据方案id获取方案信息失败！");
+
+        }
+    }
+
+
+    /**
+     *  根据方案id获取水位/流量数据显示
+     *  @param planId
+     * @return
+     */
+    @RequestMapping(value = "/getBoundaryZqByPlanId/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getBoundaryZqByPlanId(@PathVariable String planId) {
+        try {
+            Object planInfo = modelCallFbcService.getBoundaryZqByPlanId(planId);
+            return SystemSecurityMessage.getSuccessMsg("根据方案id获取水位/流量成功！", planInfo);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("根据方案id获取水位/流量失败！");
+
+        }
+    }
+
+    /**
+     * 删除方案以及方案下关联点所有入参
+     * @param planId
+     * @return
+     */
+    @RequestMapping(value = "/deleteAllInputByPlanId/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage deleteAllInputByPlanId(@PathVariable String planId) {
+        try {
+            modelCallFbcService.deleteAllInputByPlanId(planId);
+            return SystemSecurityMessage.getSuccessMsg("删除方案信息成功！");
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("删除方案信息失败！");
+
+        }
     }
 }
 

@@ -16,4 +16,10 @@ public interface FbcWindSpeedDao extends EssenceJpaRepository<FbcWindSpeed, Stri
      * @return
      */
     List<FbcWindSpeed> findByNPlanidOrderByAbsoluteTime(String planId);
+
+    /**
+     * 根据方案id删除边界条件信息
+     * @param planId
+     */
+    void deleteByNPlanid(String planId);
 }
