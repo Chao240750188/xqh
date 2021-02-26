@@ -698,6 +698,7 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         List<Criterion> orders = paginatorParam.getOrders();
         if(orders==null){
             orders = new ArrayList<>();
+            paginatorParam.setOrders(orders);
         }
         Criterion criterion = new Criterion();
         criterion.setFieldName("nCreatetime");
@@ -847,5 +848,7 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         fbcWindPressureDao.deleteByNPlanid(planId);
         fbcWindMinimumPressureDao.deleteByNPlanid(planId);
         fbcWindMaximumSpeedDao.deleteByNPlanid(planId);
+        fbcHdpHhtdzWDao.deleteByNPlanid(planId);
+        ywkPlaninfoDao.deleteById(planId);
     }
 }
