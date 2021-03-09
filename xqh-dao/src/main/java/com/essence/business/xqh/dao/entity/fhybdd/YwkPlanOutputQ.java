@@ -1,5 +1,8 @@
 package com.essence.business.xqh.dao.entity.fhybdd;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -15,6 +18,9 @@ public class YwkPlanOutputQ {
     private String idcId;
     @Column(name = "N_PLANID")
     private String nPlanid;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @Column(name = "D_TIME")
     private Date dTime;
     @Column(name = "N_Q")

@@ -17,4 +17,10 @@ public interface YwkPlaninFloodBoundaryDao extends EssenceJpaRepository<YwkPlani
     void deleteByPlanId(String planId);
 
     List<YwkPlaninFloodBoundary> findByPlanId(String planId);
+
+    /**
+     * 感觉方案id和stcd删除-针对潮位数据处理潮位站
+     * @param planId
+     */
+    void deleteByPlanIdAndStcd(String planId,String stcd);
 }
