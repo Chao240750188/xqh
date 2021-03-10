@@ -26,7 +26,6 @@ public class ModelFbcGcdController {
 
     @Autowired
     ModelFbcGcdService modelFbcGcdService;
-
     /**
      * 根据方案名称查询方案
      *
