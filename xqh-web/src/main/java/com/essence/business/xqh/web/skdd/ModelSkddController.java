@@ -37,6 +37,7 @@ public class ModelSkddController {
      *
      * @return
      */
+
     @RequestMapping(value = "getPlanInfoByName/{planName}", method = RequestMethod.GET)
     public SystemSecurityMessage getPlanInfoByName(@PathVariable String planName) {
         try {
