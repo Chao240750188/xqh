@@ -98,7 +98,7 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
 
 
     @Query(value = "SELECT B.STCD,B.STNM,r.DRP FROM ST_STBPRP_B b INNER JOIN ( SELECT * FROM ST_STSMTASK_B WHERE PFL = 1 ) m " +
-            "ON b.STCD = m.STCD LEFT JOIN ( SELECT STCD, DRP FROM ST_PPTN_R WHERE TM >= ?1 AND TM <=?2 ) r " +
+            "ON b.STCD = m.STCD INNER JOIN ( SELECT STCD, SUM (DRP) DRP FROM ST_PPTN_R WHERE TM >= ?1 AND TM <=?2  GROUP BY STCD) r " +
             "ON r.STCD = B.STCD ORDER BY DRP DESC", nativeQuery = true)
     List<Map<String, Object>> getRainSituation(Date startTime, Date endTime);
 
@@ -148,6 +148,22 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
      * 查询记录雨量的站点信息
      * @return
      */
-    @Query(value="SELECT b.STCD,b.STNM,b.LGTD,b.LTTD  FROM ST_STBPRP_B B LEFT JOIN ST_STSMTASK_B M ON B.STCD = M.STCD WHERE B.USFL = '1' AND M.PFL = '1'",nativeQuery=true)
-    List<Map<String,Object>> findUseRainStbprpb();
+    @Query(value = "SELECT b.STCD,b.STNM,b.LGTD,b.LTTD  FROM ST_STBPRP_B B LEFT JOIN ST_STSMTASK_B M ON B.STCD = M.STCD WHERE B.USFL = '1' AND M.PFL = '1'", nativeQuery = true)
+    List<Map<String, Object>> findUseRainStbprpb();
+
+    /**
+     * 查询记录水位的站点信息
+     *
+     * @return
+     */
+    @Query(value = "SELECT b.STCD,b.STNM,b.RVNM FROM ST_STBPRP_B B LEFT JOIN ST_STSMTASK_B M ON B.STCD = M.STCD WHERE B.USFL = '1' AND M.ZFL = '1'", nativeQuery = true)
+    List<Map<String, Object>> findUseWaterLevelStbprpb();
+
+    /**
+     * 查询记录流量的站点信息
+     *
+     * @return
+     */
+    @Query(value = "SELECT b.STCD,b.STNM,b.RVNM FROM ST_STBPRP_B B LEFT JOIN ST_STSMTASK_B M ON B.STCD = M.STCD WHERE B.USFL = '1' AND M.QFL = '1'", nativeQuery = true)
+    List<Map<String, Object>> findUseWaterFlowStbprpb();
 }

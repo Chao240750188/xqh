@@ -30,6 +30,8 @@ public class RainMonitoringController {
     FloodWarningService floodWarningService;
     @Autowired
     RainfallSearchService rainfallSearchService;
+    @Autowired
+    WaterCompareAnalysisService waterCompareAnalysisService;
 
     /**
      * 实时监测-雨情监测-雨情概况
@@ -551,6 +553,67 @@ public class RainMonitoringController {
         try {
             return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getMonthRainfallTendency(dto));
         } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+
+    /**
+     * 雨量信息查询-雨量对比分析
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/rainfallCompareAnalysis")
+    public SystemSecurityMessage rainfallCompareAnalysis(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.rainfallCompareAnalysis(dto));
+        } catch (Exception exception) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水情信息查询-水情对比分析-左侧树
+     *
+     * @return
+     */
+    @PostMapping(value = "/getStnmList")
+    public SystemSecurityMessage getStnmList(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", waterCompareAnalysisService.getStnmList(dto));
+        } catch (Exception exception) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+
+    }
+
+    /**
+     * 水情信息查询-水情对比分析-水位
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getWaterLevelTendency")
+    public SystemSecurityMessage getWaterLevelTendency(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", waterCompareAnalysisService.getWaterLevelTendency(dto, "level"));
+        } catch (Exception exception) {
+            return new SystemSecurityMessage("error", "查询失败");
+        }
+    }
+
+    /**
+     * 水情信息查询-水情对比分析-流量
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/getWaterFlowTendency")
+    public SystemSecurityMessage getWaterFlowTendency(@RequestBody QueryParamDto dto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询成功", waterCompareAnalysisService.getWaterLevelTendency(dto, "flow"));
+        } catch (Exception exception) {
             return new SystemSecurityMessage("error", "查询失败");
         }
     }
