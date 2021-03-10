@@ -107,7 +107,7 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
             "(SELECT a.STCD, SUM( a.DRP ) total FROM (SELECT B.STCD, R.DRP FROM ST_STBPRP_B B INNER JOIN ( " +
             "SELECT STCD FROM ST_STSMTASK_B WHERE PFL = 1 ) M ON B.STCD = M.STCD LEFT JOIN ( " +
             "SELECT STCD, DRP FROM ST_PPTN_R WHERE TM >= ?1 AND TM <= ?2 ) R ON R.STCD = B.STCD WHERE B.STCD LIKE %?3% OR B.STNM LIKE %?3% ) a " +
-            "GROUP BY a.STCD ) D ON ST.STCD = D.STCD ORDER BY D.TOTAL DESC", nativeQuery = true)
+            "GROUP BY a.STCD ) D ON ST.STCD = D.STCD ORDER BY D.TOTAL DESC NULLS LAST", nativeQuery = true)
     List<Map<String, Object>> getRainDistributionList(Date startTime, Date endTime,String name);
 
 
