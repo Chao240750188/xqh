@@ -14,7 +14,7 @@ public interface YwkPlaninfoDao extends EssenceJpaRepository<YwkPlaninfo,String 
     /**
      * 根据id查询
      */
-    @Query(value="select p from YwkPlaninfo p where p.nPlanid = ?1")
+    @Query(value="select * from YWK_PLANINFO  where  N_PLANID = ?1",nativeQuery = true)
     YwkPlaninfo findOneById(String planId);
 
     /**
