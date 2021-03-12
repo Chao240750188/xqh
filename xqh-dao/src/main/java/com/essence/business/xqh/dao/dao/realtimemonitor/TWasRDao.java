@@ -33,4 +33,6 @@ public interface TWasRDao extends EssenceJpaRepository<TWasR, String> {
      */
     @Query(value="SELECT * FROM (SELECT STCD,TM,UPZ WATERLEVEL,TGTQ FLOW,row_number() over(partition BY STCD ORDER BY TM DESC) rn FROM ST_WAS_R WHERE STCD IN (?1) AND TM<=?2) WHERE rn<3",nativeQuery=true)
     List<Map<String,Object>> findSluiceLastData(List<String> stcdList,Date endTime);
+
+    List<TWasR> findByStcdAndTmBetweenOrderByTmDesc(String stcd, Date startTime, Date endTime);
 }

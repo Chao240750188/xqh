@@ -41,7 +41,17 @@ public class ModelParamVo implements Serializable {
         return roughnessParamid;
     }
 
+    public ModelParamVo() {
+    }
+
+    public ModelParamVo(String nPlanid, String idmodelId, String roughnessParamid) {
+        this.nPlanid = nPlanid;
+        this.idmodelId = idmodelId;
+        this.roughnessParamid = roughnessParamid;
+    }
+
     public void setRoughnessParamid(String roughnessParamid) {
         this.roughnessParamid = roughnessParamid;
+
     }
 }

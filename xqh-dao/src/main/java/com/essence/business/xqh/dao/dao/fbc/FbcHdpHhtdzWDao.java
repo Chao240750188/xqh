@@ -16,4 +16,10 @@ public interface FbcHdpHhtdzWDao extends EssenceJpaRepository<FbcHdpHhtdzW, Stri
      * @return
      */
     List<FbcHdpHhtdzW> findByNPlanidOrderByAbsoluteTime(String planId);
+
+    /**
+     * 根据方案id删除
+     * @param planId
+     */
+    void deleteByNPlanid(String planId);
 }

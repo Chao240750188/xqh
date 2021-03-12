@@ -26,4 +26,9 @@ public interface YwkPlaninRainfallDao extends EssenceJpaRepository<YwkPlaninRain
 
     @Query(value = "SELECT count(C_ID)count FROM \"YWK_PLANIN_RAINFALL\" where N_PLANID = ?1",nativeQuery = true)
     Long countByPlanId(String planId);
+    /**
+     * 根据方案获取雨量列表
+     * @param planId
+     */
+    List<YwkPlaninRainfall> findByNPlanid(String planId);
 }
