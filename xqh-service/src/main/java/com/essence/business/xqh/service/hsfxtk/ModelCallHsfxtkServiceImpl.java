@@ -1117,8 +1117,16 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
                 for (int i = 0; i < ctrCsvDatas.size(); i++) {
                     List<String> strings = readDatas.get(i + 1);
                     YwkPlaninRiverRoughness ywkPlaninRiverRoughness = ctrCsvDatas.get(i);//数据是从0开始
-                    strings.set(2, ywkPlaninRiverRoughness.getMileage() + "");
-                    strings.set(3, ywkPlaninRiverRoughness.getRoughness() + "");
+                    try{
+                        strings.set(2, ywkPlaninRiverRoughness.getMileage() + "");
+                        strings.set(3, ywkPlaninRiverRoughness.getRoughness() + "");
+                    }catch (Exception e){
+                        List<String> newStrings = new ArrayList<>();
+                        newStrings.addAll(strings);
+                        newStrings.add(2, ywkPlaninRiverRoughness.getMileage() + "");
+                        newStrings.add(3, ywkPlaninRiverRoughness.getRoughness() + "");
+                        readDatas.add(i+1,newStrings);
+                    }
                 }
                 for (int i = 1; i < readDatas.size(); i++) {
                     List<String> strings = readDatas.get(i);
