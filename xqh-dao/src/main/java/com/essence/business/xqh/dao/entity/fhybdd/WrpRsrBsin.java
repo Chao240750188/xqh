@@ -1,7 +1,11 @@
 package com.essence.business.xqh.dao.entity.fhybdd;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.Date;
 
 @Entity
 @Table(name = "WRP_RSR_BSIN", schema = "XQH", catalog = "")
@@ -53,8 +57,12 @@ public class WrpRsrBsin {
     private String isrg;
     @Column(name = "RSOV")
     private String rsov;
+
     @Column(name = "DTUPDT")
-    private Timestamp dtupdt;
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date dtupdt;
+
     @Column(name = "RVCRCRSCCD")
     private String rvcrcrsccd;
 
@@ -253,13 +261,11 @@ public class WrpRsrBsin {
         this.rsov = rsov;
     }
 
-    public Timestamp getDtupdt() {
+    public Date getDtupdt() {
         return dtupdt;
     }
 
-    public void setDtupdt(Timestamp dtupdt) {
+    public void setDtupdt(Date dtupdt) {
         this.dtupdt = dtupdt;
     }
-
-
 }

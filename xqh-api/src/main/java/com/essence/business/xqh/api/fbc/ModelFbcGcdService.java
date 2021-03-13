@@ -177,4 +177,6 @@ public interface ModelFbcGcdService {
      * @return
      */
     List<Object> getModelCwBoundaryByFbcPlan(ModelParamVo modelParamVo, String nPlanId);
+
+    void test33(MultipartFile mutilpartFile);
 }

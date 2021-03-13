@@ -8,4 +8,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface WrpRsrBsinDao extends EssenceJpaRepository<WrpRsrBsin,String > {
 
+    /**
+     * 根据水库编码删除
+     * @param stcd
+     */
+    void deleteByRscd(String stcd);
 }

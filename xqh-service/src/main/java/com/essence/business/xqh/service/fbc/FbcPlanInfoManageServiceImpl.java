@@ -1,7 +1,8 @@
-package com.essence.business.xqh.service.hsfxtk;
+package com.essence.business.xqh.service.fbc;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.essence.business.xqh.api.fbc.FbcPlanInfoManageService;
 import com.essence.business.xqh.api.hsfxtk.PlanInfoManageService;
 import com.essence.business.xqh.common.util.PropertiesUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
@@ -24,7 +25,7 @@ import java.util.*;
  * 方案结果列表相关业务层实现
  */
 @Service
-public class PlanInfoManageServiceImpl implements PlanInfoManageService {
+public class FbcPlanInfoManageServiceImpl implements FbcPlanInfoManageService {
 
     @Autowired
     YwkPlaninfoDao ywkPlaninfoDao;
@@ -54,7 +55,7 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
 
     @Override
     public Paginator<YwkPlaninfo> getPlanList(PaginatorParam paginatorParam) {
-        String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("XT_HSFX");
+        String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("XT_FBC_GCD");
 
         List<Criterion> orders = paginatorParam.getOrders();
         if(orders==null){
@@ -83,8 +84,7 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
 
 
     @Override
-    public List<Map> getAllBoundaryByPlanId(String planId) {
-
+    public List<Map> getAllBoundaryQByPlanId(String planId) {
         //获取防洪保护区设置入参列表
         List<Map<String, Object>> boundaryByPlanIds = ywkBoundaryBasicDao.findBoundaryByPlanId(planId);
 

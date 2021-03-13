@@ -13,7 +13,7 @@ public interface YwkModelDao extends EssenceJpaRepository<YwkModel,String > {
 
 
 
-    @Query(value = "select * from YWK_MODEL where MODEL_TYPE = ?1",nativeQuery = true)
+    @Query(value = "select * from YWK_MODEL where MODEL_TYPE = ?1 order by IDMODEL_ID",nativeQuery = true)
     List<YwkModel> getYwkModelByModelType(String modelType);
 
 }

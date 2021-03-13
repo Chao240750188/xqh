@@ -26,12 +26,9 @@ public interface YwkBoundaryBasicDao extends EssenceJpaRepository<YwkBoundaryBas
      */
     List<YwkBoundaryBasic> findByStcdInOrderByBoundaryType(List<String> stcdList);
 
-
-    @Query(value = "select a.STCD,a.MILEAGE,a.BOUNDARYNM," +
-            "b.N_PLANID,b.ABSOLUTE_TIME,b.RELATIVE_TIME,b.Z,b.Q " +
-            "from YWK_BOUNDARY_BASIC a LEFT JOIN " +
-            "(SELECT * from YWK_PLANIN_FLOOD_BOUNDARY WHERE " +
-            "N_PLANID = ?1) b on\n" +
-            "a.STCD = b.STCD ORDER BY MILEAGE ASC ",nativeQuery = true)
+    @Query(value = "select a.STCD,a.BOUNDARY_TYPE ,a.MILEAGE,a.BOUNDARYNM,b.N_PLANID,b.ABSOLUTE_TIME,b.RELATIVE_TIME,b.Z,b.Q\n" +
+            "from YWK_BOUNDARY_BASIC a left JOIN\n" +
+            "YWK_PLANIN_FLOOD_BOUNDARY b on\n" +
+            "a.STCD = b.STCD WHERE b.N_PLANID = ?1 ORDER BY MILEAGE ASC",nativeQuery = true)
     List<Map<String,Object>> findBoundaryByPlanId(String nPlanId);
 }
