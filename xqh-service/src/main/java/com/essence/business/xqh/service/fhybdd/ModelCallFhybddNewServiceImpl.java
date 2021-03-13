@@ -68,12 +68,32 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     @Autowired
     private EntityManager entityManager;
 
+    /**
+     * 根据方案id获取方案信息，并加入缓存
+     * @param planId
+     * @return
+     */
+    @Override
+    public YwkPlaninfo getPlanInfoByPlanId(String planId){
 
+        YwkPlaninfo planinfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);
+        if (planinfo == null){
+            planinfo = ywkPlaninfoDao.findOneById(planId);
+            if (planinfo != null){
+                CacheUtil.saveOrUpdate("planInfo", planId, planinfo);
+            }
+        }
+        return planinfo;
+    }
     @Override
     public String savePlan(ModelCallBySWDDVo vo) {
 
 
         String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("XT_SWYB");
+        List<YwkPlaninfo> isAll = ywkPlaninfoDao.findByCPlannameAndPlanSystem(vo.getcPlanname(), planSystem);
+        if (!CollectionUtils.isEmpty(isAll)){
+            return "isExist";
+        }
 
         Date startTime = vo.getStartTime(); //开始时间
         Date endTIme = vo.getEndTime();  //结束时间
@@ -102,22 +122,19 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         ywkPlaninfo.setdOpensourceendtime(endTIme);
         ywkPlaninfo.setnCreatetime(DateUtil.getCurrentTime());
         ywkPlaninfo.setRiverId(vo.getRvcd());
+        ywkPlaninfo.setnCalibrationStatus(0l);
         YwkPlaninfo saveDbo = ywkPlaninfoDao.save(ywkPlaninfo);
+        //保存数据到缓存
+        CacheUtil.saveOrUpdate("planInfo", ywkPlaninfo.getnPlanid(), ywkPlaninfo);
+
         return saveDbo.getnPlanid();
     }
 
 
     @Override
-    public List<Map<String,Object>> getRainfalls(String planId) {
-        List<Map<String, Object>> results11 = (List<Map<String, Object>>) CacheUtil.get("rainfall", planId+"new");
-        if (!CollectionUtils.isEmpty(results11)){  //TODO inport的时候更新了缓存
-            return results11;
-        }
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
-        if (planInfo == null){
-            System.out.println("方案找不到。。。。。");
-            return new ArrayList<>();
-        }
+    public List<Map<String,Object>> getRainfalls(YwkPlaninfo planInfo) {
+
+
         SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
@@ -126,10 +143,10 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         String endTimeStr = format1.format(endTime);
         Long step = planInfo.getnOutputtm() / 60;//步长
 
-        Long count = ywkPlaninRainfallDao.countByPlanId(planId);
+        Long count = ywkPlaninRainfallDao.countByPlanId(planInfo.getnPlanid());
         List<Map<String, Object>> stPptnRWithSTCD = new ArrayList<>();
         if (count != 0){
-            stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planId);
+            stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planInfo.getnPlanid());
         }
         else {
             stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
@@ -212,7 +229,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             results.add(resultMap);
         }
         //TODO 修改雨量值并不修改基础表的数据，只修改缓存的的数据
-        CacheUtil.saveOrUpdate("rainfall", planId+"new", results);
+        CacheUtil.saveOrUpdate("rainfall", planInfo.getnPlanid()+"new", results);
         return results;
     }
 
@@ -237,12 +254,10 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     }
 
     @Override
-    public List<Map<String,Object>> getTriggerFlow(String planId, String rcsId) {//TODO 未从缓存里拿
+    public List<Map<String,Object>> getTriggerFlow(YwkPlaninfo planInfo, String rcsId) {//
         List<Map<String,Object>> results = new ArrayList<>();
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
-        YwkPlanTriggerRcs ywkPlanTriggerRcs = ywkPlanTriggerRcsDao.findByNPlanidAndRcsId(planId,rcsId);
+        YwkPlanTriggerRcs ywkPlanTriggerRcs = ywkPlanTriggerRcsDao.findByNPlanidAndRcsId(planInfo.getnPlanid(),rcsId);
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH");
-
         if (ywkPlanTriggerRcs == null){
             Date startTime = planInfo.getdCaculatestarttm();
             Date endTime = planInfo.getdCaculateendtm();
@@ -269,9 +284,8 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
 
     @Override
-    public Workbook exportTriggerFlowTemplate(String planId) {//TODO 回写的没写
+    public Workbook exportTriggerFlowTemplate(YwkPlaninfo planInfo) {//TODO 回写的没写
 
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
         //封装边界模板数据
         XSSFWorkbook workbook = new XSSFWorkbook();
 
@@ -315,9 +329,8 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
     @Transactional
     @Override
-    public List<Map<String,Object>> importTriggerFlowData(MultipartFile mutilpartFile, String planId,String rcsId) {
+    public List<Map<String,Object>> importTriggerFlowData(MultipartFile mutilpartFile, YwkPlaninfo planInfo,String rcsId) {
         List<Map<String,Object>> result = new ArrayList<>();
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         //解析ecxel数据 不包含第一行
@@ -361,11 +374,11 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             return new ArrayList<>();
         }
         //1、先插入
-        ywkPlanTriggerRcsDao.deleteByNPlanidAndRcsId(planId, rcsId);
+        ywkPlanTriggerRcsDao.deleteByNPlanidAndRcsId(planInfo.getnPlanid(), rcsId);
 
         YwkPlanTriggerRcs ywkPlanTriggerRcs = new YwkPlanTriggerRcs();
         ywkPlanTriggerRcs.setId(StrUtil.getUUID());
-        ywkPlanTriggerRcs.setnPlanid(planId);
+        ywkPlanTriggerRcs.setnPlanid(planInfo.getnPlanid());
         ywkPlanTriggerRcs.setRcsId(rcsId);
         ywkPlanTriggerRcs.setCreateTime(new Date());
         ywkPlanTriggerRcsDao.save(ywkPlanTriggerRcs);
@@ -392,18 +405,13 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     }
 
     @Override
-    public Workbook exportRainfallTemplate(String planId) {
+    public Workbook exportRainfallTemplate(YwkPlaninfo planInfo) {
 
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
-        if (planInfo == null){
-            return  new XSSFWorkbook();
-        }
         //封装时间列
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
         Long step = planInfo.getnOutputtm() / 60;//步长
        
-        //List<StStbprpB> stations = stStbprpBDao.findAll();
         //封装边界模板数据
         XSSFWorkbook workbook = new XSSFWorkbook();
 
@@ -441,7 +449,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             startTime = DateUtil.getNextHour(startTime, step.intValue());
         }
 
-        List<Map<String, Object>> rainfalls = getRainfalls(planId);
+        List<Map<String, Object>> rainfalls = getRainfalls(planInfo);
         int rowLine = 1;
         for (Map<String,Object> map :rainfalls ){
             //A.STCD,A.STNM,A.LGTD,A.LTTD,B.TM,B.DRP
@@ -476,14 +484,11 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     }
 
     @Override
-    public List<Map<String, Object>> importRainfallData(MultipartFile mutilpartFile, String planId) {
+    public List<Map<String, Object>> importRainfallData(MultipartFile mutilpartFile, YwkPlaninfo planInfo) {
         List<StStbprpB> stbp = stStbprpBDao.findAll();
         Map<String, StStbprpB> collect = stbp.stream().collect(Collectors.toMap(StStbprpB::getStcd, Function.identity()));
-
         List<Map<String,Object>> result = new ArrayList<>();
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
         //解析ecxel数据 不包含第一行
         List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile, 0);
 
@@ -597,11 +602,10 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             }//里层for循环
             insert.put("LIST",list11);
             inSertList.add(insert);
-
         }
 
         //TODO 修改雨量值并不修改基础表的数据，只修改缓存的的数据
-        CacheUtil.saveOrUpdate("rainfall", planId+"new", inSertList);
+        CacheUtil.saveOrUpdate("rainfall", planInfo.getnPlanid()+"new", inSertList);
         return inSertList;
     }
 
@@ -609,20 +613,9 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     ModelCallHandleDataService modelCallHandleDataService;
     @Transactional
     @Override
-    public void saveRainfallsFromCacheToDb(String planId) {
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+    public void saveRainfallsFromCacheToDb(YwkPlaninfo planInfo,List<Map<String,Object>> results) {
 
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        if (planInfo == null){
-            System.out.println("planId找不到方案信息");
-            return;
-        }
-        List<Map<String,Object>> result = (List<Map<String,Object>>) CacheUtil.get("rainfall", planId+"new");
 
-        if (CollectionUtils.isEmpty(result)){
-            System.out.println("缓存里没有雨量信息");
-            return;
-        }
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH");
         List<String> timeResults = new ArrayList();
         Date startTime = planInfo.getdCaculatestarttm();
@@ -634,7 +627,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             startTime = DateUtil.getNextHour(startTime, step.intValue());
         }
         List<YwkPlaninRainfall> insertList = new ArrayList<>();
-        for (Map<String,Object> map : result){//
+        for (Map<String,Object> map : results){//
             String id = map.get("STCD") + "";//STCD<STNM<LGTD<LTTD<LIST
             List<Map<String,Object>> list = (List<Map<String,Object>>) map.get("LIST");
             int z = 0;
@@ -655,7 +648,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 YwkPlaninRainfall ywkPlaninRainfall = new YwkPlaninRainfall();
                 ywkPlaninRainfall.setcId(StrUtil.getUUID());
                 ywkPlaninRainfall.setcStcd(id);
-                ywkPlaninRainfall.setnPlanid(planId);
+                ywkPlaninRainfall.setnPlanid(planInfo.getnPlanid());
                 try {
                     ywkPlaninRainfall.setdTime(format.parse(time));
                 }catch (Exception e){
@@ -670,25 +663,12 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                     System.out.println("雨量值不正确");
                     continue;
                 }
-
                 insertList.add(ywkPlaninRainfall);
             }//里层for循环
 
         }//外层for循环*/
+        ywkPlaninRainfallDao.deleteByNPlanid(planInfo.getnPlanid());//先删除，后新增*/
 
-        ywkPlaninRainfallDao.deleteByNPlanid(planId);//先删除，后新增*/
-
-       /* List<YwkPlaninRainfall> result = new ArrayList<>();
-
-        for (int i=0;i<4000;i++){
-            YwkPlaninRainfall y = new YwkPlaninRainfall();
-            y.setcId(StrUtil.getUUID());
-            y.setnPlanid("1111"+i);
-            y.setnDrp(1.0+i);
-            y.setdTime(new Date());
-            y.setcStcd("111"+i);
-            result.add(y);
-        }*/
         int insertLength = insertList.size();
         int i = 0;
         List<CompletableFuture<Integer>> futures = new ArrayList<>();
@@ -714,32 +694,19 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
 
     @Override
-    public Long modelCallHandleData(String planId) {
-
-
-        //YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);//方案基本信息
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
-        if(planInfo == null){
-            System.out.println("计划信息为空，无法计算");
-            return -1L;
-        }
+    public Long modelCall(YwkPlaninfo planInfo) {
 
         //雨量信息表
-       // List<Map<String, Object>> results = (List<Map<String, Object>>) CacheUtil.get("rainfall", planId+"new");
-        Long aLong = ywkPlaninRainfallDao.countByPlanId(planId);
-        if (aLong == 0){
+        Long aLong = ywkPlaninRainfallDao.countByPlanId(planInfo.getnPlanid());
+        if (aLong == 0L){
             System.out.println("方案雨量表没有保存数据");
             return -1L;
         }
-        List<Map<String, Object>> results = getRainfalls(planId);
+        List<Map<String, Object>> results = getRainfalls(planInfo);
         if (CollectionUtils.isEmpty(results)){
             System.out.println("雨量信息为空，无法计算");
             return -1L;
         }
-        /*String catchMentAreaModelId = planInfo.getnModelid(); //集水区模型id   // 1是SCS  2是单位线
-        String reachId = planInfo.getnSWModelid(); //河段模型id*/
-
-        // modelPyId = modelProperties.getModel().get(modelid);
 
         //创建入参、出参
         String SWYB_PCP_HANDLE_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_NEW_PCP_HANDLE_MODEL_PATH");
@@ -752,24 +719,24 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         String PCP_HANDLE_MODEL_TEMPLATE = SWYB_PCP_HANDLE_MODEL_PATH + File.separator + template;
 
         String PCP_HANDLE_MODEL_TEMPLATE_INPUT = PCP_HANDLE_MODEL_TEMPLATE
-                + File.separator + "INPUT" + File.separator + planId; //输入的地址
+                + File.separator + "INPUT" + File.separator + planInfo.getnPlanid(); //输入的地址
         String PCP_HANDLE_MODEL_TEMPLATE_OUTPUT = SWYB_PCP_HANDLE_MODEL_PATH + File.separator + out
-                + File.separator + planId;//输出的地址
+                + File.separator + planInfo.getnPlanid();//输出的地址
 
         String PCP_HANDLE_MODEL_RUN = SWYB_PCP_HANDLE_MODEL_PATH + File.separator + run;
 
-        String PCP_HANDLE_MODEL_RUN_PLAN = PCP_HANDLE_MODEL_RUN + File.separator + planId;
+        String PCP_HANDLE_MODEL_RUN_PLAN = PCP_HANDLE_MODEL_RUN + File.separator + planInfo.getnPlanid();
 
         //另一个模型
         String SHUIWEN_MODEL_TEMPLATE = SWYB_SHUIWEN_MODEL_PATH + File.separator + template;
         String SHUIWEN_MODEL_TEMPLATE_INPUT = SHUIWEN_MODEL_TEMPLATE
-                + File.separator + "INPUT" + File.separator + planId; //输入的地址
+                + File.separator + "INPUT" + File.separator + planInfo.getnPlanid(); //输入的地址
         String SHUIWEN_MODEL_TEMPLATE_OUTPUT = SWYB_SHUIWEN_MODEL_PATH + File.separator + out
-                + File.separator + planId;//输出的地址
+                + File.separator + planInfo.getnPlanid();//输出的地址
         //模型运行的config
         String SHUIWEN_MODEL_RUN = SWYB_SHUIWEN_MODEL_PATH + File.separator + run;
 
-        String SHUIWEN_MODEL_RUN_PLAN = SHUIWEN_MODEL_RUN + File.separator + planId;
+        String SHUIWEN_MODEL_RUN_PLAN = SHUIWEN_MODEL_RUN + File.separator + planInfo.getnPlanid();
 
         File inputPcpPath = new File(PCP_HANDLE_MODEL_TEMPLATE_INPUT);
         File outPcpPath = new File(PCP_HANDLE_MODEL_TEMPLATE_OUTPUT);
@@ -865,7 +832,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             return -1L;
         }
         //11,修改shuiwen config文件
-        int result9 = writeDataToShuiWenConfig(SHUIWEN_MODEL_RUN_PLAN, SHUIWEN_MODEL_TEMPLATE_INPUT, SHUIWEN_MODEL_TEMPLATE_OUTPUT);
+        int result9 = writeDataToShuiWenConfig(SHUIWEN_MODEL_RUN_PLAN, SHUIWEN_MODEL_TEMPLATE_INPUT, SHUIWEN_MODEL_TEMPLATE_OUTPUT,0,planInfo);
         if (result9 == 0){
             System.out.println("水文模型之水文模型:修改config文件失败");
             return -1L;
@@ -891,20 +858,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
     }
     @Override
-    public Long ModelCallCalibration(String planId) {
-
-
-        //YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);//方案基本信息
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
-        if(planInfo == null){
-            System.out.println("计划信息为空，无法计算");
-            return -1L;
-        }
-        Long status = planInfo.getnPlanstatus();
-        if (status.longValue() != 2){
-            System.out.println("模型首次计算未成功，不能进行率定运算");
-            return -1L;
-        }
+    public Long ModelCallCalibration(YwkPlaninfo planInfo) {
 
 
         //创建入参、出参
@@ -913,23 +867,25 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
         String run = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
 
-
        //TODO 二次运行 pcp模型就不用在执行了
 
         //另一个模型
         String SHUIWEN_MODEL_TEMPLATE = SWYB_SHUIWEN_MODEL_PATH + File.separator + template;
         String SHUIWEN_MODEL_TEMPLATE_INPUT = SHUIWEN_MODEL_TEMPLATE
-                + File.separator + "INPUT" + File.separator + planId; //输入的地址
-        String SHUIWEN_MODEL_TEMPLATE_OUTPUT = SWYB_SHUIWEN_MODEL_PATH + File.separator + out
-                + File.separator + planId+File.separator+"calibration";//率定的地址
+                + File.separator + "INPUT" + File.separator + planInfo.getnPlanid();
+        String SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION = SHUIWEN_MODEL_TEMPLATE
+                + File.separator + "INPUT" + File.separator + planInfo.getnPlanid()+File.separator+"calibration"; //输入的地址 //TODO 加一个calibration
+        String SHUIWEN_MODEL_TEMPLATE_OUTPUT_CALIBRATION = SWYB_SHUIWEN_MODEL_PATH + File.separator + out
+                + File.separator + planInfo.getnPlanid()+File.separator+"calibration";//率定的地址
         //模型运行的config
         String SHUIWEN_MODEL_RUN = SWYB_SHUIWEN_MODEL_PATH + File.separator + run;
 
-        String SHUIWEN_MODEL_RUN_PLAN = SHUIWEN_MODEL_RUN + File.separator + planId;
+        String SHUIWEN_MODEL_RUN_PLAN = SHUIWEN_MODEL_RUN + File.separator + planInfo.getnPlanid();
 
-        File outShuiWenPath = new File(SHUIWEN_MODEL_TEMPLATE_OUTPUT);
-
+        File outShuiWenPath = new File(SHUIWEN_MODEL_TEMPLATE_OUTPUT_CALIBRATION);
         outShuiWenPath.mkdir();
+        File inputShuiwenPath = new File(SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION);
+        inputShuiwenPath.mkdir();
 
         String  catchModel = planInfo.getnModelid();
         String reachModel = planInfo.getnSWModelid();
@@ -937,7 +893,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         switch (catchModel){
             case "MODEL_SWYB_CATCHMENT_SCS":
                 //1 修改率定的SCS模型watershed.csv入参文件，watershed.csv
-                int result0 = writeCalibrationWatershedCsv(SHUIWEN_MODEL_TEMPLATE_INPUT,planInfo);
+                int result0 = writeCalibrationWatershedCsv(SHUIWEN_MODEL_TEMPLATE_INPUT,SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION,planInfo);
                 if (result0 == 0){
                     System.out.println("率定: 率定交互watershed.csv输入文件失败");
                     return -1L;
@@ -945,7 +901,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 break;
             case "MODEL_SWYB_CATCHMENT_DWX":
                 //2 修改率定的单位线unit.csv文件
-                int result1 = writeCalibrationUnitCsv(SHUIWEN_MODEL_TEMPLATE_INPUT,planInfo);
+                int result1 = writeCalibrationUnitCsv(SHUIWEN_MODEL_TEMPLATE_INPUT,SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION,planInfo);
                 if (result1 == 0){
                     System.out.println("率定: 率定交互unit.csv输入文件失败");
                     return -1L;
@@ -953,7 +909,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 break;
             case "MODEL_SWYB_CATCHMENT_XAJ":
                 //3 修改率定的单位线xaj.csv文件
-                int result2 = writeCalibrationXajCsv(SHUIWEN_MODEL_TEMPLATE_INPUT,planInfo);
+                int result2 = writeCalibrationXajCsv(SHUIWEN_MODEL_TEMPLATE_INPUT,SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION,planInfo);
                 if (result2 == 0){
                     System.out.println("率定: 率定交互xaj.csv输入文件失败");
                     return -1L;
@@ -974,7 +930,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         switch (reachModel){
             case "MODEL_SWYB_REACH_MSJG":
                 //4 修改率定的单位线msgj.csv文件
-                int result3 = writeCalibrationMsgjCsv(SHUIWEN_MODEL_TEMPLATE_INPUT,planInfo);
+                int result3 = writeCalibrationMsgjCsv(SHUIWEN_MODEL_TEMPLATE_INPUT,SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION,planInfo);
                 if (result3 == 0){
                     System.out.println("率定: 率定交互msgj.csv输入文件失败");
                     return -1L;
@@ -990,12 +946,11 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 System.out.println("模型河段编码错误");
                 return -1L;
         }
-        if (isTag == 2){
+        if (isTag == 2){//TODO 后面加入新安江跟相关系数需要改
             return -1L;
         }
-
         //5,修改shuiwen config文件
-        int result4 = writeDataToShuiWenConfig(SHUIWEN_MODEL_RUN_PLAN, SHUIWEN_MODEL_TEMPLATE_INPUT, SHUIWEN_MODEL_TEMPLATE_OUTPUT);
+        int result4 = writeDataToShuiWenConfig(SHUIWEN_MODEL_RUN_PLAN, SHUIWEN_MODEL_TEMPLATE_INPUT, SHUIWEN_MODEL_TEMPLATE_OUTPUT_CALIBRATION,1,planInfo);
         if (result4 == 0){
             System.out.println("率定:修改config文件失败");
             return -1L;
@@ -1007,7 +962,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         System.out.println("率定:模型计算结束。。。");
 
         //判断是否执行成功，是否有error文件
-        String errorStr = SHUIWEN_MODEL_TEMPLATE_OUTPUT + File.separator + "error_log.txt";
+        String errorStr = SHUIWEN_MODEL_TEMPLATE_OUTPUT_CALIBRATION + File.separator + "error_log.txt";
         File errorFile = new File(errorStr);
         if (errorFile.exists()) {//存在表示执行失败
             System.out.println("率定:模型计算失败。。存在error_log文件");
@@ -1020,10 +975,11 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
     }
 
-    private int writeCalibrationMsgjCsv(String shuiwen_model_template_input, YwkPlaninfo planinfo) {
+    private int writeCalibrationMsgjCsv(String shuiwen_model_template_input,String shuiwen_model_template_input_calibration, YwkPlaninfo planinfo) {
 
         String reachInput = shuiwen_model_template_input + File.separator + "Reach.csv";
-        String reachXiangGuanShujvInput = shuiwen_model_template_input + File.separator + "reach_xiangguan_shujv.csv";
+        String reachInputUpdate = shuiwen_model_template_input_calibration + File.separator + "Reach.csv";
+        //String reachXiangGuanShujvInput = shuiwen_model_template_input + File.separator + "reach_xiangguan_shujv.csv";
 
         String riverId = planinfo.getRiverId();
         List<WrpRiverZone> wrpRiverZones = wrpRiverZoneDao.findByRvcd(riverId);
@@ -1063,7 +1019,14 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
         }
         if (dataMap.size() == 0){
-            System.out.println("scs cn值未变");
+            try {
+                FileUtil.copyFile(reachInput, reachInputUpdate, true);
+                System.out.println("copy msjg文件成功");
+            }catch (Exception e){
+                System.out.println("copy msjg文件失败");
+                e.printStackTrace();
+            }
+            System.out.println("msjg率定值k x 值未变");
             return 1;
         }
 
@@ -1089,7 +1052,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             }
         }
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(reachInput, false)); // 附加
+            BufferedWriter bw = new BufferedWriter(new FileWriter(reachInputUpdate, false)); // 附加
             // 添加新的数据行
             String head = "";
             List<String> strings1 = readDatas.get(0);
@@ -1106,7 +1069,6 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 if (zone != null){
                     strings.set(2,zone.getMsjgK()+"");
                     strings.set(3,zone.getMsjgX()+"");
-
                 }
 
                 String line = "";
@@ -1143,13 +1105,21 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         }
     }
 
-    private int writeCalibrationXajCsv(String shuiwen_model_template_input, YwkPlaninfo planinfo) {
+    private int writeCalibrationXajCsv(String shuiwen_model_template_input,String shuiwen_model_template_input_calibration, YwkPlaninfo planinfo) {
 
         String xajInput = shuiwen_model_template_input + File.separator + "xaj.csv";
+        String xajInputUpdate = shuiwen_model_template_input_calibration + File.separator + "xaj.csv";
 
         YwkPlanCalibrationXaJBasic xajBasic = ywkPlanCalibrationXaJBasicDao.findByNPlanid(planinfo.getnPlanid());
 
         if (xajBasic == null){
+            try {
+                FileUtil.copyFile(xajInput, xajInputUpdate, true);
+                System.out.println("copy xaj文件成功");
+            }catch (Exception e){
+                System.out.println("copy xaj文件失败");
+                e.printStackTrace();
+            }
             System.out.println("水文模型 新安江没有率定");
             return 1;
         }
@@ -1168,7 +1138,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
              * WD0	20
              * ep	0.1
              */
-            BufferedWriter bw = new BufferedWriter(new FileWriter(xajInput, false)); // 附加
+            BufferedWriter bw = new BufferedWriter(new FileWriter(xajInputUpdate, false)); // 附加
             // 添加新的数据行
             String xajKStr = "K,"+ xajBasic.getXajK();
             String xajBStr = "B," + xajBasic.getXajB();
@@ -1217,16 +1187,24 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         }
     }
 
-    private int writeCalibrationUnitCsv(String shuiwen_model_template_input, YwkPlaninfo planinfo) {
+    private int writeCalibrationUnitCsv(String shuiwen_model_template_input,String shuiwen_model_template_input_calibration,YwkPlaninfo planinfo) {
         String unitInput = shuiwen_model_template_input + File.separator + "unit.csv";
+        String unitInputUpdate = shuiwen_model_template_input_calibration + File.separator + "unit.csv";
 
         List<YwkPlanCalibrationDwx> dwxes = ywkPlanCalibrationDwxDao.findByNPlanid(planinfo.getnPlanid());
         if (CollectionUtils.isEmpty(dwxes)){
-            System.out.println("dwx 没有率定交互");
+            try {
+                FileUtil.copyFile(unitInput, unitInputUpdate, true);
+                System.out.println("copy unit文件成功");
+            }catch (Exception e){
+                System.out.println("copy unit文件失败");
+                e.printStackTrace();
+            }
+            System.out.println("dwx 没有率定交互");//copy一份进去
             return 1;
         }
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(unitInput, false)); // 附加
+            BufferedWriter bw = new BufferedWriter(new FileWriter(unitInputUpdate, false)); // 附加
             // 添加新的数据行
             String head = "unit_001,unit_002,unit_003";
             bw.write(head);
@@ -1249,8 +1227,9 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         }
     }
 
-    private int writeCalibrationWatershedCsv(String shuiwen_model_template_input,YwkPlaninfo planinfo) {
+    private int writeCalibrationWatershedCsv(String shuiwen_model_template_input,String shuiwen_model_template_input_calibration,YwkPlaninfo planinfo) {
         String watershedInput = shuiwen_model_template_input + File.separator + "Watershed.csv";
+        String watershedInputUpdate = shuiwen_model_template_input_calibration + File.separator + "Watershed.csv";
         String riverId = planinfo.getRiverId();
         List<WrpRiverZone> wrpRiverZones = wrpRiverZoneDao.findByRvcd(riverId);
 
@@ -1288,7 +1267,15 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             dataMap.put(rvcd+zoneStr,ywkPlanCalibrationZone.getScsCn());
 
         }
-        if (dataMap.size() == 0){
+        if (dataMap.size() == 0){ //值未变，copy一份进去
+
+            try {
+                FileUtil.copyFile(watershedInput, watershedInputUpdate, true);
+                System.out.println("copy watershed文件成功");
+            }catch (Exception e){
+                System.out.println("copy watershed文件失败");
+                e.printStackTrace();
+            }
             System.out.println("scs cn值未变");
             return 1;
         }
@@ -1313,7 +1300,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             }
         }
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(watershedInput, false)); // 附加
+            BufferedWriter bw = new BufferedWriter(new FileWriter(watershedInputUpdate, false)); // 附加
             // 添加新的数据行
             String head = "";
             List<String> strings1 = readDatas.get(0);
@@ -1360,7 +1347,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
      * @param shuiwen_model_template_output
      * @return
      */
-    private int writeDataToShuiWenConfig(String shuiwen_model_run_plan, String shuiwen_model_template_input, String shuiwen_model_template_output) {
+    private int writeDataToShuiWenConfig(String shuiwen_model_run_plan, String shuiwen_model_template_input, String shuiwen_model_template_output,int tag,YwkPlaninfo planinfo) {
         String configUrl = shuiwen_model_run_plan + File.separator + "config.txt";
         List<String> list = new ArrayList();
         String reachUrl = "Reach&&" + shuiwen_model_template_input + File.separator + "Reach.csv";
@@ -1383,6 +1370,50 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         String shuiku_resultUrl = "shuiku_result&&" + shuiwen_model_template_output + File.separator + "shuiku_result.txt";
         String errorUrl = "error&&" + shuiwen_model_template_output + File.separator + "error_log.txt";
 
+        if (tag == 1){
+            String catchMentAreaModelId = planinfo.getnModelid(); //集水区模型id   // 1是SCS  2是单位线
+            String reachId = planinfo.getnSWModelid(); //河段模型id
+
+            /**
+             * 1：SCS模型
+             * 2：单位线模型
+             * 3：新安江模型
+             * 4：智能模型
+             */
+            switch (catchMentAreaModelId){
+                case "MODEL_SWYB_CATCHMENT_SCS":
+                    WatershedUrl = "Watershed&&" + shuiwen_model_template_input + File.separator+"calibration" + File.separator + "Watershed.csv";;
+                    break;
+                case "MODEL_SWYB_CATCHMENT_DWX":
+                    unitUrl = "unit&&" + shuiwen_model_template_input + File.separator+"calibration" + File.separator + "unit.csv";
+                    break;
+                case "MODEL_SWYB_CATCHMENT_XAJ":
+                    xaj_xinputUrl = "xaj_xinput&&" + shuiwen_model_template_input + File.separator+"calibration" + File.separator + "xaj.csv";
+                    break;
+                case "MODEL_SWYB_CATCHMENT_ZN":
+                    break;
+                default:
+                    System.out.println("模型集水区编码错误");
+                    return 0;
+            }
+            /**
+             * 1：马斯京根法
+             * 2：相关关系法
+             * 3：智能方法
+             */
+            switch (reachId){
+                case "MODEL_SWYB_REACH_MSJG":
+                    reachUrl = "Reach&&" + shuiwen_model_template_input + File.separator+"calibration"+File.separator + "Reach.csv";
+                    break;
+                case "MODEL_SWYB_REACH_XGGX":
+                    break;
+                case "MODEL_SWYB_REACH_ZN":
+                    break;
+                default:
+                    System.out.println("模型河段编码错误");
+                    return 0;
+            }
+        }
         list.add(reachUrl);
         list.add(WatershedUrl);
         list.add(unitUrl);
@@ -1941,13 +1972,8 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
 
     @Override
-    public String getModelRunStatus(String planId,Integer tag) {
+    public String getModelRunStatus(YwkPlaninfo planInfo,Integer tag) {
 
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
-        if (planInfo == null){
-            System.out.println("方案找不到。。。。。");
-            return "1";
-        }
         Long status;
         if (tag == 0){
             status  = planInfo.getnPlanstatus();
@@ -1964,11 +1990,10 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     }
 
     @Override
-    public Object getModelResultQ(String planId,Integer tag) {
+    public Object getModelResultQ(YwkPlaninfo planInfo,Integer tag) {
 
         DecimalFormat df = new DecimalFormat("0.000");
         JSONArray list = new JSONArray();
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
 
         Long step = planInfo.getnOutputtm() / 60;//步长(小时)
 
@@ -1980,10 +2005,10 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         String SHUIWEN_MODEL_TEMPLATE_OUTPUT ="";
         if (tag == 0){
             SHUIWEN_MODEL_TEMPLATE_OUTPUT = SWYB_SHUIWEN_MODEL_PATH + File.separator + out
-                    + File.separator + planId;//输出的地址
+                    + File.separator + planInfo.getnPlanid();//输出的地址
         }else {
             SHUIWEN_MODEL_TEMPLATE_OUTPUT = SWYB_SHUIWEN_MODEL_PATH + File.separator + out
-                    + File.separator + planId + File.separator +"calibration";//输出的地址
+                    + File.separator + planInfo.getnPlanid() + File.separator +"calibration";//输出的地址
         }
         //解析河道断面
         Map<String, List<String>> finalResult = getModelResult(SHUIWEN_MODEL_TEMPLATE_OUTPUT+File.separator+"result.txt");
@@ -2031,9 +2056,9 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
 
     @Override
-    public Object getModelResultQCalibration(String planId) {
-        JSONArray modelResultQ = (JSONArray) getModelResultQ(planId, 0);
-        JSONArray modelResultQCalibration = (JSONArray) getModelResultQ(planId, 1);
+    public Object getModelResultQCalibration(YwkPlaninfo planInfo) {
+        JSONArray modelResultQ = (JSONArray) getModelResultQ(planInfo, 0);
+        JSONArray modelResultQCalibration = (JSONArray) getModelResultQ(planInfo, 1);
         List<Map> resultQ = JSON.parseArray(JSON.toJSONString(modelResultQ), Map.class);
         List<Map> resultQCalibration = JSON.parseArray(JSON.toJSONString(modelResultQCalibration), Map.class);
         Map handleMap = new HashMap();
@@ -2123,16 +2148,15 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
      * @return
      */
     @Override
-    public Object getCalibrationList(String planId) {
+    public Object getCalibrationList(YwkPlaninfo planInfo) {
 
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
 
         List<WrpRiverZone> riverZones = wrpRiverZoneDao.findByRvcd( planInfo.getRiverId());//查找下面的分区
         Map<String, WrpRiverZone> riverZoneMap = riverZones.stream().collect(Collectors.toMap(WrpRiverZone::getcId, Function.identity()));
         List<String> zoneIds = riverZones.stream().map(WrpRiverZone::getcId).collect(Collectors.toList());
 
         //List<YwkPlanCalibrationZone> byZoneIds = ywkPlanCalibrationZoneDao.findByZoneIds(zoneIds);
-        List<YwkPlanCalibrationZone> byNPlanid = ywkPlanCalibrationZoneDao.findByNPlanid(planId);
+        List<YwkPlanCalibrationZone> byNPlanid = ywkPlanCalibrationZoneDao.findByNPlanid(planInfo.getnPlanid());
         Map<String, YwkPlanCalibrationZone> zoneMap = byNPlanid.stream().collect(Collectors.toMap(YwkPlanCalibrationZone::getZoneId, Function.identity()));
 
         String catchMentAreaModelId = planInfo.getnModelid(); //集水区模型id
@@ -2179,7 +2203,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 break;
             case "MODEL_SWYB_CATCHMENT_DWX":
 
-                List<YwkPlanCalibrationDwx> dwxes = ywkPlanCalibrationDwxDao.findByNPlanid(planId);
+                List<YwkPlanCalibrationDwx> dwxes = ywkPlanCalibrationDwxDao.findByNPlanid(planInfo.getnPlanid());
                 if (CollectionUtils.isEmpty(dwxes)){
                     dwxes = null;
                 }
@@ -2188,7 +2212,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 break;
             case "MODEL_SWYB_CATCHMENT_XAJ":
                 catchNum = "3";
-                YwkPlanCalibrationXaJBasic xaJBasic = ywkPlanCalibrationXaJBasicDao.findByNPlanid(planId);
+                YwkPlanCalibrationXaJBasic xaJBasic = ywkPlanCalibrationXaJBasicDao.findByNPlanid(planInfo.getnPlanid());
                 resultMap.put("xaj",xaJBasic);//基础信息
                 List<YwkPlanCalibrationXajEp> xajEps = new ArrayList<>();
                 if (xaJBasic != null){
@@ -2251,7 +2275,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
     //单位线模型参数交互
     @Override
-    public List<Map<String, Double>> importCalibrationWithDWX(MultipartFile mutilpartFile, String planId) {
+    public List<Map<String, Double>> importCalibrationWithDWX(MultipartFile mutilpartFile, YwkPlaninfo planInfo) {
 
         //解析ecxel数据 不包含第一行
         List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile, 0);
@@ -2304,7 +2328,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             return new ArrayList<>();
         }
         //TODO 修改雨量值并不修改基础表的数据，只修改缓存的的数据
-        CacheUtil.saveOrUpdate("calibrationDWX", planId, results);
+        CacheUtil.saveOrUpdate("calibrationDWX", planInfo.getnPlanid(), results);
         return results;
     }
 
@@ -2312,13 +2336,12 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     /**
      * 新安江参数交互
      * @param mutilpartFile
-     * @param planId
+     * @param planInfo
      * @return
      */
     @Override
-    public List<Map<String, Object>> importCalibrationWithXAJ(MultipartFile mutilpartFile, String planId) {
+    public List<Map<String, Object>> importCalibrationWithXAJ(MultipartFile mutilpartFile, YwkPlaninfo planInfo) {
 
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
 
         //解析ecxel数据 不包含第一行
         List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile, 0);
@@ -2373,13 +2396,13 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             return new ArrayList<>();
         }
         //TODO 修改雨量值并不修改基础表的数据，只修改缓存的的数据
-        CacheUtil.saveOrUpdate("calibrationXAJ", planId, results);
+        CacheUtil.saveOrUpdate("calibrationXAJ", planInfo.getnPlanid(), results);
         return results;
     }
 
 
     @Override
-    public List<Map<String, Double>> importCalibrationWithMSJG(MultipartFile mutilpartFile, String planId) {
+    public List<Map<String, Double>> importCalibrationWithXGXS(MultipartFile mutilpartFile, YwkPlaninfo planInfo) {
 
         //解析ecxel数据 不包含第一行
         List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile, 0);
@@ -2389,7 +2412,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         }
         List<String> head = Arrays.asList(excelList.get(0));
         if (CollectionUtils.isEmpty(head) || head.size() != 2){
-            System.out.println("马斯京根表格有问题。。。。");
+            System.out.println("相关系数表格有问题。。。。");
             return new ArrayList<>();
         }
         List<Map<String,Double>> results = new ArrayList<>();
@@ -2430,7 +2453,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             return new ArrayList<>();
         }
         //TODO 修改雨量值并不修改基础表的数据，只修改缓存的的数据
-        CacheUtil.saveOrUpdate("calibrationMSJG", planId, results);
+        CacheUtil.saveOrUpdate("calibrationMSJG", planInfo.getnPlanid(), results);
         return results;
     }
 
@@ -2442,15 +2465,14 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
     @Transactional
     @Override
-    public void saveCalibrationDwxToDB(String planId,List<Map<String,Double>> result) {
+    public void saveCalibrationDwxToDB(YwkPlaninfo planInfo,List<Map<String,Double>> result) {
 
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
-        if (planInfo.getnCalibrationStatus() == null || planInfo.getnCalibrationStatus() != 0L){
-            planInfo.setnCalibrationStatus(0L);
+        if ( planInfo.getnCalibrationStatus() != 0L){
+            planInfo.setnCalibrationStatus(0L);//将模型运算置换到0的状态
             ywkPlaninfoDao.save(planInfo);
         }
 
-        ywkPlanCalibrationDwxDao.deleteByNPlanid(planId);//删除
+        ywkPlanCalibrationDwxDao.deleteByNPlanid(planInfo.getnPlanid());//删除
         List<YwkPlanCalibrationDwx> insert = new ArrayList<>();
         for (Map<String,Double> map : result){
             YwkPlanCalibrationDwx ywkPlanCalibrationDwx = new YwkPlanCalibrationDwx();
@@ -2461,7 +2483,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             ywkPlanCalibrationDwx.setUnitTwo(d2);
             ywkPlanCalibrationDwx.setUnitThree(d3);
             ywkPlanCalibrationDwx.setcId(StrUtil.getUUID());
-            ywkPlanCalibrationDwx.setnPlanid(planId);
+            ywkPlanCalibrationDwx.setnPlanid(planInfo.getnPlanid());
             ywkPlanCalibrationDwx.setCreateTime(new Date());
             insert.add(ywkPlanCalibrationDwx);
         }
@@ -2473,17 +2495,16 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
     @Transactional
     @Override
-    public void saveCalibrationXAJToDB(String planId, List<Map<String, Object>> result, CalibrationXAJVo calibrationXAJVo) {
+    public void saveCalibrationXAJToDB(YwkPlaninfo planInfo, List<Map<String, Object>> result, CalibrationXAJVo calibrationXAJVo) {
 
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
-        if (planInfo.getnCalibrationStatus() == null || planInfo.getnCalibrationStatus() != 0L){
+        if (planInfo.getnCalibrationStatus() != 0L){
             planInfo.setnCalibrationStatus(0L);
             ywkPlaninfoDao.save(planInfo);
         }
-        ywkPlanCalibrationXaJBasicDao.deleteByNPlanid(planId);
+        ywkPlanCalibrationXaJBasicDao.deleteByNPlanid(planInfo.getnPlanid());
         YwkPlanCalibrationXaJBasic calibrationBasic = new YwkPlanCalibrationXaJBasic();
         calibrationBasic.setcId(StrUtil.getUUID());
-        calibrationBasic.setnPlanid(planId);
+        calibrationBasic.setnPlanid(planInfo.getnPlanid());
         calibrationBasic.setCreateTime(new Date());
         calibrationBasic.setXajB(calibrationXAJVo.getXajB());
         calibrationBasic.setXajC(calibrationXAJVo.getXajC());
@@ -2525,10 +2546,9 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     YwkPlanCalibrationFlowDao ywkPlanCalibrationFlowDao;
     @Transactional
     @Override
-    public void saveCalibrationMSJGOrScSToDB(String planId, CalibrationMSJGAndScsVo calibrationMSJGAndScsVo,Integer tag) {
+    public void saveCalibrationMSJGOrScSToDB(YwkPlaninfo planInfo, CalibrationMSJGAndScsVo calibrationMSJGAndScsVo,Integer tag) {
 
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
-        if (planInfo.getnCalibrationStatus() == null || planInfo.getnCalibrationStatus() != 0L){
+        if (planInfo.getnCalibrationStatus() != 0L){
             planInfo.setnCalibrationStatus(0L);
             ywkPlaninfoDao.save(planInfo);
         }
@@ -2548,8 +2568,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             keyMap.put(calibrationMSJGAndScsVo.getMsjg3().getcId(),calibrationMSJGAndScsVo.getMsjg3());
         }
 
-
-        List<YwkPlanCalibrationZone> byNPlanidAndZoneId = ywkPlanCalibrationZoneDao.findByNPlanid(planId);
+        List<YwkPlanCalibrationZone> byNPlanidAndZoneId = ywkPlanCalibrationZoneDao.findByNPlanid(planInfo.getnPlanid());
         Map<String, YwkPlanCalibrationZone> zoneMap = byNPlanidAndZoneId.stream().collect(Collectors.toMap(YwkPlanCalibrationZone::getZoneId, Function.identity()));
 
         for (String id : ids){
@@ -2557,7 +2576,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             if (ywkPlanCalibrationZone == null){
                 ywkPlanCalibrationZone  = new YwkPlanCalibrationZone();
                 ywkPlanCalibrationZone.setcId(StrUtil.getUUID());
-                ywkPlanCalibrationZone.setnPlanid(planId);
+                ywkPlanCalibrationZone.setnPlanid(planInfo.getnPlanid());
                 ywkPlanCalibrationZone.setZoneId(id);
             }
             CalibrationMSJGAndScsVo.MSJGAndScSVo msjgAndScSVo = keyMap.get(id);
@@ -2570,7 +2589,6 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
             ywkPlanCalibrationZoneDao.save(ywkPlanCalibrationZone);//保存
         }
-
 
         /*if (calibrationMSJGVo.getMsjgVote()==1){相关稀释的
             ywkPlanCalibrationFlowDao.deleteByCalibrationId(calibrationBasic.getcId());
@@ -2589,14 +2607,11 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             ywkPlanCalibrationFlowDao.saveAll(insert);
         }
 */
-
     }
 
 
-
     @Override
-    public Workbook exportCalibrationXAJTemplate(String planId) {
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+    public Workbook exportCalibrationXAJTemplate(YwkPlaninfo planInfo) {
         //封装边界模板数据
         XSSFWorkbook workbook = new XSSFWorkbook();
 
@@ -2636,5 +2651,181 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             startTime = DateUtil.getNextHour(startTime, step.intValue());
         }
         return workbook;
+    }
+    @Autowired
+    YwkPlanOutputQDao ywkPlanOutputQDao;
+    @Transactional
+    @Override
+    public void saveModelData(YwkPlaninfo planInfo) {
+        //保存方案计算-降雨量条件
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        //首先保存入库，
+        JSONArray modelResultQ = (JSONArray) getModelResultQ(planInfo, 0);//因为经历过修改保存跟修改撤销后只有一个地方有result文件
+        List<Map> resultQ = JSON.parseArray(JSON.toJSONString(modelResultQ), Map.class);
+        List<YwkPlanOutputQ> insert = new ArrayList<>();
+        for (Map<String,Object> map : resultQ){
+            String rcs_id = map.get("RCS_ID")+"";
+            List<Map<String,Object>> values = (List<Map<String, Object>>) map.get("values");
+            for (Map<String,Object> value : values){
+                YwkPlanOutputQ model = new YwkPlanOutputQ();
+                String time = value.get("time")+"";
+                Double q = Double.parseDouble(value.get("q")+"");
+                model.setIdcId(StrUtil.getUUID());
+                try {
+                    model.setdTime(format.parse(time));
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                model.setnQ(q);
+                model.setnPlanid(planInfo.getnPlanid());
+                model.setRvcrcrsccd(rcs_id);
+                insert.add(model);
+            }
+        }
+
+        ywkPlanOutputQDao.deleteByNPlanid(planInfo.getnPlanid());//先删除，后新增*/
+        //modelCallHandleDataService.handleCsvAndResult(tag,planInfo);//开启个线程处理csv
+        int insertLength = insert.size();
+        int i = 0;
+        List<CompletableFuture<Integer>> futures = new ArrayList<>();
+        while (insertLength > 400) {
+            futures.add(modelCallHandleDataService.savePlanOut(insert.subList(i, i + 400)));
+            i = i + 400;
+            insertLength = insertLength - 400;
+        }
+        if (insertLength > 0) {
+            futures.add(modelCallHandleDataService.savePlanOut(insert.subList(i, i + insertLength)));
+        }
+        System.out.println("futures.size"+futures.size());
+        CompletableFuture[] completableFutures = new CompletableFuture[futures.size()];
+        for (int j = 0;j < futures.size();j++){
+            completableFutures[j] = futures.get(j);
+        }
+        System.out.println("等待多线程执行完毕。。。。");//TODO 我认为不需要那个处理csv文件
+        CompletableFuture.allOf(completableFutures).join();//全部执行完后 然后主线程结束
+        System.out.println("多线程执行完毕，结束主线程。。。。");
+        return ;
+    }
+
+    @Override
+    public int saveOrDeleteResultCsv(YwkPlaninfo planInfo, Integer tag) {
+        String SWYB_SHUIWEN_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_NEW_SHUIWEN_MODEL_PATH");
+        String template = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
+        String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
+        String run = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
+
+        //另一个模型
+        String SHUIWEN_MODEL_TEMPLATE = SWYB_SHUIWEN_MODEL_PATH + File.separator + template;
+        String SHUIWEN_MODEL_TEMPLATE_INPUT = SHUIWEN_MODEL_TEMPLATE
+                + File.separator + "INPUT" + File.separator + planInfo.getnPlanid();
+        String SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION = SHUIWEN_MODEL_TEMPLATE
+                + File.separator + "INPUT" + File.separator + planInfo.getnPlanid()+File.separator+"calibration"; //输入的地址 //TODO 加一个calibration
+
+        String SHUIWEN_MODEL_TEMPLATE_OUTPUT = SWYB_SHUIWEN_MODEL_PATH + File.separator + out
+                + File.separator + planInfo.getnPlanid();//率定的地址
+
+        String SHUIWEN_MODEL_TEMPLATE_OUTPUT_CALIBRATION = SWYB_SHUIWEN_MODEL_PATH + File.separator + out
+                + File.separator + planInfo.getnPlanid()+File.separator+"calibration";//率定的地址
+
+        if (tag == 1){//保留旧的，删除新的  只是删除了文件 但是库里的数据没删除
+
+                String catchMentAreaModelId = planInfo.getnModelid(); //集水区模型id   // 1是SCS  2是单位线
+                String reachId = planInfo.getnSWModelid(); //河段模型id
+
+                /**
+                 * 1：SCS模型
+                 * 2：单位线模型
+                 * 3：新安江模型
+                 * 4：智能模型
+                 */
+                switch (catchMentAreaModelId){
+                    case "MODEL_SWYB_CATCHMENT_SCS":
+                        try {
+                            FileUtil.copyFile(SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION+File.separator+"Watershed.csv",
+                                    SHUIWEN_MODEL_TEMPLATE_INPUT+File.separator+"Watershed.csv",true);
+                            System.out.println("copy 新版watershed.csv替换旧版watershed.scv文件成功");
+                        }catch (Exception e){
+                            System.out.println("copy 新版watershed.csv替换旧版watershed.scv文件失败");
+                            e.printStackTrace();
+                            return 0;
+                        }
+                        break;
+                    case "MODEL_SWYB_CATCHMENT_DWX":
+                        try {
+                            FileUtil.copyFile(SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION+File.separator+"unit.csv",
+                                    SHUIWEN_MODEL_TEMPLATE_INPUT+File.separator+"unit.csv",true);
+                            System.out.println("copy 新版watershed.csv替换旧版unit.scv文件成功");
+                        }catch (Exception e){
+                            System.out.println("copy 新版watershed.csv替换旧版unit.scv文件失败");
+                            e.printStackTrace();
+                            return 0;
+                        }
+                        break;
+                    case "MODEL_SWYB_CATCHMENT_XAJ":
+                        try {
+                            FileUtil.copyFile(SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION+File.separator+"xaj.csv",
+                                    SHUIWEN_MODEL_TEMPLATE_INPUT+File.separator+"xaj.csv",true);
+                            System.out.println("copy 新版watershed.csv替换旧版xaj.scv文件成功");
+                        }catch (Exception e){
+                            System.out.println("copy 新版watershed.csv替换旧版xaj.scv文件失败");
+                            e.printStackTrace();
+                            return 0;
+                        }
+                        break;
+                    case "MODEL_SWYB_CATCHMENT_ZN":
+                        break;
+                    default:
+                        System.out.println("模型集水区编码错误");
+                }
+                /**
+                 * 1：马斯京根法
+                 * 2：相关关系法
+                 * 3：智能方法
+                 */
+                switch (reachId){
+                    case "MODEL_SWYB_REACH_MSJG":
+                        try {
+                            FileUtil.copyFile(SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION+File.separator+"Reach.csv",
+                                    SHUIWEN_MODEL_TEMPLATE_INPUT+File.separator+"Reach.csv",true);
+                            System.out.println("copy 新版watershed.csv替换旧版Reach.scv文件成功");
+                        }catch (Exception e){
+                            System.out.println("copy 新版watershed.csv替换旧版Reach.scv文件失败");
+                            e.printStackTrace();
+                            return 0;
+                        }
+                        break;
+                    case "MODEL_SWYB_REACH_XGGX":
+                        break;
+                    case "MODEL_SWYB_REACH_ZN":
+                        break;
+                    default:
+                        System.out.println("模型河段编码错误");
+                }
+
+                //还需要将结果文件拷贝过来
+            try {//tor + "result.txt";
+                //String shuiku_resultUrl = "shuiku_result&&" + shuiwen_model_template_output + File.separator + "shuiku_result.txt";
+                FileUtil.copyFile(SHUIWEN_MODEL_TEMPLATE_OUTPUT_CALIBRATION+File.separator+"result.txt",
+                        SHUIWEN_MODEL_TEMPLATE_OUTPUT+File.separator+"result.txt",true);
+
+                FileUtil.copyFile(SHUIWEN_MODEL_TEMPLATE_OUTPUT_CALIBRATION+File.separator+"shuiku_result.txt",
+                        SHUIWEN_MODEL_TEMPLATE_OUTPUT+File.separator+"shuiku_result.txt",true);
+
+                System.out.println("copy 新版watershed.csv替换旧版shuiku_result.txt、result.txt文件成功");
+            }catch (Exception e){
+                System.out.println("copy 新版watershed.csv替换旧版shuiku_result.txt、result.txt文件失败");
+                e.printStackTrace();
+                return 0;
+            }
+        }
+        try {
+            FileUtil.deleteFile(SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION); //删除输入文件 //TODO 这个地方率定之前的表里的数据没有了，只有率定之后的了，但是用户是修改保存了可咋办
+            FileUtil.deleteFile(SHUIWEN_MODEL_TEMPLATE_OUTPUT_CALIBRATION);
+        }catch (Exception e){
+            e.printStackTrace();
+            return 0;
+        }
+
+        return 1;
     }
 }

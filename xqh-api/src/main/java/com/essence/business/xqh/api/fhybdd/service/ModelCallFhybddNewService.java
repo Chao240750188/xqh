@@ -5,6 +5,7 @@ import com.essence.business.xqh.api.fhybdd.dto.CalibrationXAJVo;
 import com.essence.business.xqh.api.fhybdd.dto.ModelCallBySWDDVo;
 import com.essence.business.xqh.dao.entity.fhybdd.WrpRcsBsin;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlanTriggerRcsFlow;
+import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,7 +14,12 @@ import java.util.Map;
 
 public interface ModelCallFhybddNewService {
 
-
+    /**
+     * 获取方案信息
+     * @param planId
+     * @return
+     */
+     YwkPlaninfo getPlanInfoByPlanId(String planId);
     /**
      * 保存方案基本信息
      * @param vo
@@ -23,18 +29,18 @@ public interface ModelCallFhybddNewService {
 
     /**
      * 根据方案获取雨量信息
-     * @param planId
+     * @param planInfo
      * @return
      */
-    List<Map<String, Object>> getRainfalls(String planId);
+    List<Map<String, Object>> getRainfalls(YwkPlaninfo planInfo);
 
 
     /**
      * 模型计算，俩个模型一起计算
-     * @param planId
+     * @param ywkPlaninfo
      * @return
      */
-    Long modelCallHandleData(String planId);
+    Long modelCall(YwkPlaninfo ywkPlaninfo);
 
     /**
      * 集水区模型选择跟河段模型选择
@@ -51,133 +57,147 @@ public interface ModelCallFhybddNewService {
 
     /**
      * 根据方案id获取预报断面流量
-     * @param planId
+     * @param planinfo
      * @param rcsId
      * @return
      */
-    List<Map<String,Object>> getTriggerFlow(String planId, String rcsId);
+    List<Map<String,Object>> getTriggerFlow(YwkPlaninfo planinfo, String rcsId);
 
 
     /**
      * 下载预报断面流量模板
-     * @param planId
+     * @param planinfo
      * @return
      */
-    Workbook exportTriggerFlowTemplate(String planId);
+    Workbook exportTriggerFlowTemplate(YwkPlaninfo planinfo);
 
 
     /**
      * 上传预报断面流量数据excel
      * @param mutilpartFile
-     * @param planId
+     * @param planinfo
      * @return
      */
-    List<Map<String,Object>> importTriggerFlowData(MultipartFile mutilpartFile, String planId,String rcsId);
+    List<Map<String,Object>> importTriggerFlowData(MultipartFile mutilpartFile, YwkPlaninfo planinfo,String rcsId);
 
 
     /**
      * 下载雨量模板
-     * @param planId
+     * @param planinfo
      * @return
      */
-    Workbook exportRainfallTemplate(String planId);
+    Workbook exportRainfallTemplate(YwkPlaninfo planinfo);
 
     /**
      * 上传监测站雨量数据excel
      * @param mutilpartFile
-     * @param planId
+     * @param planinfo
      * @return
      */
-    List<Map<String, Object>> importRainfallData(MultipartFile mutilpartFile, String planId);
+    List<Map<String, Object>> importRainfallData(MultipartFile mutilpartFile, YwkPlaninfo planinfo);
 
     /**
      * 从缓存里获取获取雨量信息并存库
-     * @param planId
+     * @param planinfo
      */
-    void saveRainfallsFromCacheToDb(String planId);
+    void saveRainfallsFromCacheToDb(YwkPlaninfo planinfo,List<Map<String,Object>> results);
 
     /**
      * 获取模型运行状态
-     * @param planId
+     * @param ywkPlaninfo
      * @return
      */
-    String getModelRunStatus(String planId,Integer tag);
+    String getModelRunStatus(YwkPlaninfo ywkPlaninfo,Integer tag);
 
     /**
      * 获取模型运行输出结果
-     * @param planId
+     * @param ywkPlaninfo
      * @return
      */
-    Object getModelResultQ(String planId,Integer tag);
+    Object getModelResultQ(YwkPlaninfo ywkPlaninfo,Integer tag);
 
 
     /**
      * 获取率定参数交互列表
-     * @param planId
+     * @param ywkPlaninfo
      * @return
      */
-    Object getCalibrationList(String planId);
+    Object getCalibrationList(YwkPlaninfo ywkPlaninfo);
 
     /**
      * 单位线模型参数交互
      * @param mutilpartFile
-     * @param planId
+     * @param planinfo
      * @return
      */
-    List<Map<String, Double>> importCalibrationWithDWX(MultipartFile mutilpartFile, String planId);
+    List<Map<String, Double>> importCalibrationWithDWX(MultipartFile mutilpartFile, YwkPlaninfo planinfo);
 
     /**
      * 新安江模型参数交互
      * @param mutilpartFile
-     * @param planId
+     * @param planInfo
      * @return
      */
-    List<Map<String, Object>> importCalibrationWithXAJ(MultipartFile mutilpartFile, String planId);
+    List<Map<String, Object>> importCalibrationWithXAJ(MultipartFile mutilpartFile, YwkPlaninfo planInfo);
 
 
     /**
-     * 马思京根模型参数交互
+     * 相关系数
      * @param mutilpartFile
-     * @param planId
+     * @param planinfo
      * @return
      */
-    List<Map<String, Double>> importCalibrationWithMSJG(MultipartFile mutilpartFile, String planId);
+    List<Map<String, Double>> importCalibrationWithXGXS(MultipartFile mutilpartFile, YwkPlaninfo planinfo);
 
     /**
      * 保存率定的单位线信息入库
-     * @param planId
+     * @param planinfo
      */
-    void saveCalibrationDwxToDB(String planId,List<Map<String,Double>> result);
+    void saveCalibrationDwxToDB(YwkPlaninfo planinfo,List<Map<String,Double>> result);
 
     /**
      * 保存率定的新安江信息入库
-     * @param planId
+     * @param planinfo
      * @param result
      * @param calibrationXAJVo
      */
-    void saveCalibrationXAJToDB(String planId, List<Map<String, Object>> result, CalibrationXAJVo calibrationXAJVo);
+    void saveCalibrationXAJToDB(YwkPlaninfo planinfo, List<Map<String, Object>> result, CalibrationXAJVo calibrationXAJVo);
 
     /**
      * 保存马斯京根跟SCS模型参数
-     * @param planId
+     * @param planinfo
      * @param calibrationMSJGAndScsVo
      */
-    void saveCalibrationMSJGOrScSToDB(String planId, CalibrationMSJGAndScsVo calibrationMSJGAndScsVo,Integer tag);
+    void saveCalibrationMSJGOrScSToDB(YwkPlaninfo planinfo, CalibrationMSJGAndScsVo calibrationMSJGAndScsVo,Integer tag);
 
 
     /**
      * 新安江模型蒸发量
-     * @param planId
+     * @param planInfo
      * @return
      */
-    Workbook exportCalibrationXAJTemplate(String planId);
+    Workbook exportCalibrationXAJTemplate(YwkPlaninfo planInfo);
 
-    Long ModelCallCalibration(String planId);
+    Long ModelCallCalibration(YwkPlaninfo planInfo);
 
     /**
      * 获取率定后的结果
-     * @param planId
+     * @param planinfo
      * @return
      */
-    Object getModelResultQCalibration(String planId);
+    Object getModelResultQCalibration(YwkPlaninfo planinfo);
+
+    /**
+     * 方案结果保存
+     * @param planInfo
+     * @return
+     */
+    void saveModelData(YwkPlaninfo planInfo);
+
+    /**
+     * 修改撤销，修改保存
+     * @param planInfo
+     * @param tag
+     */
+    int saveOrDeleteResultCsv(YwkPlaninfo planInfo, Integer tag);
 }
