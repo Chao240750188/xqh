@@ -47,6 +47,27 @@ public class ModelCallBySWDDVo {
      */
     private String rvcd;
 
+    //集水区模型id
+    private String catchmentAreaModelId;
+    //河段模型id
+    private String reachId;
+
+    public String getCatchmentAreaModelId() {
+        return catchmentAreaModelId;
+    }
+
+    public void setCatchmentAreaModelId(String catchmentAreaModelId) {
+        this.catchmentAreaModelId = catchmentAreaModelId;
+    }
+
+    public String getReachId() {
+        return reachId;
+    }
+
+    public void setReachId(String reachId) {
+        this.reachId = reachId;
+    }
+
     public String getcPlanname() {
         return cPlanname;
     }

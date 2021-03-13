@@ -60,4 +60,13 @@ public interface RainfallSearchService {
      * @return
      */
     Map<String, Object> getMonthRainfallTendency(QueryParamDto dto);
+
+
+    /**
+     * 雨量信息查询-雨量对比分析
+     *
+     * @param dto
+     * @return
+     */
+    Map<String, Object> rainfallCompareAnalysis(QueryParamDto dto);
 }

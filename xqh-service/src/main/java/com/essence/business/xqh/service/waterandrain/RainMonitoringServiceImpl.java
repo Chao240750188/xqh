@@ -60,19 +60,12 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
         rainDistributionMap.put("50-100", 0);
         rainDistributionMap.put("100-250", 0);
         rainDistributionMap.put("≥250", 0);
-        Map<String, Boolean> booleanMap = new HashMap<>();
         String max = null;
         if (rainSituation != null && rainSituation.size() > 0) {
-            String stnm = "";
-            BigDecimal drp = new BigDecimal(0);
             Map<String, Object> map = rainSituation.get(0);
-            stnm = map.get("STNM").toString();
-            drp = new BigDecimal(map.get("DRP") == null ? "0" : map.get("DRP").toString());
+            String stnm = map.get("STNM").toString();
+            BigDecimal drp = new BigDecimal(map.get("DRP") == null ? "0" : map.get("DRP").toString());
             for (Map<String, Object> tempMap : rainSituation) {
-                String stcd = tempMap.get("STCD").toString();
-                if (!booleanMap.containsKey(stcd)) {
-                    booleanMap.put(stcd, true);
-                }
                 BigDecimal decimal = new BigDecimal(tempMap.get("DRP") == null ? "0" : tempMap.get("DRP").toString());
                 String section = getRainSection(decimal);
                 Integer integer = rainDistributionMap.get(section);
@@ -81,7 +74,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             }
             max = "最大值为" + drp + "（ " + stnm + " ）";
         }
-        String rainfall = "当前发生降雨的站点共有" + booleanMap.size() + "个。";
+        String rainfall = "当前发生降雨的站点共有" + rainSituation.size() + "个。";
         if (max != null && !"".equals(max)) {
             rainfall = rainfall + max;
         }

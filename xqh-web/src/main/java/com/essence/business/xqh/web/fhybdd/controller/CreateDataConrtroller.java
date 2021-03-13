@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/createData")
@@ -35,11 +36,12 @@ public class CreateDataConrtroller {
     public SystemSecurityMessage modelCallBySWDD(ModelCallBySWDDVo vo) {
         try {
             List<StStbprpB> list = stStbprpBDao.findAll();
+            List<StStbprpB> newLIst = list.stream().filter(StStbprpB->"1".equals(StStbprpB.getAddvcd())).collect(Collectors.toList());
             List<StPptnR> stPptnRList = new ArrayList<>();
-            Date time = DateUtil.getDateByStringNormal("2021/01/01 00:00:00");
+            Date time = DateUtil.getDateByStringNormal("2021/03/01 00:00:00");
             for (int i = 0; i < 500; i++) {
                 Date times = DateUtil.getNextHour(time,i);
-                for (StStbprpB stStbprpB:list) {
+                for (StStbprpB stStbprpB:newLIst) {
                     StPptnR stPptnR = new StPptnR();
                     stPptnR.setStcd(stStbprpB.getStcd());
                     Double drp=(int)(Math.random()*10+1)*1.0;

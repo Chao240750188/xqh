@@ -49,6 +49,9 @@ public class YwkPlaninfo {
     @Column(name = "N_MODELID")
     private String nModelid;
 
+    @Column(name = "N_SW_MODELID")
+    private String nSWModelid;
+
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @Column(name = "D_RAINSTARTTIME")
@@ -83,8 +86,19 @@ public class YwkPlaninfo {
     @Column(name = "C_PLAN_SYSTEM")
     private String planSystem;
 
-    @Transient
+    @Column(name = "C_RIVERID")
    private  String riverId;
+
+    @Column(name = "N_CALIBRATION_STATUS")
+    private Long nCalibrationStatus;
+
+    public Long getnCalibrationStatus() {
+        return nCalibrationStatus;
+    }
+
+    public void setnCalibrationStatus(Long nCalibrationStatus) {
+        this.nCalibrationStatus = nCalibrationStatus;
+    }
 
     public String getRiverId() {
         return riverId;
@@ -92,6 +106,14 @@ public class YwkPlaninfo {
 
     public void setRiverId(String riverId) {
         this.riverId = riverId;
+    }
+
+    public String getnSWModelid() {
+        return nSWModelid;
+    }
+
+    public void setnSWModelid(String nSWModelid) {
+        this.nSWModelid = nSWModelid;
     }
 
     public String getnPlanid() {

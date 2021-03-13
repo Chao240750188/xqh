@@ -405,4 +405,86 @@ public class RainfallSearchServiceImpl implements RainfallSearchService {
         resultMap.put("list", list);
         return resultMap;
     }
+
+    @Override
+    public Map<String, Object> rainfallCompareAnalysis(QueryParamDto dto) {
+        List<Map<String, Object>> rainList = stStbprpBDao.findUseRainStbprpb();
+        Map<String, String> stcdAndNameMap = new HashMap<>();
+        List<String> stcdList = new ArrayList<>();
+        for (int i = 0; i < rainList.size(); i++) {
+            Map<String, Object> map = rainList.get(i);
+            String stcd = map.get("STCD").toString();
+            String stnm = map.get("STNM").toString();
+            stcdAndNameMap.put(stcd, stnm);
+            stcdList.add(stcd);
+        }
+
+        List<Map<String, Object>> time = stPptnRDao.findByStcdInAndTmBetween(stcdList, dto.getStartTime(), dto.getEndTime());
+        Map<String, Object> map = this.handler(time, stcdAndNameMap);
+        List<Map<String, Object>> time1 = stPptnRDao.findByStcdInAndTmBetween(stcdList, dto.getStartTime1(), dto.getEndTime1());
+        Map<String, Object> map1 = this.handler(time1, stcdAndNameMap);
+
+        Map<String, Object> resultMap = new HashMap<>();
+        BigDecimal min = new BigDecimal(map.get("min").toString());
+        BigDecimal min1 = new BigDecimal(map1.get("min").toString());
+        if (min.compareTo(min1) == 1) {
+            resultMap.put("min", min1);
+        } else if (min.compareTo(min1) == -1) {
+            resultMap.put("min", min);
+        } else {
+            resultMap.put("min", min);
+        }
+        BigDecimal max = new BigDecimal(map.get("max").toString());
+        BigDecimal max1 = new BigDecimal(map1.get("max").toString());
+        if (max.compareTo(max1) == 1) {
+            resultMap.put("max", max);
+        } else if (max.compareTo(max1) == -1) {
+            resultMap.put("max", max1);
+        } else {
+            resultMap.put("max", max);
+        }
+        resultMap.put("time", map.get("list"));
+        resultMap.put("time1", map1.get("list"));
+        return resultMap;
+    }
+
+    private Map<String, Object> handler(List<Map<String, Object>> list, Map<String, String> stcdAndNameMap) {
+        BigDecimal min = new BigDecimal(0);
+        BigDecimal max = new BigDecimal(0);
+        BigDecimal total = new BigDecimal(0);
+        Map<String, BigDecimal> map = new HashMap<>();
+        for (int i = 0; i < list.size(); i++) {
+            Map<String, Object> tempMap = list.get(i);
+            String stcd = tempMap.get("STCD").toString();
+            BigDecimal drp = new BigDecimal(tempMap.get("total").toString());
+            total = total.add(drp);
+            if (drp.compareTo(min) == -1) {
+                min = total;
+            }
+            if (drp.compareTo(max) == 1) {
+                max = total;
+            }
+            map.put(stcd, drp);
+        }
+
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        Map<String, Object> avgMap = new HashMap<>();
+        avgMap.put("stnm", "流域平均");
+        avgMap.put("rainfall", total.divide(new BigDecimal(stcdAndNameMap.size()), 2));
+        resultList.add(avgMap);
+        for (Map.Entry<String, String> tempMap : stcdAndNameMap.entrySet()) {
+            String stcd = tempMap.getKey();
+            String stnm = tempMap.getValue();
+            BigDecimal bigDecimal = map.get(stcd) == null ? new BigDecimal(0) : map.get(stcd);
+            Map<String, Object> hashMap = new HashMap<>();
+            hashMap.put("stnm", stnm);
+            hashMap.put("rainfall", bigDecimal);
+            resultList.add(hashMap);
+        }
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("min", min);
+        resultMap.put("max", max);
+        resultMap.put("list", resultList);
+        return resultMap;
+    }
 }
