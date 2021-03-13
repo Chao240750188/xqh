@@ -1,7 +1,11 @@
 package com.essence.business.xqh.dao.entity.fhybdd;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.Date;
 
 @Entity
 @Table(name = "ST_STBPRP_B", schema = "XQH", catalog = "")
@@ -85,9 +89,12 @@ public class StStbprpB {
     //备注
     @Column(name = "COMMENTS")
     private String comments;
-    @Column(name = "MODITIME")
-    private Timestamp moditime;
 
+    //编辑时间
+    @Column(name = "MODITIME")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date moditime;
 
     public String getStcd() {
         return stcd;
@@ -297,11 +304,11 @@ public class StStbprpB {
         this.comments = comments;
     }
 
-    public Timestamp getModitime() {
+    public Date getModitime() {
         return moditime;
     }
 
-    public void setModitime(Timestamp moditime) {
+    public void setModitime(Date moditime) {
         this.moditime = moditime;
     }
 }

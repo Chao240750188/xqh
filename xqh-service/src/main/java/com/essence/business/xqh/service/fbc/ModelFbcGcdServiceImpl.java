@@ -22,13 +22,12 @@ import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.transaction.Transactional;
 import java.io.*;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -672,7 +671,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
             stcdList.add(modelboundary.getStcd());
         }
         List<YwkBoundaryBasic> boundaryBasicList = ywkBoundaryBasicDao.findByStcdInOrderByStcd(stcdList);
-        //流量边界
+        //潮位边界
         List<YwkBoundaryBasic> llboundaryList = new ArrayList<>();
         for (YwkBoundaryBasic ywkBoundaryBasic : boundaryBasicList) {
             if (ywkBoundaryBasic.getBoundaryType().equals("4")) {
@@ -783,7 +782,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 JSONObject dataTimeObj = new JSONObject();
                 dataTimeObj.put("time", timeStr);
                 try {
-                    dataTimeObj.put("boundaryData", Double.parseDouble(strings.get(i + 1)));
+                    dataTimeObj.put("boundaryData", Double.parseDouble(strings.get(1)));
                 } catch (Exception e) {
                     dataTimeObj.put("boundaryData", 0.0);
                 }
@@ -807,6 +806,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
      * @return
      */
     @Override
+    @Transactional
     public List<YwkPlanInfoBoundaryDto> savePlanCwBoundaryData(List<YwkPlanInfoBoundaryDto> ywkPlanInfoBoundaryDtoList, String planId) {
         //根据方案id删除边界条件信息
         if (ywkPlanInfoBoundaryDtoList != null && ywkPlanInfoBoundaryDtoList.size() > 0) {
@@ -847,7 +847,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
 
     @Override
     public List<YwkPlaninfo> getFbcPlaninfoList() {
-        String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("XT_FBC_GCD");
+        String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("XT_FBC");
         List<YwkPlaninfo> byPlanSystemList = ywkPlaninfoDao.findByPlanSystem(planSystem);
         return byPlanSystemList;
     }
@@ -900,9 +900,65 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 list.add(jsonObject);
             }
         }
+        //存入缓存
+        CacheUtil.saveOrUpdate("modelCwBoundary", modelParamVo.getnPlanid(), list);
         return list;
     }
 
+    @Override
+    public void test33(MultipartFile mutilpartFile) {
+        //解析ecxel数据 不包含第一行
+        List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile, 1);
+        List<String> jwdList = new ArrayList<>();
+        // 判断有无数据 时间-每个边界的值集合
+        Map<String, List<String>> dataMap = new HashMap<>();
+        if (excelList != null && excelList.size() > 0) {
+            // 遍历每行数据（除了标题）
+            for (int i = 0; i < excelList.size(); i++) {
+                String[] strings = excelList.get(i);
+                if (strings != null && strings.length > 0) {
+                    // 封装每列（每个指标项数据）
+                    jwdList.add(strings[0]+","+strings[1]+","+strings[2]);
+                }
+            }
+        }
+
+        for (String split : jwdList) {
+            String[] split1 = split.split(",");
+            String jingdu = split1[1];
+            String weidu = split1[2];
+            //经度
+            String[] lgtdArr = jingdu.replace("°", ";").replace("′", ";").replace("″", ";").replace("\"", "").split(";");
+            Double lgtdResult = 0D;
+            for (int j = lgtdArr.length; j > 0; j--) {
+
+                double v = Double.parseDouble(lgtdArr[j - 1]);
+
+                if (j == 1) {
+
+                    lgtdResult = v + lgtdResult;
+                } else {
+                    lgtdResult = (lgtdResult + v) / 60;
+                }
+            }
+
+            //纬度
+            String[] lttdArr = weidu.trim().replace("°", ";").replace("′", ";").replace("″", ";").replace("\"", "").split(";");
+            Double lttdResult = 0D;
+            for (int j = lttdArr.length; j > 0; j--) {
+
+                double v = Double.parseDouble(lttdArr[j - 1]);
+
+                if (j == 1) {
+
+                    lttdResult = v + lttdResult;
+                } else {
+                    lttdResult = (lttdResult + v) / 60;
+                }
+            }
+            System.out.println(lgtdResult + "\t" + lttdResult);
+        }
+    }
 
     @Override
     public List<YwkBreakBasicDto> getBreakList(String modelId) {
@@ -957,7 +1013,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         } else if ("MODEL_FBC_GCD_02".equals(modelid)) {
             hsfx_model_template = hsfx_model_template + File.separator + "FHBHQ2";
         } else {
-            System.out.println("水动力模型的模型id值不对");
+            System.out.println("风暴潮感潮段模型的模型id值不对");
             return;
         }
 
@@ -1000,7 +1056,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         //写入边界条件成功
         int result0 = writeDataToInputBNDCsv(hsfx_model_template_input, BndDatas, BndList);
         if (result0 == 0) {
-            System.out.println("水动力模型计算:边界BND.csv输入文件写入成功。。。");
+            System.out.println("风暴潮感潮段模型计算:边界BND.csv输入文件写入成功。。。");
             return;
         }
 
@@ -1008,44 +1064,44 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         int result1 = writeDataToInputCTRCsv(hsfx_model_template, hsfx_model_template_input, ctrCsvDatas, planInfo, BndList.size());
 
         if (result1 == 0) {
-            System.out.println("水动力模型计算:溃口CTR.csv输入文件写入失败。。。");
+            System.out.println("风暴潮感潮段模型计算:溃口CTR.csv输入文件写入失败。。。");
             return;
         }
         int result2 = writeDataToInputBDCsv(hsfx_model_template, hsfx_model_template_input, planInfo, BndList.size());
 
         if (result2 == 0) {
-            System.out.println("水动力模型计算:溃口通道BD.csv输入文件写入失败。。。");
+            System.out.println("风暴潮感潮段模型计算:溃口通道BD.csv输入文件写入失败。。。");
             return;
         }
 
         int result3 = writeDataToInputWGCsv(hsfx_model_template, hsfx_model_template_input, planInfo);
 
         if (result3 == 0) {
-            System.out.println("水动力模型计算:糙率WG.csv输入文件写入失败。。。");
+            System.out.println("风暴潮感潮段模型计算:糙率WG.csv输入文件写入失败。。。");
             return;
         }
 
         int result4 = copyOtherCsv(hsfx_model_template, hsfx_model_template_input);
         if (result4 == 0) {
-            System.out.println("水动力模型计算:复制其他.csv输入文件写入失败。。。");
+            System.out.println("风暴潮感潮段模型计算:复制其他.csv输入文件写入失败。。。");
             return;
         }
         int result5 = copyExeFile(hsfx_model_template_run, hsfx_model_template_run_plan);
         if (result5 == 0) {
-            System.out.println("水动力模型计算:复制执行文件与config文件写入失败。。。");
+            System.out.println("风暴潮感潮段模型计算:复制执行文件与config文件写入失败。。。");
             return;
         }
 
         int result6 = writeDataToConfig(hsfx_model_template_run_plan, hsfx_model_template_input, hsfx_model_template_output);
         if (result6 == 0) {
-            System.out.println("水动力模型计算:config文件写入失败。。。");
+            System.out.println("风暴潮感潮段模型计算:config文件写入失败。。。");
             return;
         }
         //调用模型计算
-        System.out.println("水动力模型计算:开始水动力模型计算。。。");
-        System.out.println("水动力模型计算路径为。。。" + hsfx_model_template_run_plan + File.separator + "startUp.bat");
+        System.out.println("风暴潮感潮段模型计算:开始风暴潮感潮段模型计算。。。");
+        System.out.println("风暴潮感潮段模型计算路径为。。。" + hsfx_model_template_run_plan + File.separator + "startUp.bat");
         runModelExe(hsfx_model_template_run_plan + File.separator + "startUp.bat");
-        System.out.println("水动力模型计算:水动力模型计算结束。。。");
+        System.out.println("风暴潮感潮段模型计算:风暴潮感潮段模型计算结束。。。");
 
         //判断是否执行成功，是否有error文件
         String errorStr = hsfx_model_template_output + File.separator + "error.txt";
@@ -1066,9 +1122,13 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 //saveGridMaxToDb(planId);
 
                 //如果模型运行成功-解析过程文件生成图片
-                planProcessDataService.readDepthCsvFile(hsfx_model_template_output, "process", planInfo.getnModelid(), planId);
+                String modelIds = "MODEL_HSFX_01";
+                if ("MODEL_FBC_GCD_02".equals(planInfo.getnModelid())) {
+                    modelIds = "MODEL_HSFX_02";
+                }
+                planProcessDataService.readDepthCsvFile(hsfx_model_template_output, "process", modelIds, planId);
                 //解析最大水深文件
-                planProcessDataService.readDepthCsvFile(hsfx_model_template_output, "maxDepth", planInfo.getnModelid(), planId);
+                planProcessDataService.readDepthCsvFile(hsfx_model_template_output, "maxDepth", modelIds, planId);
             } catch (Exception e) {
                 System.out.println("模型结果解析失败！");
             }
@@ -1122,10 +1182,10 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         try {
             FileUtil.copyFile(exeUrl, exeInputUrl, true);
             FileUtil.copyFile(batUrl, batInputUrl, true);
-            System.err.println("水动力模型计算：copy执行文件exe,bat文件成功");
+            System.err.println("风暴潮感潮段模型计算：copy执行文件exe,bat文件成功");
             return 1;
         } catch (Exception e) {
-            System.err.println("水动力模型计算：copy执行文件exe,bat文件错误" + e.getMessage());
+            System.err.println("风暴潮感潮段模型计算：copy执行文件exe,bat文件错误" + e.getMessage());
             return 0;
         }
     }
@@ -1189,16 +1249,16 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 }
             }
             bw.close();
-            System.out.println("写入水动力模型config成功");
+            System.out.println("写入风暴潮感潮段模型config成功");
             return 1;
         } catch (FileNotFoundException e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("写入水动力模型config失败");
+            System.out.println("写入风暴潮感潮段模型config失败");
             e.printStackTrace();
             return 0;
         } catch (IOException e) {
             // BufferedWriter在关闭对象捕捉异常
-            System.out.println("写入水动力模型config失败");
+            System.out.println("写入风暴潮感潮段模型config失败");
             e.printStackTrace();
             return 0;
         }
@@ -1231,10 +1291,10 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
             FileUtil.copyFile(InUrl, InInputUrl, true); //二维的
             FileUtil.copyFile(JDUrl, JDInputUrl, true); //二维的
             FileUtil.copyFile(TDUrl, TDInputUrl, true); //二维的
-            System.err.println("水动力模型计算：copy输入文件成功");
+            System.err.println("风暴潮感潮段模型计算：copy输入文件成功");
             return 1;
         } catch (Exception e) {
-            System.err.println("水动力模型计算：copy输入文件错误" + e.getMessage());
+            System.err.println("风暴潮感潮段模型计算：copy输入文件错误" + e.getMessage());
             return 0;
         }
 
@@ -1259,7 +1319,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 readDatas.add(split);
             }
         } catch (Exception e) {
-            System.err.println("水动力模型计算：WG.csv输入文件读取错误:read errors :" + e);
+            System.err.println("风暴潮感潮段模型计算：WG.csv输入文件读取错误:read errors :" + e);
         } finally {
             try {
                 br.close();
@@ -1285,16 +1345,16 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 bw.newLine();
             }
             bw.close();
-            System.out.println("水动力模型计算：WG.csv输入文件写入成功");
+            System.out.println("风暴潮感潮段模型计算：WG.csv输入文件写入成功");
             return 1;
         } catch (FileNotFoundException e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水动力模型计算：WG.csv输入文件写入失败");
+            System.out.println("风暴潮感潮段模型计算：WG.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         } catch (IOException e) {
             // BufferedWriter在关闭对象捕捉异常
-            System.out.println("水动力模型计算：WG.csv输入文件写入失败");
+            System.out.println("风暴潮感潮段模型计算：WG.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         }
@@ -1308,9 +1368,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         //溃口基本信息表
         YwkBreakBasic breakBasic = ywkBreakBasicDao.findById(floodBreak.getBreakId()).get();
 
-        //String BDInputUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"BD.csv";
         String BDInputUrl = hsfx_model_template_input + File.separator + "erwei" + File.separator + "BD.csv";
-        //String BDInputReadUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh2_Xinhecun_50/erwei" + File.separator+"BD.csv";
         String BDInputReadUrl = hsfx_model_template + File.separator + "erwei" + File.separator + "BD.csv";
 
         List<List<String>> readDatas = new ArrayList();
@@ -1324,7 +1382,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 readDatas.add(split);
             }
         } catch (Exception e) {
-            System.err.println("水动力模型计算：BD.csv输入文件读取错误:read errors :" + e);
+            System.err.println("风暴潮感潮段模型计算：BD.csv输入文件读取错误:read errors :" + e);
         } finally {
             try {
                 br.close();
@@ -1363,16 +1421,16 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 bw.newLine();
             }
             bw.close();
-            System.out.println("水动力模型计算：BD.csv输入文件写入成功");
+            System.out.println("风暴潮感潮段模型计算：BD.csv输入文件写入成功");
             return 1;
         } catch (FileNotFoundException e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水动力模型计算：BD.csv输入文件写入失败");
+            System.out.println("风暴潮感潮段模型计算：BD.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         } catch (IOException e) {
             // BufferedWriter在关闭对象捕捉异常
-            System.out.println("水动力模型计算：BD.csv输入文件写入失败");
+            System.out.println("风暴潮感潮段模型计算：BD.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         }
@@ -1391,9 +1449,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
     private int writeDataToInputCTRCsv(String hsfx_model_template, String hsfx_model_template_input, List<YwkPlaninRiverRoughness> ctrCsvDatas, YwkPlaninfo planInfo, int size) {
 
         String CTRInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "CTR.csv";
-        //String CTRInputUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"CTR.csv";
         String CTRInputReadUrl = hsfx_model_template + File.separator + "yiwei" + File.separator + "CTR.csv";
-        //String CTRInputReadUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh2_Xinhecun_50/yiwei" + File.separator+"CTR.csv";
 
         List<List<String>> readDatas = new ArrayList();
         /* 读取数据 */
@@ -1406,7 +1462,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 readDatas.add(split);
             }
         } catch (Exception e) {
-            System.err.println("水动力模型计算：CTR.csv输入文件读取错误:read errors :" + e);
+            System.err.println("风暴潮感潮段模型计算：CTR.csv输入文件读取错误:read errors :" + e);
         } finally {
             try {
                 br.close();
@@ -1421,16 +1477,22 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
             //溃口基本信息表
             YwkBreakBasic breakBasic = ywkBreakBasicDao.findById(floodBreak.getBreakId()).get();
 
-            //BufferedWriter bw = new BufferedWriter(new FileWriter(CTRInputUrl, false)); // 附加
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(CTRInputUrl, false), "UTF-8"));
             //数据小于等于excel的个数
-            if (ctrCsvDatas.size() <= readDatas.size() - 1) {//9个数据，7个excel 1个表头 TODO 这个if已经测试了 但是else没有测试呢
-
+            if (ctrCsvDatas.size() <= readDatas.size() - 1) {
                 for (int i = 0; i < ctrCsvDatas.size(); i++) {
                     List<String> strings = readDatas.get(i + 1);
                     YwkPlaninRiverRoughness ywkPlaninRiverRoughness = ctrCsvDatas.get(i);//数据是从0开始
-                    strings.set(2, ywkPlaninRiverRoughness.getMileage() + "");
-                    strings.set(3, ywkPlaninRiverRoughness.getRoughness() + "");
+                    try{
+                        strings.set(2, ywkPlaninRiverRoughness.getMileage() + "");
+                        strings.set(3, ywkPlaninRiverRoughness.getRoughness() + "");
+                    }catch (Exception e){
+                        List<String> newStrings = new ArrayList<>();
+                        newStrings.addAll(strings);
+                        newStrings.add(2, ywkPlaninRiverRoughness.getMileage() + "");
+                        newStrings.add(3, ywkPlaninRiverRoughness.getRoughness() + "");
+                        readDatas.add(i+1,newStrings);
+                    }
                 }
                 for (int i = 1; i < readDatas.size(); i++) {
                     List<String> strings = readDatas.get(i);
@@ -1498,16 +1560,16 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 bw.newLine();
             }
             bw.close();
-            System.out.println("水动力模型计算：溃口CTR.csv输入文件写入成功");
+            System.out.println("风暴潮感潮段模型计算：溃口CTR.csv输入文件写入成功");
             return 1;
         } catch (FileNotFoundException e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水动力模型计算：溃口CTR.csv输入文件写入失败");
+            System.out.println("风暴潮感潮段模型计算：溃口CTR.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         } catch (IOException e) {
             // BufferedWriter在关闭对象捕捉异常
-            System.out.println("水动力模型计算：溃口CTR.csv输入文件写入失败");
+            System.out.println("风暴潮感潮段模型计算：溃口CTR.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         }
@@ -1654,12 +1716,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         String BndInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "BND.csv";
 
         try {
-            //BufferedWriter bw = new BufferedWriter(new FileWriter(BndInputUrl, false)); // 附加
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(BndInputUrl, false), "UTF-8"));
-
-            //BufferedWriter bw = new BufferedWriter(new FileWriter("/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本/yiwei/BND.csv", false)); // 附加
-            // 添加新的数据行
-
             String head = "\"上边界条件\"" + "," + "\"\"" + ",";
             head = head + "\"下边界条件\"" + "," + "\"\"";
 
@@ -1689,16 +1746,16 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 bw.newLine();
             }
             bw.close();
-            System.out.println("水动力模型边界条件输入文件写入成功");
+            System.out.println("风暴潮感潮段模型边界条件输入文件写入成功");
             return 1;
         } catch (FileNotFoundException e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水动力模型边界条件输入文件写入失败");
+            System.out.println("风暴潮感潮段模型边界条件输入文件写入失败");
             e.printStackTrace();
             return 0;
         } catch (IOException e) {
             // BufferedWriter在关闭对象捕捉异常
-            System.out.println("水动力模型边界条件输入文件写入失败");
+            System.out.println("风暴潮感潮段模型边界条件输入文件写入失败");
             e.printStackTrace();
             return 0;
         }
@@ -1818,6 +1875,10 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
     @Override
     public void previewPicFile(HttpServletRequest request, HttpServletResponse response, String planId, String picId) {
         YwkPlaninfo planinfo = ywkPlaninfoDao.findOneById(planId);
+        String modelId = "MODEL_HSFX_01";
+        if ("MODEL_FBC_GCD_02".equals(planinfo.getnModelid())) {
+            modelId = "MODEL_HSFX_02";
+        }
         //图片路径
         String outputAbsolutePath = GisPathConfigurationUtil.getOutputPictureAbsolutePath() + "/" + planinfo.getnModelid() + "/" + planId;
         //图片路径
