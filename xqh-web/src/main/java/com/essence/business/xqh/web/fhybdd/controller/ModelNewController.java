@@ -44,14 +44,17 @@ public class ModelNewController {
     public SystemSecurityMessage savePlanWithCache(@RequestBody ModelCallBySWDDVo vo) {
         try {
             String planId = modelCallFhybddNewService.savePlan(vo);
-            if (planId == null){
-                return SystemSecurityMessage.getFailMsg("水文调度模型存入缓存失败！",null);
+            if ("isExist".equals(planId)){
+                return SystemSecurityMessage.getFailMsg("方案名字已经存在，请重新输入！",null);
             }
-            return SystemSecurityMessage.getSuccessMsg("水文调度模型存入缓存成功",planId);
+            if (planId == null){
+                return SystemSecurityMessage.getFailMsg("水文调度模型保存失败！",null);
+            }
+            return SystemSecurityMessage.getSuccessMsg("水文调度模型保存成功",planId);
 
         }catch (Exception e){
             e.printStackTrace();
-            return SystemSecurityMessage.getFailMsg("水文调度模型存入缓存失败！",null);
+            return SystemSecurityMessage.getFailMsg("水文调度模型保存失败！",null);
 
         }
     }
@@ -65,7 +68,15 @@ public class ModelNewController {
     @RequestMapping(value = "/getRainfalls/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage getRainfalls(@PathVariable String planId) {
         try {
-            List<Map<String,Object>> results = modelCallFhybddNewService.getRainfalls(planId);
+            YwkPlaninfo planinfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+            if (planinfo == null){
+                return SystemSecurityMessage.getFailMsg("方案id不存在");
+            }
+            List<Map<String, Object>> results11 = (List<Map<String, Object>>) CacheUtil.get("rainfall", planId+"new");
+            if (!CollectionUtils.isEmpty(results11)){  //TODO inport的时候更新了缓存
+                return SystemSecurityMessage.getSuccessMsg("根据方案获取雨量信息成功",results11);
+            }
+            List<Map<String,Object>> results = modelCallFhybddNewService.getRainfalls(planinfo);
             return SystemSecurityMessage.getSuccessMsg("根据方案获取雨量信息成功",results);
         }catch (Exception e){
             e.printStackTrace();
@@ -82,7 +93,17 @@ public class ModelNewController {
     @RequestMapping(value = "/saveRainfallsFromCacheToDb/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage saveRainfallsFromCacheToDb(@PathVariable String planId) {
         try {
-            modelCallFhybddNewService.saveRainfallsFromCacheToDb(planId);
+            YwkPlaninfo planinfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+            if (planinfo == null){
+                return SystemSecurityMessage.getFailMsg("方案id不存在");
+            }
+            List<Map<String,Object>> result = (List<Map<String,Object>>) CacheUtil.get("rainfall", planId+"new");
+
+            if (CollectionUtils.isEmpty(result)){
+                System.out.println("缓存里没有雨量信息");
+                return SystemSecurityMessage.getFailMsg("缓存里没有雨量信息！");
+            }
+            modelCallFhybddNewService.saveRainfallsFromCacheToDb(planinfo,result);
             return SystemSecurityMessage.getSuccessMsg("保存雨量信息成功");
         }catch (Exception e){
             e.printStackTrace();
@@ -101,7 +122,11 @@ public class ModelNewController {
     @RequestMapping(value = "/exportRainfallTemplate/{planId}", method = RequestMethod.GET)
     public void exportRainfallTemplate(HttpServletRequest request, HttpServletResponse response, @PathVariable String planId) {
         try {
-            Workbook workbook = modelCallFhybddNewService.exportRainfallTemplate(planId);
+            YwkPlaninfo planinfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+            if (planinfo == null){
+                return ;
+            }
+            Workbook workbook = modelCallFhybddNewService.exportRainfallTemplate(planinfo);
             //响应尾
             response.setContentType("applicationnd.openxmlformats-officedocument.spreadsheetml.sheet");
             String fileName = "监测站雨量数据模板.xlsx";
@@ -122,6 +147,11 @@ public class ModelNewController {
      */
     @RequestMapping(value = "/importRainfallData/{planId}", method = RequestMethod.POST)
     public SystemSecurityMessage importRainfallData(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile, @PathVariable String planId) {
+
+        YwkPlaninfo planinfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planinfo == null){
+            return new SystemSecurityMessage("error", "方案id不存在" );
+        }
         SystemSecurityMessage SystemSecurityMessage = null;
         // 预报断面数据文件上传解析
         String checkFlog = ExcelUtil.checkFile(mutilpartFile);
@@ -132,7 +162,7 @@ public class ModelNewController {
         } else {
             // 解析表格数据为对象类型
             try {
-                List<Map<String,Object>> list = modelCallFhybddNewService.importRainfallData(mutilpartFile,planId);
+                List<Map<String,Object>> list = modelCallFhybddNewService.importRainfallData(mutilpartFile,planinfo);
                 if (CollectionUtils.isEmpty(list)){
                     SystemSecurityMessage = new SystemSecurityMessage("error", "监测站雨量数据上传解析失败" );
                 }else {
@@ -189,7 +219,11 @@ public class ModelNewController {
     @RequestMapping(value = "/getTriggerFlow/{planId}/{rcsId}", method = RequestMethod.GET)
     public SystemSecurityMessage getTriggerFlow(@PathVariable String planId,@PathVariable String rcsId) {
         try {
-            List<Map<String,Object>> results = modelCallFhybddNewService.getTriggerFlow(planId,rcsId);
+            YwkPlaninfo planinfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+            if (planinfo == null){
+                return SystemSecurityMessage.getFailMsg("方案id不存在！");
+            }
+            List<Map<String,Object>> results = modelCallFhybddNewService.getTriggerFlow(planinfo,rcsId);
             return SystemSecurityMessage.getSuccessMsg("根据方案id获取预报断面流量成功",results);
         }catch (Exception e){
             e.printStackTrace();
@@ -207,7 +241,11 @@ public class ModelNewController {
     @RequestMapping(value = "/exportTriggerFlowTemplate/{planId}/{rcsName}", method = RequestMethod.GET)
     public void exportTriggerFlowTemplate(HttpServletRequest request, HttpServletResponse response, @PathVariable String planId, @PathVariable String rcsName) {
         try {
-            Workbook workbook = modelCallFhybddNewService.exportTriggerFlowTemplate(planId);
+            YwkPlaninfo planinfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+            if (planinfo == null){
+                return ;
+            }
+            Workbook workbook = modelCallFhybddNewService.exportTriggerFlowTemplate(planinfo);
             //响应尾
             response.setContentType("applicationnd.openxmlformats-officedocument.spreadsheetml.sheet");
             String fileName = "预报断面("+rcsName+")数据模板.xlsx";
@@ -228,6 +266,11 @@ public class ModelNewController {
      */
     @RequestMapping(value = "/importTriggerFlowData/{planId}/{rcsId}", method = RequestMethod.POST)
     public SystemSecurityMessage importTriggerFlowData(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile, @PathVariable String planId,@PathVariable String rcsId) {
+
+        YwkPlaninfo planinfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planinfo == null){
+            return new SystemSecurityMessage("error", "方案不存在！", null);
+        }
         SystemSecurityMessage SystemSecurityMessage = null;
         // 预报断面数据文件上传解析
         String checkFlog = ExcelUtil.checkFile(mutilpartFile);
@@ -238,7 +281,7 @@ public class ModelNewController {
         } else {
             // 解析表格数据为对象类型
             try {
-                List<Map<String,Object>> list = modelCallFhybddNewService.importTriggerFlowData(mutilpartFile,planId,rcsId);
+                List<Map<String,Object>> list = modelCallFhybddNewService.importTriggerFlowData(mutilpartFile,planinfo,rcsId);
                 if (CollectionUtils.isEmpty(list)){
                     SystemSecurityMessage = new SystemSecurityMessage("error", "预报断面数据表上传解析失败" );
                 }else {
@@ -256,9 +299,9 @@ public class ModelNewController {
     }
 
 
-
     @Autowired
     YwkPlaninfoDao ywkPlaninfoDao;
+
     /**
      * 水文调度模型计算执行new版本
      * @return  tag 为0是第一次运算，为1是率定运算
@@ -266,18 +309,17 @@ public class ModelNewController {
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage modelCall(@PathVariable String planId) {
         //TODO 这个地方优化从库里取
-        //YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);//方案基本信息
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
         if (planInfo == null){
-            return SystemSecurityMessage.getFailMsg("调用防洪与报警水文调度模型失败！",-1);
+            return  SystemSecurityMessage.getFailMsg( "方案不存在！，模型调用失败", null);
         }
         try {
-            Long ret = modelCallFhybddNewService.modelCallHandleData(planId);
+            Long ret = modelCallFhybddNewService.modelCall(planInfo);
             planInfo.setnPlanstatus(ret);
             ywkPlaninfoDao.save(planInfo);
             return SystemSecurityMessage.getSuccessMsg("调用防洪与报警水文调度模型成功！",ret);
         }catch (Exception e){
-            planInfo.setnPlanstatus(-1L);
+            planInfo.setnPlanstatus(-1L);//模型执行失败
             ywkPlaninfoDao.save(planInfo);
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("调用防洪与报警水文调度模型失败！",-1);
@@ -292,7 +334,11 @@ public class ModelNewController {
     @RequestMapping(value = "/getModelRunStatus/{planId}/{tag}",method = RequestMethod.GET)
     public SystemSecurityMessage getModelRunStatus(@PathVariable String planId,@PathVariable Integer tag){
 
-        String status = modelCallFhybddNewService.getModelRunStatus(planId,tag);
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return  SystemSecurityMessage.getFailMsg( "方案不存在！", null);
+        }
+        String status = modelCallFhybddNewService.getModelRunStatus(planInfo,tag);
         return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",status);
 
     }
@@ -303,8 +349,11 @@ public class ModelNewController {
      */
     @RequestMapping(value = "/getModelResultQ/{planId}/{tag}",method = RequestMethod.GET)
     public SystemSecurityMessage getModelResultQ(@PathVariable String planId,@PathVariable Integer tag){
-
-        Object results = modelCallFhybddNewService.getModelResultQ(planId,tag);
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return  SystemSecurityMessage.getFailMsg( "方案不存在！", null);
+        }
+        Object results = modelCallFhybddNewService.getModelResultQ(planInfo,tag);
         return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",results);
 
     }
@@ -316,8 +365,11 @@ public class ModelNewController {
      */
     @RequestMapping(value = "/getModelResultQCalibration/{planId}",method = RequestMethod.GET)
     public SystemSecurityMessage getModelResultQCalibration(@PathVariable String planId){
-
-        Object results = modelCallFhybddNewService.getModelResultQCalibration(planId);
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return  SystemSecurityMessage.getFailMsg( "方案不存在！", null);
+        }
+        Object results = modelCallFhybddNewService.getModelResultQCalibration(planInfo);
         return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",results);
 
     }
@@ -326,10 +378,14 @@ public class ModelNewController {
 
     //TODO 模型二次运算
 
-
     //单位线模型参数交互  这个地方前端给下载模板文档 TODO 已测试
     @RequestMapping(value = "/importCalibrationWithDWX/{planId}", method = RequestMethod.POST)
     public SystemSecurityMessage importCalibrationWithSCS(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile, @PathVariable String planId) {
+
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return  SystemSecurityMessage.getFailMsg( "方案不存在！", null);
+        }
         SystemSecurityMessage SystemSecurityMessage = null;
         // 预报断面数据文件上传解析
         String checkFlog = ExcelUtil.checkFile(mutilpartFile);
@@ -340,7 +396,7 @@ public class ModelNewController {
         } else {
             // 解析表格数据为对象类型
             try {
-                List<Map<String,Double>> list = modelCallFhybddNewService.importCalibrationWithDWX(mutilpartFile,planId);
+                List<Map<String,Double>> list = modelCallFhybddNewService.importCalibrationWithDWX(mutilpartFile,planInfo);
                 if (CollectionUtils.isEmpty(list)){
                     SystemSecurityMessage = new SystemSecurityMessage("error", "率定参数交互单位线解析失败" );
                 }else {
@@ -358,7 +414,7 @@ public class ModelNewController {
     }
 
     /**
-     * 下载新安江数据模板TODO 顺序很重要 TODO 已测试
+     * 下载新安江数据模板TODO 顺序很重要 TODO 未接入
      *
      * @param response
      * @throws Exception
@@ -366,7 +422,11 @@ public class ModelNewController {
     @RequestMapping(value = "/exportCalibrationXAJTemplate/{planId}", method = RequestMethod.GET)
     public void exportCalibrationXAJTemplate(HttpServletRequest request, HttpServletResponse response, @PathVariable String planId) {
         try {
-            Workbook workbook = modelCallFhybddNewService.exportCalibrationXAJTemplate(planId);
+            YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+            if (planInfo == null){
+                return ;
+            }
+            Workbook workbook = modelCallFhybddNewService.exportCalibrationXAJTemplate(planInfo);
             //响应尾
             response.setContentType("applicationnd.openxmlformats-officedocument.spreadsheetml.sheet");
             String fileName = "新安江模型蒸发量数据模板.xlsx";
@@ -380,9 +440,13 @@ public class ModelNewController {
         }
     }
 
-    //新安江模型参数交互 TODO 已测试
+    //新安江模型参数交互 TODO 未接入
     @RequestMapping(value = "/importCalibrationWithXAJ/{planId}", method = RequestMethod.POST)
     public SystemSecurityMessage importCalibrationWithXAJ(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile, @PathVariable String planId) {
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return new SystemSecurityMessage("error", "方案不存在！" );
+        }
         SystemSecurityMessage SystemSecurityMessage = null;
         // 预报断面数据文件上传解析
         String checkFlog = ExcelUtil.checkFile(mutilpartFile);
@@ -393,7 +457,7 @@ public class ModelNewController {
         } else {
             // 解析表格数据为对象类型
             try {
-                List<Map<String,Object>> list = modelCallFhybddNewService.importCalibrationWithXAJ(mutilpartFile,planId);
+                List<Map<String,Object>> list = modelCallFhybddNewService.importCalibrationWithXAJ(mutilpartFile,planInfo);
                 if (CollectionUtils.isEmpty(list)){
                     SystemSecurityMessage = new SystemSecurityMessage("error", "率定参数交互新安江解析失败" );
                 }else {
@@ -410,9 +474,14 @@ public class ModelNewController {
         return SystemSecurityMessage;
     }
 
-    //马斯井跟模型参数交互 TODO
-    @RequestMapping(value = "/importCalibrationWithMSJG/{planId}", method = RequestMethod.POST)
-    public SystemSecurityMessage importCalibrationWithMSJG(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile, @PathVariable String planId) {
+    //相关系数 TODO 未接入
+    @RequestMapping(value = "/importCalibrationWithXGXS/{planId}", method = RequestMethod.POST)
+    public SystemSecurityMessage importCalibrationWithXGXS(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile, @PathVariable String planId) {
+
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return new SystemSecurityMessage("error", "方案不存在！" );
+        }
         SystemSecurityMessage SystemSecurityMessage = null;
         // 预报断面数据文件上传解析
         String checkFlog = ExcelUtil.checkFile(mutilpartFile);
@@ -423,11 +492,11 @@ public class ModelNewController {
         } else {
             // 解析表格数据为对象类型
             try {
-                List<Map<String,Double>> list = modelCallFhybddNewService.importCalibrationWithMSJG(mutilpartFile,planId);
+                List<Map<String,Double>> list = modelCallFhybddNewService.importCalibrationWithXGXS(mutilpartFile,planInfo);
                 if (CollectionUtils.isEmpty(list)){
-                    SystemSecurityMessage = new SystemSecurityMessage("error", "率定参数交互马斯京根解析失败" );
+                    SystemSecurityMessage = new SystemSecurityMessage("error", "率定参数交互相关系数解析失败" );
                 }else {
-                    SystemSecurityMessage = new SystemSecurityMessage("ok", "率定参数交互马斯京根解析成功", list);
+                    SystemSecurityMessage = new SystemSecurityMessage("ok", "率定参数交互相关系数解析成功", list);
                 }
             } catch (Exception e) {
                 String eMessage = "";
@@ -447,7 +516,7 @@ public class ModelNewController {
      */
     @RequestMapping(value = "/saveCalibrationDwxToDB/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage saveCalibrationDwxToDB(@PathVariable String planId) {
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
         if (planInfo == null){
             return SystemSecurityMessage.getFailMsg("方案不存在");
 
@@ -456,10 +525,10 @@ public class ModelNewController {
 
         if (CollectionUtils.isEmpty(result)){
             System.out.println("缓存里没有率定的单位线信息");
-            return SystemSecurityMessage.getFailMsg("率定单位线信息未导入");
+            return SystemSecurityMessage.getSuccessMsg("率定单位线信息未导入，使用默认数据计算");
         }
         try {
-            modelCallFhybddNewService.saveCalibrationDwxToDB(planId,result);
+            modelCallFhybddNewService.saveCalibrationDwxToDB(planInfo,result);
             return SystemSecurityMessage.getSuccessMsg("保存率定单位线信息成功");
         }catch (Exception e){
             e.printStackTrace();
@@ -468,27 +537,25 @@ public class ModelNewController {
         }
     }
 
-
     /**
      * 保存新安江模型参数
-     * @param planId TODO 已测试
+     * @param planId TODO 未接入
      * @return
      */
     @RequestMapping(value = "/saveCalibrationXAJToDB/{planId}", method = RequestMethod.POST)
     public SystemSecurityMessage saveCalibrationXAJToDB(@RequestBody CalibrationXAJVo calibrationXAJVo, @PathVariable String planId) {
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
         if (planInfo == null){
             return SystemSecurityMessage.getFailMsg("方案不存在");
-
         }
         List<Map<String,Object>> result = (List<Map<String,Object>>) CacheUtil.get("calibrationXAJ", planId);
 
         if (CollectionUtils.isEmpty(result)){
             System.out.println("缓存里没有率定的新安江信息");
-            return SystemSecurityMessage.getFailMsg("率定新安江数据未导入");
+            return SystemSecurityMessage.getSuccessMsg("率定新安江数据未导入,使用默认的数据进行率定计算");
         }
         try {
-            modelCallFhybddNewService.saveCalibrationXAJToDB(planId,result,calibrationXAJVo);
+            modelCallFhybddNewService.saveCalibrationXAJToDB(planInfo,result,calibrationXAJVo);
             return SystemSecurityMessage.getSuccessMsg("保存率定新安江数据成功");
         }catch (Exception e){
             e.printStackTrace();
@@ -504,19 +571,17 @@ public class ModelNewController {
      */
     @RequestMapping(value = "/saveCalibrationMSJGOrScSToDB/{planId}/{tag}", method = RequestMethod.POST)
     public SystemSecurityMessage saveCalibrationMSJGOrScSToDB(@RequestBody CalibrationMSJGAndScsVo calibrationMSJGAndScsVo, @PathVariable String planId,@PathVariable Integer tag) {
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
         if (planInfo == null){
             return SystemSecurityMessage.getFailMsg("方案不存在");
-
         }
-
         /*List<Map<String,Double>> result = (List<Map<String,Double>>) CacheUtil.get("calibrationMSJG", planId);
         if (calibrationMSJGVo.getMsjgVote() == 1 && CollectionUtils.isEmpty(result)){
             System.out.println("缓存里没有率定的率定马斯京根数据信息");
             return SystemSecurityMessage.getFailMsg("率定马斯京根数据未导入");
         }*/
         try {
-            modelCallFhybddNewService.saveCalibrationMSJGOrScSToDB(planId,calibrationMSJGAndScsVo,tag);
+            modelCallFhybddNewService.saveCalibrationMSJGOrScSToDB(planInfo,calibrationMSJGAndScsVo,tag);
             if (tag == 0){
                 return SystemSecurityMessage.getSuccessMsg("保存率定马斯京根数据成功");
             }
@@ -536,12 +601,15 @@ public class ModelNewController {
     YwkPlanCalibrationZoneDao ywkPlanCalibrationZoneDao;
 
 
-
     //获取率定参数交互列表
     @RequestMapping(value = "/getCalibrationList/{planId}",method = RequestMethod.GET)
     public SystemSecurityMessage getCalibrationList(@PathVariable String planId){
 
-        Object results = modelCallFhybddNewService.getCalibrationList(planId);
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return SystemSecurityMessage.getFailMsg("方案不存在");
+        }
+        Object results = modelCallFhybddNewService.getCalibrationList(planInfo);
         return SystemSecurityMessage.getSuccessMsg("获取率定参数交互列表",results);
 
     }
@@ -553,26 +621,93 @@ public class ModelNewController {
     @RequestMapping(value = "/modelCallCalibrayion/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage ModelCallCalibration(@PathVariable String planId) {
         //TODO 这个地方优化从库里取
-        //YwkPlaninfo planInfo = (YwkPlaninfo) CacheUtil.get("planInfo", planId);//方案基本信息
-        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
         if (planInfo == null){
-            return SystemSecurityMessage.getFailMsg("调用防洪与报警水文调度模型失败！",-1);
+            return SystemSecurityMessage.getFailMsg("方案不存在,模型不调用");
         }
-        if (planInfo.getnCalibrationStatus()==null){
+        if (planInfo.getnPlanstatus() != 2L){
+            System.out.println("模型首次计算未成功，不能进行率定运算");
+            return SystemSecurityMessage.getFailMsg("模型首次计算未成功，不能进行率定运算");
+        }
+        if (planInfo.getnCalibrationStatus() != 0L){
             return SystemSecurityMessage.getFailMsg("率定交互未进行，不进行二次计算！",-1);
         }
         try {
-            Long ret = modelCallFhybddNewService.ModelCallCalibration(planId);
+            Long ret = modelCallFhybddNewService.ModelCallCalibration(planInfo);
             planInfo.setnCalibrationStatus(ret);
             ywkPlaninfoDao.save(planInfo);
-            return SystemSecurityMessage.getSuccessMsg("调用防洪与报警水文调度模型成功！",ret);
+            return SystemSecurityMessage.getSuccessMsg("率定运算水文调度模型成功！",ret);
         }catch (Exception e){
             planInfo.setnCalibrationStatus(-1L);
             ywkPlaninfoDao.save(planInfo);
             e.printStackTrace();
-            return SystemSecurityMessage.getFailMsg("调用防洪与报警水文调度模型失败！",-1);
+            return SystemSecurityMessage.getFailMsg("率定运算水文调度模型失败！",-1);
 
         }
+    }
+
+    /**
+     * 方案结果保存入库，只能保存一条，率定前跟率定后的 TODO 方案保存的是肯定已经方案修改或者撤销了
+     * @return
+     */
+    @RequestMapping(value = "/saveModelData/{planId}",method = RequestMethod.GET)
+    public SystemSecurityMessage saveModelData(@PathVariable String planId){
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return SystemSecurityMessage.getFailMsg("方案不存在");
+        }
+
+        if (planInfo.getnPlanstatus() != 2L){
+            return SystemSecurityMessage.getFailMsg("方案运算未成功，不能保存");
+        }
+
+        try {
+            modelCallFhybddNewService.saveModelData(planInfo);
+            return SystemSecurityMessage.getSuccessMsg("保存模型运算结果成功");
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getSuccessMsg("保存模型运算结果失败");
+
+        }
+
+    }
+
+    /**
+     * 修改撤销 ，修改保存
+     * @param planId
+     * @param tag
+     * @return
+     */
+    @RequestMapping(value = "/saveOrDeleteResultCsv/{planId}/{tag}",method = RequestMethod.GET)
+    public SystemSecurityMessage saveOrDeleteResultCsv(@PathVariable String planId,@PathVariable Integer tag){
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return SystemSecurityMessage.getFailMsg("方案不存在");
+        }
+
+        if (planInfo.getnCalibrationStatus() != 2L){
+            return SystemSecurityMessage.getFailMsg("方案率定运算未成功，不能保存或者撤销");
+        }
+        String message = "";
+        if (tag == 0){  //0是撤销
+            message = "修改撤销";
+        }else {
+            message = "修改保存";
+        }
+        try {
+            int ret = modelCallFhybddNewService.saveOrDeleteResultCsv(planInfo,tag);
+
+            if (ret == 1){
+                return SystemSecurityMessage.getSuccessMsg(message+"成功");
+            }else {
+                return SystemSecurityMessage.getSuccessMsg(message+"失败");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+                return SystemSecurityMessage.getFailMsg(message+"失败");
+
+        }
+
     }
 
 
