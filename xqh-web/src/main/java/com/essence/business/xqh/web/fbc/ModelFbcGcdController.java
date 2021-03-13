@@ -211,7 +211,7 @@ public class ModelFbcGcdController {
     }
 
     /**
-     * 根据模型id查询下游潮位边界条件列表
+     * 查询下游潮位边界条件列表
      *
      * @return
      */
@@ -240,7 +240,7 @@ public class ModelFbcGcdController {
             Workbook workbook = modelFbcGcdService.exportCwBoundaryTemplate(planId, modelId);
             //响应尾
             response.setContentType("applicationnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            String fileName = "边界数据模板.xlsx";
+            String fileName = "潮位边界数据模板.xlsx";
             response.setHeader("Content-disposition", "attachment;filename=" + new String(fileName.getBytes(), "iso_8859_1"));
             OutputStream ouputStream = response.getOutputStream();
             workbook.write(ouputStream);
@@ -250,7 +250,6 @@ public class ModelFbcGcdController {
             e.printStackTrace();
         }
     }
-
     /**
      * 上传潮位界条件数据解析-Excel导入
      *
@@ -282,26 +281,6 @@ public class ModelFbcGcdController {
     }
 
     /**
-     * TODO 已测试
-     * 根据模型id获取溃口列表
-     *
-     * @param
-     * @return
-     */
-    @RequestMapping(value = "/getBreakList/{modelId}", method = RequestMethod.GET)
-    public SystemSecurityMessage getBreakList(@PathVariable String modelId) {
-        try {
-            List<YwkBreakBasicDto> result = modelFbcGcdService.getBreakList(modelId);
-            return SystemSecurityMessage.getSuccessMsg("根据模型id获取溃口列表成功", result);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return SystemSecurityMessage.getFailMsg("根据模型id获取溃口列表失败！", new ArrayList<>());
-
-        }
-    }
-
-    /**
      * 风暴潮感潮河段-获取风暴潮计算的方案（使用其潮位数据做感潮段计算使用）
      *
      * @return
@@ -323,7 +302,7 @@ public class ModelFbcGcdController {
      * nPlanId 风暴潮方案的id
      * @return
      */
-    @RequestMapping(value = "getModelCwBoundaryByFbcPlan/{nPlanId}", method = RequestMethod.GET)
+    @RequestMapping(value = "getModelCwBoundaryByFbcPlan/{nPlanId}", method = RequestMethod.POST)
     public SystemSecurityMessage getModelCwBoundaryByFbcPlan(@RequestBody ModelParamVo modelParamVo,@PathVariable String nPlanId) {
         try {
             List<Object> modelRiverRoughnessList = modelFbcGcdService.getModelCwBoundaryByFbcPlan(modelParamVo,nPlanId);
@@ -352,6 +331,28 @@ public class ModelFbcGcdController {
             return SystemSecurityMessage.getFailMsg("方案计算边界条件值-提交入库失败！", null);
         }
     }
+
+
+    /**
+     * TODO 已测试
+     * 根据模型id获取溃口列表
+     *
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/getBreakList/{modelId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getBreakList(@PathVariable String modelId) {
+        try {
+            List<YwkBreakBasicDto> result = modelFbcGcdService.getBreakList(modelId);
+            return SystemSecurityMessage.getSuccessMsg("根据模型id获取溃口列表成功", result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("根据模型id获取溃口列表失败！", new ArrayList<>());
+
+        }
+    }
+
 
     /**
      * TODO
@@ -438,5 +439,35 @@ public class ModelFbcGcdController {
         modelFbcGcdService.previewPicFile(request, response, planId, picId);
     }
 
+
+    /**
+     * 测试
+     * @param mutilpartFile
+     * @return
+     */
+    @RequestMapping(value = "/test", method = RequestMethod.POST)
+    public SystemSecurityMessage importCwBoundaryData(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile) {
+        SystemSecurityMessage SystemSecurityMessage = null;
+        // 值班表文件上传解析
+        String checkFlog = ExcelUtil.checkFile(mutilpartFile);
+        if (mutilpartFile == null) {
+            SystemSecurityMessage = new SystemSecurityMessage("error", "上传文件为空！", null);
+        } else if (!"excel".equals(checkFlog)) {
+            SystemSecurityMessage = new SystemSecurityMessage("error", "上传文件类型错误！", null);
+        } else {
+            // 解析表格数据为对象类型
+            try {
+                modelFbcGcdService.test33(mutilpartFile);
+                SystemSecurityMessage = new SystemSecurityMessage("ok", "边界数据表上传解析成功!", null);
+            } catch (Exception e) {
+                String eMessage = "";
+                if (e != null) {
+                    eMessage = e.getMessage();
+                }
+                SystemSecurityMessage = new SystemSecurityMessage("error", "边界数据表上传解析失败，错误原因：" + eMessage, null);
+            }
+        }
+        return SystemSecurityMessage;
+    }
 }
 
