@@ -1875,12 +1875,12 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
     @Override
     public void previewPicFile(HttpServletRequest request, HttpServletResponse response, String planId, String picId) {
         YwkPlaninfo planinfo = ywkPlaninfoDao.findOneById(planId);
-        String modelId = "MODEL_HSFX_01";
+        String modelIds = "MODEL_HSFX_01";
         if ("MODEL_FBC_GCD_02".equals(planinfo.getnModelid())) {
-            modelId = "MODEL_HSFX_02";
+            modelIds = "MODEL_HSFX_02";
         }
         //图片路径
-        String outputAbsolutePath = GisPathConfigurationUtil.getOutputPictureAbsolutePath() + "/" + planinfo.getnModelid() + "/" + planId;
+        String outputAbsolutePath = GisPathConfigurationUtil.getOutputPictureAbsolutePath() + "/" + modelIds + "/" + planId;
         //图片路径
         String processOutputAbsolutePath = outputAbsolutePath + "/process/";
         String filePath = null;
