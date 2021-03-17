@@ -4,7 +4,9 @@ import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
 import com.essence.business.xqh.api.hsfxtk.dto.*;
 import com.essence.business.xqh.api.modelResult.PlanProcessDataService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
+import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.common.util.ExcelUtil;
+import com.essence.business.xqh.common.util.PropertiesUtil;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -12,8 +14,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -250,6 +254,19 @@ public class ModelHsfxtkController {
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage modelCall2(@PathVariable  String planId) {
         try {
+            //判断是否有运行中的
+            String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
+            String hsfx_model_template_output = hsfx_path +
+                    File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                    + File.separator + planId; //输出的地址
+           //进度文件
+            File jinduFile = new File(hsfx_model_template_output+ File.separator+"jindu.txt");
+            System.out.println("controller洪水动力模型调用了……方案id:"+planId);
+            //存在表示执行失败
+            if (jinduFile.exists()) {
+                System.out.println("controller洪水动力模型调用拦截:"+planId);
+                return SystemSecurityMessage.getSuccessMsg("调用洪水风险调控模型运行中！");
+            }
             modelCallHsfxtkService.callMode(planId);
             return SystemSecurityMessage.getSuccessMsg("调用洪水风险调控模型成功！");
         }catch (Exception e){

@@ -3,7 +3,9 @@ package com.essence.business.xqh.web.fbc;
 import com.essence.business.xqh.api.fbc.ModelFbcGcdService;
 import com.essence.business.xqh.api.hsfxtk.dto.*;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
+import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.common.util.ExcelUtil;
+import com.essence.business.xqh.common.util.PropertiesUtil;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
 import com.essence.business.xqh.dao.entity.hsfxtk.YwkModelRoughnessParam;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -13,8 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -258,7 +262,7 @@ public class ModelFbcGcdController {
     @RequestMapping(value = "/importCwBoundaryData/{planId}/{modelId}", method = RequestMethod.POST)
     public SystemSecurityMessage importCwBoundaryData(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile, @PathVariable String planId, @PathVariable String modelId) {
         SystemSecurityMessage SystemSecurityMessage = null;
-        // 值班表文件上传解析
+        // 上传潮位界条件数据解析
         String checkFlog = ExcelUtil.checkFile(mutilpartFile);
         if (mutilpartFile == null) {
             SystemSecurityMessage = new SystemSecurityMessage("error", "上传文件为空！", null);
@@ -382,6 +386,19 @@ public class ModelFbcGcdController {
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage modelCall2(@PathVariable String planId) {
         try {
+            //判断是否有运行中的
+            String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
+            String hsfx_model_template_output = hsfx_path +
+                    File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                    + File.separator + planId; //输出的地址
+            //进度文件
+            File jinduFile = new File(hsfx_model_template_output+ File.separator+"jindu.txt");
+            //存在表示执行失败
+            System.out.println("controller风暴潮感潮段调用了……方案id:"+planId);
+            if (jinduFile.exists()) {
+                System.out.println("controller风暴潮感潮段调用拦截:"+planId);
+                return SystemSecurityMessage.getSuccessMsg("风暴潮感潮段调用模型运行中！");
+            }
             modelFbcGcdService.callMode(planId);
             return SystemSecurityMessage.getSuccessMsg("调用风暴潮感潮河段模型成功！");
         } catch (Exception e) {

@@ -88,7 +88,6 @@ public class FbcPlanInfoManageController {
         }
     }
 
-
     /**
      * 删除方案以及方案下关联点所有入参
      * @param planId
