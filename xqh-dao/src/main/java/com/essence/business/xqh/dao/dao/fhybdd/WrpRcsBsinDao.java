@@ -14,4 +14,7 @@ public interface WrpRcsBsinDao  extends EssenceJpaRepository<WrpRcsBsin,String >
     @Query(value = "select * from WRP_RCS_BSIN where RVCD=?1",nativeQuery = true)
     List<WrpRcsBsin> findListByRiverId(String riverId);
 
+    @Query(value = "select * from WRP_RCS_BSIN where RVCD in ?1",nativeQuery = true)
+    List<WrpRcsBsin> findListByRiverIds(List<String> riverIds);
+
 }

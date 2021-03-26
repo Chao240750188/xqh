@@ -79,7 +79,7 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
         }
 
         //河流信息
-        List<WrpRvrBsin> allParentIdIsNull = wrpRvrBsinDao.findAllParentIdIsNull();//模型入参使用
+        List<WrpRvrBsin> allParentIdIsNull = wrpRvrBsinDao.findAll();//模型入参使用
         String modelid = planInfo.getnModelid();// 1是SCS  2是单位线
         String modelPyId = modelProperties.getModel().get(modelid);
 
@@ -656,7 +656,7 @@ public class ModelCallFhybddServiceImpl implements ModelCallFhybddService {
     @Override
     public List<WrpRvrBsinDto> getRiverInfos() {
         List<WrpRvrBsinDto> list = new ArrayList<>();
-        List<WrpRvrBsin> wrpRvrBsinList = wrpRvrBsinDao.findAllParentIdIsNull();
+        List<WrpRvrBsin> wrpRvrBsinList = wrpRvrBsinDao.findAll();
         for (WrpRvrBsin wrpRvrBsin:wrpRvrBsinList) {
             WrpRvrBsinDto wrpRvrBsinDto = new WrpRvrBsinDto();
             BeanUtils.copyProperties(wrpRvrBsin,wrpRvrBsinDto);

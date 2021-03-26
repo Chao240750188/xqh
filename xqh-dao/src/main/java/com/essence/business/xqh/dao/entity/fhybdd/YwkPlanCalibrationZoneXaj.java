@@ -1,22 +1,18 @@
 package com.essence.business.xqh.dao.entity.fhybdd;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.format.annotation.DateTimeFormat;
-
 import javax.persistence.*;
 import java.sql.Time;
 import java.util.Date;
 import java.util.Objects;
 
 @Entity
-@Table(name = "YWK_PLAN_CALIBRATION_XAJ_BASIC", schema = "XQH", catalog = "")
-public class YwkPlanCalibrationXaJBasic {
+@Table(name = "YWK_PLAN_CALIBRATION_ZONE_XAJ", schema = "XQH", catalog = "")
+public class YwkPlanCalibrationZoneXaj {
     @Id
     @Column(name = "C_ID")
     private String cId;
-    @Column(name = "N_PLANID")
-    private String nPlanid;
-
+    @Column(name = "ZONE_ID")
+    private String zoneId;
     @Column(name = "XAJ_K")
     private Double xajK;
     @Column(name = "XAJ_B")
@@ -35,19 +31,12 @@ public class YwkPlanCalibrationXaJBasic {
     private Double xajWl0;
     @Column(name = "XAJ_WD0")
     private Double xajWd0;
-
+    @Column(name = "XAJ_EP")
+    private Double xajEp;
     @Column(name = "CREATE_TIME")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createTime;
-
-    public String getcId() {
-        return cId;
-    }
-
-    public void setcId(String cId) {
-        this.cId = cId;
-    }
+    @Column(name = "N_PLANID")
+    private String nPlanid;
 
     public String getnPlanid() {
         return nPlanid;
@@ -57,7 +46,21 @@ public class YwkPlanCalibrationXaJBasic {
         this.nPlanid = nPlanid;
     }
 
+    public String getcId() {
+        return cId;
+    }
 
+    public void setcId(String cId) {
+        this.cId = cId;
+    }
+
+    public String getZoneId() {
+        return zoneId;
+    }
+
+    public void setZoneId(String zoneId) {
+        this.zoneId = zoneId;
+    }
 
     public Double getXajK() {
         return xajK;
@@ -131,7 +134,13 @@ public class YwkPlanCalibrationXaJBasic {
         this.xajWd0 = xajWd0;
     }
 
+    public Double getXajEp() {
+        return xajEp;
+    }
 
+    public void setXajEp(Double xajEp) {
+        this.xajEp = xajEp;
+    }
 
     public Date getCreateTime() {
         return createTime;
