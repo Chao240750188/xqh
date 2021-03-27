@@ -11,6 +11,6 @@ import java.util.Map;
 
 @Repository
 public interface StStbprpPartRelateDao extends EssenceJpaRepository<StStbprpPartRelate, String> {
-    @Query(value = "select T.STCD,SUM(t.drp) DRP from ST_PPTN_R t where t.stcd in ?1 and t.tm >= ?2 and t.tm< ?3 GROUP BY T.STCD", nativeQuery = true)
+    @Query(value = "select T.STCD,SUM(t.drp) DRP from ST_PPTN_R t where t.stcd in ?1 and t.tm >= ?2 and t.tm< ?3 GROUP BY T.STCD ORDER BY DRP DESC", nativeQuery = true)
     List<Map<String, Object>> getPartRainByTime(List<String> stcdList,Date startTime, Date endTime);
 }
