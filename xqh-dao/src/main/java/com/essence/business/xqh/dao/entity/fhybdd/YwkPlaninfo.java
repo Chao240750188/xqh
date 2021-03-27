@@ -92,6 +92,50 @@ public class YwkPlaninfo {
     @Column(name = "N_CALIBRATION_STATUS")
     private Long nCalibrationStatus;
 
+    @Column(name = "N_PUBLISH")
+    private Long nPublish;
+
+    @Column(name = "N_PUBLISH_TIME")
+    public  Date nPublishTime;
+
+    @Transient
+    private Long leadTime;//预见期
+
+    @Transient
+    private Integer isWarnIng;//告警
+
+    public Integer getIsWarnIng() {
+        return isWarnIng;
+    }
+
+    public void setIsWarnIng(Integer isWarnIng) {
+        this.isWarnIng = isWarnIng;
+    }
+
+    public Date getnPublishTime() {
+        return nPublishTime;
+    }
+
+    public void setnPublishTime(Date nPublishTime) {
+        this.nPublishTime = nPublishTime;
+    }
+
+    public Long getnPublish() {
+        return nPublish;
+    }
+
+    public void setnPublish(Long nPublish) {
+        this.nPublish = nPublish;
+    }
+
+    public Long getLeadTime() {
+        return leadTime;
+    }
+
+    public void setLeadTime(Long leadTime) {
+        this.leadTime = leadTime;
+    }
+
     public Long getnCalibrationStatus() {
         return nCalibrationStatus;
     }

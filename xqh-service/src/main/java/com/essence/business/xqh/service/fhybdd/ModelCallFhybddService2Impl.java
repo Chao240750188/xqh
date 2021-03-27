@@ -75,7 +75,7 @@ public class ModelCallFhybddService2Impl implements ModelCallFhybdd2Service {
             return -1L;
         }
         //河流信息
-        List<WrpRvrBsin> allParentIdIsNull = wrpRvrBsinDao.findAllParentIdIsNull();//模型入参使用
+        List<WrpRvrBsin> allParentIdIsNull = wrpRvrBsinDao.findAll();//模型入参使用
         String modelid = planInfo.getnModelid();// 1是SCS  2是单位线
         String modelPyId = modelProperties.getModel().get(modelid);
 

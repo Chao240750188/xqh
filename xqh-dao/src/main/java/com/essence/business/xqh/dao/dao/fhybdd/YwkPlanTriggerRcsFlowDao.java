@@ -5,6 +5,7 @@ import com.essence.framework.jpa.EssenceJpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Iterator;
 import java.util.List;
 
 @Repository
@@ -16,4 +17,7 @@ public interface YwkPlanTriggerRcsFlowDao extends EssenceJpaRepository<YwkPlanTr
     List<YwkPlanTriggerRcsFlow> findByTriggerRcsId(String id);
 
     void deleteByTriggerRcsId(String id);
+
+    @Query(value = "DELETE * FROM YWK_PLAN_TRIGGER_RCS_FLOW WHERE TRIGGER_RCS_ID IN ?1",nativeQuery = true)
+    void deleteByTriggerRcsIds(Iterable<String> ids);
 }

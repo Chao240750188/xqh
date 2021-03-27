@@ -20,5 +20,8 @@ public interface YwkPlanCalibrationZoneDao extends EssenceJpaRepository<YwkPlanC
 
     YwkPlanCalibrationZone findByNPlanidAndZoneId(String nplanId,String zoneIds);
 
+    @Query(value = "SELECT COUNT(C_ID) from YWK_PLAN_CALIBRATION_ZONE WHERE N_PLANID=?1",nativeQuery = true)
+    Integer countByNPlanId(String planId);
+
 
 }
