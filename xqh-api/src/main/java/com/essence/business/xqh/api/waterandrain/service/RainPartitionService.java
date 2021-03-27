@@ -5,6 +5,8 @@ import com.essence.business.xqh.api.rainfall.vo.RainPartitionDataDto;
 import com.essence.business.xqh.api.rainfall.vo.RainPartitionDto;
 import com.essence.business.xqh.api.rainfall.vo.RainWaterReportDto;
 import com.essence.business.xqh.api.waterandrain.dto.*;
+import com.essence.framework.jpa.Paginator;
+import com.essence.framework.jpa.PaginatorParam;
 
 import java.util.List;
 import java.util.Map;
@@ -27,4 +29,18 @@ public interface RainPartitionService {
      * @return
      */
     RainWaterReportDto getRainWaterSimpleReport(RainPartitionDto reqDto);
+
+    /**
+     * 保存简报信息
+     * @param reqDto
+     * @return
+     */
+    Object saveRainWaterSimpleReport(RainWaterReportDto reqDto);
+
+    /**
+     * 获取简报列表
+     * @param paginatorParam
+     * @return
+     */
+    Paginator getReportList(PaginatorParam paginatorParam);
 }
