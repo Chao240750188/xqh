@@ -1,7 +1,9 @@
 package com.essence.business.xqh.api.waterandrain.service;
 
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
+import com.essence.business.xqh.api.rainfall.vo.RainPartitionDataDto;
 import com.essence.business.xqh.api.rainfall.vo.RainPartitionDto;
+import com.essence.business.xqh.api.rainfall.vo.RainWaterReportDto;
 import com.essence.business.xqh.api.waterandrain.dto.*;
 
 import java.util.List;
@@ -17,5 +19,12 @@ public interface RainPartitionService {
      * @param reqDto
      * @return
      */
-    Object getPartRain(RainPartitionDto reqDto);
+    List<RainPartitionDataDto> getPartRain(RainPartitionDto reqDto,Boolean stcdRain);
+
+    /**
+     * 查询数据生成简报报告
+     * @param reqDto
+     * @return
+     */
+    RainWaterReportDto getRainWaterSimpleReport(RainPartitionDto reqDto);
 }

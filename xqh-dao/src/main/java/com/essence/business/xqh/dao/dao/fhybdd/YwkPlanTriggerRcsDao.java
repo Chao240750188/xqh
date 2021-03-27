@@ -15,4 +15,7 @@ public interface YwkPlanTriggerRcsDao extends EssenceJpaRepository<YwkPlanTrigge
     YwkPlanTriggerRcs findByNPlanidAndRcsId(String planId, String rcsId);
 
     void deleteByNPlanidAndRcsId(String planId, String rcsId);
+
+
+    void deleteByNPlanid(String planId);
 }

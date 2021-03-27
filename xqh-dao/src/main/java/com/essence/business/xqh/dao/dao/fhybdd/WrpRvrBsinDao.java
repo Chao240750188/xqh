@@ -11,6 +11,9 @@ import java.util.List;
 public interface WrpRvrBsinDao extends EssenceJpaRepository<WrpRvrBsin,String > {
 
 
-    @Query(value = "select * from WRP_RVR_BSIN where DWWTCD is null ",nativeQuery = true)
-    List<WrpRvrBsin> findAllParentIdIsNull();
+   /* @Query(value = "select * from WRP_RVR_BSIN where DWWTCD is null ",nativeQuery = true)
+    List<WrpRvrBsin> findAllParentIdIsNull();*/
+
+    @Query(value = "select * from WRP_RVR_BSIN where DWWTCD = ?1 ",nativeQuery = true)
+    List<WrpRvrBsin> findAllByParentId(String parentId);
 }

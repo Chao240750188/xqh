@@ -33,6 +33,8 @@ public interface TRsvrRDao extends EssenceJpaRepository<TRsvrR, String> {
 
     List<TRsvrR> findByTmBetweenOrderByTmDesc(Date startTime, Date endTime);
 
+    List<TRsvrR> findByTmBetweenOrderByRzDesc(Date startTime, Date endTime);
+
 
     List<TRsvrR> findByStcdInAndTmBetweenOrderByTmDesc(List<String> stcdList,Date startTime,Date endTime);
 

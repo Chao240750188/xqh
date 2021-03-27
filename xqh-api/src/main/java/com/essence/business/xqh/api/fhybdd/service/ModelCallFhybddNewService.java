@@ -2,6 +2,7 @@ package com.essence.business.xqh.api.fhybdd.service;
 
 import com.essence.business.xqh.api.fhybdd.dto.CalibrationMSJGAndScsVo;
 import com.essence.business.xqh.api.fhybdd.dto.CalibrationXAJVo;
+import com.essence.business.xqh.api.fhybdd.dto.CalibrationXGGXVo;
 import com.essence.business.xqh.api.fhybdd.dto.ModelCallBySWDDVo;
 import com.essence.business.xqh.dao.entity.fhybdd.WrpRcsBsin;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlanTriggerRcsFlow;
@@ -40,7 +41,7 @@ public interface ModelCallFhybddNewService {
      * @param ywkPlaninfo
      * @return
      */
-    Long modelCall(YwkPlaninfo ywkPlaninfo);
+    void modelCall(YwkPlaninfo ywkPlaninfo);
 
     /**
      * 集水区模型选择跟河段模型选择
@@ -132,22 +133,8 @@ public interface ModelCallFhybddNewService {
      */
     List<Map<String, Double>> importCalibrationWithDWX(MultipartFile mutilpartFile, YwkPlaninfo planinfo);
 
-    /**
-     * 新安江模型参数交互
-     * @param mutilpartFile
-     * @param planInfo
-     * @return
-     */
-    List<Map<String, Object>> importCalibrationWithXAJ(MultipartFile mutilpartFile, YwkPlaninfo planInfo);
 
 
-    /**
-     * 相关系数
-     * @param mutilpartFile
-     * @param planinfo
-     * @return
-     */
-    List<Map<String, Double>> importCalibrationWithXGXS(MultipartFile mutilpartFile, YwkPlaninfo planinfo);
 
     /**
      * 保存率定的单位线信息入库
@@ -158,10 +145,16 @@ public interface ModelCallFhybddNewService {
     /**
      * 保存率定的新安江信息入库
      * @param planinfo
-     * @param result
      * @param calibrationXAJVo
      */
-    void saveCalibrationXAJToDB(YwkPlaninfo planinfo, List<Map<String, Object>> result, CalibrationXAJVo calibrationXAJVo);
+    void saveCalibrationXAJToDB(YwkPlaninfo planinfo,  List<CalibrationXAJVo> calibrationXAJVo);
+
+    /**
+     * 保存相关关系
+     * @param planInfo
+     * @param calibrationXGGXVo
+     */
+    void saveCalibrationXGGXToDB(YwkPlaninfo planInfo, List<CalibrationXGGXVo> calibrationXGGXVo);
 
     /**
      * 保存马斯京根跟SCS模型参数
@@ -171,14 +164,9 @@ public interface ModelCallFhybddNewService {
     void saveCalibrationMSJGOrScSToDB(YwkPlaninfo planinfo, CalibrationMSJGAndScsVo calibrationMSJGAndScsVo,Integer tag);
 
 
-    /**
-     * 新安江模型蒸发量
-     * @param planInfo
-     * @return
-     */
-    Workbook exportCalibrationXAJTemplate(YwkPlaninfo planInfo);
 
-    Long ModelCallCalibration(YwkPlaninfo planInfo);
+
+    void ModelCallCalibration(YwkPlaninfo planInfo);
 
     /**
      * 获取率定后的结果
@@ -200,4 +188,7 @@ public interface ModelCallFhybddNewService {
      * @param tag
      */
     int saveOrDeleteResultCsv(YwkPlaninfo planInfo, Integer tag);
+
+
+
 }
