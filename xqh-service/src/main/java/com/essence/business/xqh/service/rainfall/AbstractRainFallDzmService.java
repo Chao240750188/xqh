@@ -6,10 +6,12 @@ import com.essence.business.xqh.api.rainfall.dto.dzm.StationRainVgeDto;
 import com.essence.business.xqh.api.rainfall.vo.RainDzmReq;
 import com.essence.business.xqh.common.RainConstants;
 import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
+import com.essence.business.xqh.dao.dao.fhybdd.StStsmtaskBDao;
 import com.essence.business.xqh.dao.dao.rainanalyse.dto.StPptnCommonRainfall;
 import com.essence.business.xqh.dao.dao.rainfall.TStsmtaskBOldDao;
 import com.essence.business.xqh.dao.dao.rainfall.dto.THdmisTotalRainfallDto;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
+import com.essence.business.xqh.dao.entity.fhybdd.StStsmtaskB;
 import com.essence.business.xqh.dao.entity.rainfall.TStsmtaskBOld;
 import com.essence.business.xqh.service.rainanalyse.strategy.*;
 import com.essence.framework.util.DateUtil;
@@ -43,7 +45,8 @@ public abstract class AbstractRainFallDzmService {
     @Autowired
     StStbprpBDao tStbprpBOldDao;
     @Autowired
-    TStsmtaskBOldDao tStsmtaskBOldDao;
+    StStsmtaskBDao stStsmtaskBDao;
+
     /**
      * @Description 策略模式
      * @Author xzc
@@ -69,14 +72,14 @@ public abstract class AbstractRainFallDzmService {
      **/
     protected Map<String, Object> getRainStation() {
         //查询所有雨量站
-        List<TStsmtaskBOld> stsmtaskBList = tStsmtaskBOldDao.findByPfl(1L);
+        List<StStsmtaskB> stsmtaskBList = stStsmtaskBDao.findByPfl("1");
         //查询所有开启的站
         List<StStbprpB> stbprpBList = tStbprpBOldDao.findByUsfl("1");
         List<String> stcdList = stbprpBList.stream().map(StStbprpB::getStcd).collect(Collectors.toList());
         //所有开启的站的map  <测站编码， this>
         Map<String, StStbprpB> stcdBprpMap = stbprpBList.stream().collect(Collectors.toMap(StStbprpB::getStcd, Function.identity()));
         //所有开启的雨量站
-        List<TStsmtaskBOld> validRainList = stsmtaskBList.stream().filter(item -> stcdList.contains(item.getStcd())).collect(Collectors.toList());
+        List<StStsmtaskB> validRainList = stsmtaskBList.stream().filter(item -> stcdList.contains(item.getStcd())).collect(Collectors.toList());
         Map map = new HashMap(2);
         map.put(RainConstants.STCDBPRPMAP, stcdBprpMap);
         map.put(RainConstants.VALIDRAINLIST, validRainList);
@@ -94,17 +97,17 @@ public abstract class AbstractRainFallDzmService {
         //所有开启的站的map  <测站编码， this>
         Map<String, StStbprpB> stcdBprpMap = (Map<String, StStbprpB>) rainStation.get(RainConstants.STCDBPRPMAP);
         //所有开启的雨量站
-        List<TStsmtaskBOld> validRainList = (List<TStsmtaskBOld>) rainStation.get(RainConstants.VALIDRAINLIST);
+        List<StStsmtaskB> validRainList = (List<StStsmtaskB>) rainStation.get(RainConstants.VALIDRAINLIST);
 
         //所有开启的雨量站编码
-        Set<String> validStcdList = validRainList.stream().map(TStsmtaskBOld::getStcd).collect(Collectors.toSet());
+        Set<String> validStcdList = validRainList.stream().map(StStsmtaskB::getStcd).collect(Collectors.toSet());
 
         List<THdmisTotalRainfallDto> dbCollect = getDbRainfall(req);
-        List<StStbprpB> selectedAll = tStbprpBOldDao.findByAdmauthIn(req.getSource());
+        List<StStbprpB> selectedAll = tStbprpBOldDao.findAll();
         Set<String> selectedStcdList = selectedAll.stream().map(StStbprpB::getStcd).collect(Collectors.toSet());
         //交集
         Sets.SetView<String> intersection = Sets.intersection(validStcdList, selectedStcdList);
-        System.out.println("交集为："+intersection);
+        System.out.println("交集为：" + intersection);
 
         List<THdmisTotalRainfallDto> collect = dbCollect.stream().filter(item ->
                 selectedStcdList.contains(item.getStcd()) && validStcdList.contains(item.getStcd())).collect(Collectors.toList());
@@ -196,32 +199,33 @@ public abstract class AbstractRainFallDzmService {
 
     /**
      * 查询日数据
+     *
+     * @return java.util.List<com.essence.tzsyq.rainanalyse.dto.StPptnCommonRainfall>
      * @Author huangxiaoli
      * @Description
      * @Date 17:02 2020/11/2
      * @Param [req]
-     * @return java.util.List<com.essence.tzsyq.rainanalyse.dto.StPptnCommonRainfall>
      **/
     protected List<StPptnCommonRainfall> dbFindByDay(RainAnalyseReq req) {
         List<StPptnCommonRainfall> currentMonth = null;
         LocalDateTime startLocalDateTime = req.getStartDay().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-        LocalDateTime endLocalDateTime =req.getEndDay().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        LocalDateTime endLocalDateTime = req.getEndDay().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 
         //当前时间
         LocalDateTime nowLocalDateTime = LocalDateTime.now();
 
         //String startDay = DateUtil.dateToStringDay(req.getStartDay());
-       // String endDay = DateUtil.dateToStringDay(req.getEndDay());
+        // String endDay = DateUtil.dateToStringDay(req.getEndDay());
         List<StPptnCommonRainfall> currentHoursDb = new ArrayList<>();
         List<StPptnCommonRainfall> historyDay = new ArrayList<>();
         List<StPptnCommonRainfall> currentListTotalNew = new ArrayList<>();
 
         //今天
-        if (endLocalDateTime.getDayOfMonth()==nowLocalDateTime.getDayOfMonth()) {
+        if (endLocalDateTime.getDayOfMonth() == nowLocalDateTime.getDayOfMonth()) {
             req.setHourOnlyFlag(false);
             RainAanlyseContext rainAanlyseContext = new RainAanlyseContext(rainStrategyHourOnly);
             currentHoursDb = rainAanlyseContext.contextInterface(req);
-            if (currentHoursDb.size()>0){
+            if (currentHoursDb.size() > 0) {
                 Map<String, List<StPptnCommonRainfall>> currentMap = currentHoursDb.stream().collect(Collectors.groupingBy(StPptnCommonRainfall::getStcd));
                 currentMap.forEach((key, value) -> {
                     double sum = value.stream().collect(Collectors.summarizingDouble(StPptnCommonRainfall::getDrp)).getSum();
@@ -235,7 +239,7 @@ public abstract class AbstractRainFallDzmService {
 
         }
         //历史天
-        if (startLocalDateTime.getDayOfMonth()<nowLocalDateTime.getDayOfMonth()) {
+        if (startLocalDateTime.getDayOfMonth() < nowLocalDateTime.getDayOfMonth()) {
             RainAanlyseContext rainAanlyseContext = new RainAanlyseContext(rainStrategyDayOnly);
             historyDay = rainAanlyseContext.contextInterface(req);
         }

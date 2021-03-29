@@ -108,18 +108,20 @@ public class RainFallDzmController {
                 DzmReqGis.FeaturesBean featuresBean = new DzmReqGis.FeaturesBean();
                 DzmReqGis.FeaturesBean.AttributesBean attributesBean = new DzmReqGis.FeaturesBean.AttributesBean();
                 attributesBean.setDrp(item.getP());
-                attributesBean.setLgtd(item.getLgtd());
-                attributesBean.setLttd(item.getLttd());
-//                attributesBean.setStcd(Integer.valueOf(item.getStcd()));
-//                attributesBean.setStcd(item.getStcd());
+                DzmReqGis.FeaturesBean.GeometryBean geometryBean = new DzmReqGis.FeaturesBean.GeometryBean();
+                if (item.getLgtd()!=null){
+                    attributesBean.setLgtd(item.getLgtd());
+                    attributesBean.setLttd(item.getLttd());
+                    geometryBean.setX(item.getLgtd());
+                    geometryBean.setY(item.getLttd());
+                }
                 attributesBean.setStnm(item.getStnm());
                 attributesBean.setFID(atomicInteger.getAndIncrement());
                 featuresBean.setAttributes(attributesBean);
-                DzmReqGis.FeaturesBean.GeometryBean geometryBean = new DzmReqGis.FeaturesBean.GeometryBean();
-                geometryBean.setX(item.getLgtd());
-                geometryBean.setY(item.getLttd());
                 featuresBean.setGeometry(geometryBean);
-                featuresBeanList.add(featuresBean);
+                if (item.getLgtd()!=null){
+                    featuresBeanList.add(featuresBean);
+                }
             });
             atomicInteger.set(1);
         }

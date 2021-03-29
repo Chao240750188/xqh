@@ -83,4 +83,13 @@ public class THdmisTotalRainfallDto {
     public void setStnm(String stnm) {
         this.stnm = stnm;
     }
+
+    public THdmisTotalRainfallDto(Double drp, String stcd, Date tm) {
+        this.drp = drp;
+        this.stcd = stcd;
+        this.tm = tm;
+    }
+    public THdmisTotalRainfallDto(){
+
+    }
 }
