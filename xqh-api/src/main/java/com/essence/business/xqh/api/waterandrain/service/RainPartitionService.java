@@ -57,4 +57,40 @@ public interface RainPartitionService {
      * @return
      */
     RainWaterReportDto getRainWaterCommonReport(RainPartitionDto reqDto);
+
+    /**
+     * 保存公报报告
+     * @param reqDto
+     * @return
+     */
+
+    Object saveRainWaterCommonReport(RainWaterReportDto reqDto);
+
+    /**
+     * 获取公报列表信息
+     * @param paginatorParam
+     * @return
+     */
+    Paginator getCommonReportList(PaginatorParam paginatorParam);
+
+    /**
+     * 根据公报id获取公报
+     * @param reportId
+     * @return
+     */
+    RainWaterReportDto getCommonReportInfo(String reportId);
+
+    /**
+     * 根据简报id删除简报数据
+     * @param reportId
+     * @return
+     */
+    Object deleteReportInfo(String reportId);
+
+    /**
+     * 根据公报id删除公报
+     * @param reportId
+     * @return
+     */
+    Object deleteCommonReportInfo(String reportId);
 }

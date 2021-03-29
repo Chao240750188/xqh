@@ -32,15 +32,15 @@ import java.util.stream.Collectors;
 public class RainPartitionServiceImpl implements RainPartitionService {
 
     //公报小清河流域面积㎡
-    private static final  double XQH_AREA = 9533094095.0;
+    private static final double XQH_AREA = 9533094095.0;
     //公报签发
-    private static final  String XQH_SIGN = "小清河流域中心";
+    private static final String XQH_SIGN = "小清河流域中心";
     //公报审定
-    private static final  String XQH_VERIFICATION = "张三";
+    private static final String XQH_VERIFICATION = "张三";
     //公报核稿
-    private static final  String XQH_ENGAGEMENT = "李四";
+    private static final String XQH_ENGAGEMENT = "李四";
     //公报拟稿
-    private static final  String XQH_DARFT = "王五";
+    private static final String XQH_DARFT = "王五";
 
     @Autowired
     private YwkRainWaterReportDao ywkRainWaterReportDao;
@@ -67,6 +67,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
 
     @Autowired
     private YwkWaterReportDataDao ywkWaterReportDataDao;
+
     /**
      * 按类型和时间查询分区雨量
      *
@@ -195,15 +196,15 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         String dataTimestr = DateUtil.dateToStringNormal(startTime);
         //年份
         int reportYear = Integer.parseInt(dataTimestr.substring(0, 4));
-        rainWaterReportDto.setReportName("小清河流域"+reportYear + "年" + dataTimestr.substring(5, 7) + "月水雨情综述");
+        rainWaterReportDto.setReportName("小清河流域" + reportYear + "年" + dataTimestr.substring(5, 7) + "月水雨情综述");
         //年份
         rainWaterReportDto.setYear(reportYear);
         //第几期
         List<YwkRainWaterReport> reportsList = ywkRainWaterReportDao.findByYearAndReportTypeOrderBySerialNumberDesc(reportYear, "0");
-        if(reportsList==null || reportsList.size()==0){
+        if (reportsList == null || reportsList.size() == 0) {
             rainWaterReportDto.setSerialNumber(1);
-        }else{
-            rainWaterReportDto.setSerialNumber(reportsList.get(0).getSerialNumber()+1);
+        } else {
+            rainWaterReportDto.setSerialNumber(reportsList.get(0).getSerialNumber() + 1);
         }
         //查询数据结束时间
         Date endTime = DateUtil.getNextMonth(startTime, 1);
@@ -284,9 +285,9 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         rainStr += month + "月小清河流域降水情况见如下雨量实况分布图。";
         rainWaterReportDto.setRainInfo(rainStr);
         //水情
-        String waterInfo = month+"月份，小清河流域月内";
+        String waterInfo = month + "月份，小清河流域月内";
         waterInfo = getWaterRegimenMessage(waterInfo, startTime, DateUtil.getNextMillis(endTime, -1));
-        waterInfo+="水库水位详情见下表。";
+        waterInfo += "水库水位详情见下表。";
         rainWaterReportDto.setWaterInfo(waterInfo);
         //水库水位数据
         List<TRsvrR> swList = tRsvrRDao.findByTmBetweenOrderByRzDesc(startTime, DateUtil.getNextMillis(endTime, -1));
@@ -433,12 +434,12 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         //封装水情数据
         List<YwkRainReportData> rainDataList = new ArrayList<>();
         List<RainPartitionDataDto> rainMonthList = reqDto.getRainMonthList();
-        if(rainMonthList!=null && rainMonthList.size()>0){
-            for(RainPartitionDataDto rain:rainMonthList){
+        if (rainMonthList != null && rainMonthList.size() > 0) {
+            for (RainPartitionDataDto rain : rainMonthList) {
                 String partName = rain.getPartName();
                 List<RainStcdDataDto> stcdRainList = rain.getStcdRainList();
-                if(stcdRainList!=null){
-                    for(RainStcdDataDto rainData:stcdRainList){
+                if (stcdRainList != null) {
+                    for (RainStcdDataDto rainData : stcdRainList) {
                         YwkRainReportData ywkRainReportData = new YwkRainReportData();
                         ywkRainReportData.setId(StrUtil.getUUID());
                         ywkRainReportData.setReportId(reportId);
@@ -454,8 +455,8 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         //封装水情数据
         List<YwkWaterReportData> waterDataList = new ArrayList<>();
         List<WaterRsrDto> rsrMonthList = reqDto.getRsrMonthList();
-        if(rsrMonthList!=null && rsrMonthList.size()>0) {
-            for(WaterRsrDto water:rsrMonthList){
+        if (rsrMonthList != null && rsrMonthList.size() > 0) {
+            for (WaterRsrDto water : rsrMonthList) {
                 YwkWaterReportData ywkWaterReportData = new YwkWaterReportData();
                 ywkWaterReportData.setId(StrUtil.getUUID());
                 ywkWaterReportData.setReportId(reportId);
@@ -472,9 +473,9 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         //保存简报
         ywkRainWaterReportDao.save(ywkRainWaterReport);
         //保存雨量数据
-        if(rainDataList.size()>0)
+        if (rainDataList.size() > 0)
             ywkRainReportDataDao.saveAll(rainDataList);
-        if(waterDataList.size()>0)
+        if (waterDataList.size() > 0)
             ywkWaterReportDataDao.saveAll(waterDataList);
         return reqDto;
     }
@@ -482,7 +483,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
     @Override
     public Paginator getReportList(PaginatorParam paginatorParam) {
         List<Criterion> orders = paginatorParam.getOrders();
-        if(orders==null){
+        if (orders == null) {
             orders = new ArrayList<>();
             paginatorParam.setOrders(orders);
         }
@@ -492,7 +493,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         orders.add(criterion);
 
         List<Criterion> conditions = paginatorParam.getConditions();
-        if(conditions==null){
+        if (conditions == null) {
             conditions = new ArrayList<>();
             paginatorParam.setConditions(conditions);
         }
@@ -506,6 +507,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
 
     /**
      * 根据简报id获取简报详情
+     *
      * @param reportId
      * @return
      */
@@ -514,7 +516,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         RainWaterReportDto rainWaterReportDto = new RainWaterReportDto();
         //查询简报信息
         YwkRainWaterReport report = ywkRainWaterReportDao.findOneById(reportId);
-             //封装数据
+        //封装数据
         rainWaterReportDto.setReportName(report.getReportName());
         rainWaterReportDto.setRainInfo(report.getDescribeRainInfo());
         rainWaterReportDto.setWaterInfo(report.getDescribeWaterInfo());
@@ -534,7 +536,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         //封装雨情数据
         List<RainPartitionDataDto> rainMonthList = new ArrayList<>();
         rainWaterReportDto.setRainMonthList(rainMonthList);
-        if(rainDataList!=null && rainDataList.size()>0){
+        if (rainDataList != null && rainDataList.size() > 0) {
             //分区分组
             Map<String, List<YwkRainReportData>> partRainMap = rainDataList.stream().collect(Collectors.groupingBy(YwkRainReportData::getPartName));
             for (Map.Entry<String, List<YwkRainReportData>> entry : partRainMap.entrySet()) {
@@ -543,7 +545,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
                 RainPartitionDataDto rainPartitionDataDto = new RainPartitionDataDto();
                 rainPartitionDataDto.setPartName(partName);
                 List<RainStcdDataDto> stcdRainList = new ArrayList<>();
-                for (YwkRainReportData ywkRainReportData:rainList) {
+                for (YwkRainReportData ywkRainReportData : rainList) {
                     RainStcdDataDto rainStcdDataDto = new RainStcdDataDto();
                     rainStcdDataDto.setStcd(ywkRainReportData.getStcd());
                     rainStcdDataDto.setDrp(ywkRainReportData.getDrp());
@@ -559,8 +561,8 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         List<YwkWaterReportData> waterDataList = ywkWaterReportDataDao.findByReportId(reportId);
         List<WaterRsrDto> rsrMonthList = new ArrayList<>();
         rainWaterReportDto.setRsrMonthList(rsrMonthList);
-        if(waterDataList!=null && waterDataList.size()>0){
-            for (YwkWaterReportData ywkWaterReportData:waterDataList) {
+        if (waterDataList != null && waterDataList.size() > 0) {
+            for (YwkWaterReportData ywkWaterReportData : waterDataList) {
                 WaterRsrDto waterRsrDto = new WaterRsrDto();
                 waterRsrDto.setWrz(ywkWaterReportData.getWrz());
                 waterRsrDto.setRscd(ywkWaterReportData.getRscd());
@@ -576,7 +578,27 @@ public class RainPartitionServiceImpl implements RainPartitionService {
     }
 
     /**
+     * 根据简报id删除简报
+     *
+     * @param reportId
+     * @return
+     */
+    @Override
+    @Transient
+    public Object deleteReportInfo(String reportId) {
+        //删除简报
+        ywkRainWaterReportDao.delete(reportId);
+        //删除雨量数据
+        ywkRainReportDataDao.deleteByReportId(reportId);
+        ywkWaterReportDataDao.deleteByReportId(reportId);
+        return reportId;
+    }
+
+
+
+    /**
      * 根据条件创建成公报报告
+     *
      * @param reqDto
      * @return
      */
@@ -601,15 +623,15 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         String endTimeStr = DateUtil.dateToStringNormal(endTime);
         //数据年份
         int reportYear = Integer.parseInt(startTimeStr.substring(0, 4));
-        rainWaterReportDto.setReportName("小清河流域"+reportYear + "年" + startTimeStr.substring(5, 7) + "月水雨情综述");
+        rainWaterReportDto.setReportName("小清河流域" + reportYear + "年" + startTimeStr.substring(5, 7) + "月水雨情综述");
         //数据年份
         rainWaterReportDto.setYear(reportYear);
         //第几期
         List<YwkRainWaterReport> reportsList = ywkRainWaterReportDao.findByYearAndReportTypeOrderBySerialNumberDesc(reportYear, "1");
-        if(reportsList==null || reportsList.size()==0){
+        if (reportsList == null || reportsList.size() == 0) {
             rainWaterReportDto.setSerialNumber(1);
-        }else{
-            rainWaterReportDto.setSerialNumber(reportsList.get(0).getSerialNumber()+1);
+        } else {
+            rainWaterReportDto.setSerialNumber(reportsList.get(0).getSerialNumber() + 1);
         }
         //查时段分区雨量
         List<RainPartitionDataDto> rainMonthList = getPartRain(new RainPartitionDto(startTime, endTime, "4"), true);
@@ -636,21 +658,21 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         String thisLastStr = thisLast > 0 ? "增加" : "减少";
 
         //起始时间月日时
-        Integer startMonth = Integer.parseInt(startTimeStr.substring(5,7));
-        Integer startDay = Integer.parseInt(startTimeStr.substring(8,10));
-        Integer startHour = Integer.parseInt(startTimeStr.substring(11,13));
+        Integer startMonth = Integer.parseInt(startTimeStr.substring(5, 7));
+        Integer startDay = Integer.parseInt(startTimeStr.substring(8, 10));
+        Integer startHour = Integer.parseInt(startTimeStr.substring(11, 13));
         //起始时间月日时
-        Integer endMonth = Integer.parseInt(endTimeStr.substring(5,7));
-        Integer endtDay = Integer.parseInt(endTimeStr.substring(8,10));
-        Integer endHour = Integer.parseInt(endTimeStr.substring(11,13));
+        Integer endMonth = Integer.parseInt(endTimeStr.substring(5, 7));
+        Integer endtDay = Integer.parseInt(endTimeStr.substring(8, 10));
+        Integer endHour = Integer.parseInt(endTimeStr.substring(11, 13));
         //降雨量折合成水量
-        Double rainToWater = (avgRain*XQH_AREA)/1000/10000;
+        Double rainToWater = (avgRain * XQH_AREA) / 1000 / 10000;
         //结束时间月日时
-        String rainStr = startMonth+"月"+startDay+"日"+startHour+"时至"+endMonth+"月"+endtDay+"日"+endHour+"时，小清河流域面平均降水量";
+        String rainStr = startMonth + "月" + startDay + "日" + startHour + "时至" + endMonth + "月" + endtDay + "日" + endHour + "时，小清河流域面平均降水量";
         if (lastAvgRain == 0.0) {
-            rainStr += df.format(avgRain) + "mm,折合水量"+df.format(rainToWater)+"万立方米,上一年同期无降水。";
+            rainStr += df.format(avgRain) + "mm,折合水量" + df.format(rainToWater) + "万立方米,上一年同期无降水。";
         } else {
-            rainStr += df.format(avgRain) + "mm,折合水量"+df.format(rainToWater)+"万立方米,上一年同期降水量为" + df.format(lastAvgRain) + "，同比" + thisLastStr + df.format(thisLast) + "mm。";
+            rainStr += df.format(avgRain) + "mm,折合水量" + df.format(rainToWater) + "万立方米,上一年同期降水量为" + df.format(lastAvgRain) + "，同比" + thisLastStr + df.format(thisLast) + "mm。";
         }
         rainStr += "各流域分区降水量为：";
         for (RainPartitionDataDto rainDto : rainMonthList) {
@@ -660,7 +682,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
             }
         }
         //今年雨量
-        Date thisYearStartTime = DateUtil.getNextHour(DateUtil.getThisYear(),8);
+        Date thisYearStartTime = DateUtil.getNextHour(DateUtil.getThisYear(), 8);
         Date thisYearEndTime = DateUtil.getCurrentTime();
         List<RainPartitionDataDto> thisYearList = getPartRain(new RainPartitionDto(thisYearStartTime, thisYearEndTime, "4"), true);
         Double avgThisYearRain = 0.0;
@@ -671,12 +693,12 @@ public class RainPartitionServiceImpl implements RainPartitionService {
             avgThisYearRain = avgThisYearRain / thisYearList.size();
         } catch (Exception e) {
         }
-        rainStr+="今年以来（1月1日8时至"+endMonth+"月"+endtDay+"日"+endHour+"时）全流域平均降水量"+avgThisYearRain+"mm。";
+        rainStr += "今年以来（1月1日8时至" + endMonth + "月" + endtDay + "日" + endHour + "时）全流域平均降水量" + avgThisYearRain + "mm。";
         //如果汛期
-        Date xqStartTm = DateUtil.getDateByStringNormal(reportYear+"-06-01 00:00:00");
-        Date xqEndTm = DateUtil.getDateByStringNormal(reportYear+"-09-15 00:00:00");
-        if(endTime.after(xqStartTm) && endTime.before(xqEndTm)){
-           //查询汛期雨量
+        Date xqStartTm = DateUtil.getDateByStringNormal(reportYear + "-06-01 00:00:00");
+        Date xqEndTm = DateUtil.getDateByStringNormal(reportYear + "-09-15 00:00:00");
+        if (endTime.after(xqStartTm) && endTime.before(xqEndTm)) {
+            //查询汛期雨量
             List<RainPartitionDataDto> xqDataList = getPartRain(new RainPartitionDto(xqStartTm, endTime, "4"), true);
             Double xqRain = 0.0;
             for (RainPartitionDataDto rainDto : xqDataList) {
@@ -686,11 +708,11 @@ public class RainPartitionServiceImpl implements RainPartitionService {
                 xqRain = xqRain / xqDataList.size();
             } catch (Exception e) {
             }
-            rainStr+="入汛以来（6月1日8时至"+endMonth+"月"+endtDay+"日"+endHour+"时）全流域平均降水量"+xqRain+"mm。";
+            rainStr += "入汛以来（6月1日8时至" + endMonth + "月" + endtDay + "日" + endHour + "时）全流域平均降水量" + xqRain + "mm。";
         }
         rainWaterReportDto.setRainInfo(rainStr);
         //水情
-        String waterInfo = startMonth+"月"+startDay+"日"+startHour+"时至"+endMonth+"月"+endtDay+"日"+endHour+"时，小清河流域";
+        String waterInfo = startMonth + "月" + startDay + "日" + startHour + "时至" + endMonth + "月" + endtDay + "日" + endHour + "时，小清河流域";
         waterInfo = getWaterRegimenMessage(waterInfo, startTime, DateUtil.getNextMillis(endTime, -1));
         rainWaterReportDto.setWaterInfo(waterInfo);
         rainWaterReportDto.setSign(XQH_SIGN);
@@ -698,5 +720,104 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         rainWaterReportDto.setDarft(XQH_DARFT);
         rainWaterReportDto.setVerification(XQH_VERIFICATION);
         return rainWaterReportDto;
+    }
+
+    /**
+     * 保存公报报告
+     *
+     * @param reqDto
+     * @return
+     */
+    @Override
+    public Object saveRainWaterCommonReport(RainWaterReportDto reqDto) {
+        YwkRainWaterReport ywkRainWaterReport = new YwkRainWaterReport();
+        String reportId = StrUtil.getUUID();
+        ywkRainWaterReport.setId(reportId);
+        ywkRainWaterReport.setCreateTime(reqDto.getCreateTime());
+        ywkRainWaterReport.setReportName(reqDto.getReportName());
+        ywkRainWaterReport.setReportType("1");
+        ywkRainWaterReport.setReportStartTime(reqDto.getDataTime());
+        ywkRainWaterReport.setReportEndTime(reqDto.getEndTime());
+        ywkRainWaterReport.setYear(reqDto.getYear());
+        ywkRainWaterReport.setSerialNumber(reqDto.getSerialNumber());
+        ywkRainWaterReport.setDescribeRainInfo(reqDto.getRainInfo());
+        ywkRainWaterReport.setDescribeWaterInfo(reqDto.getWaterInfo());
+
+        ywkRainWaterReport.setSign(reqDto.getSign());
+        ywkRainWaterReport.setEngagement(reqDto.getEngagement());
+        ywkRainWaterReport.setVerification(reqDto.getVerification());
+        ywkRainWaterReport.setDarft(reqDto.getDarft());
+
+        //保存简报
+        ywkRainWaterReportDao.save(ywkRainWaterReport);
+        return reqDto;
+    }
+
+    /**
+     * 获取公报列表信息
+     *
+     * @param paginatorParam
+     * @return
+     */
+    @Override
+    public Paginator getCommonReportList(PaginatorParam paginatorParam) {
+        List<Criterion> orders = paginatorParam.getOrders();
+        if (orders == null) {
+            orders = new ArrayList<>();
+            paginatorParam.setOrders(orders);
+        }
+        Criterion criterion = new Criterion();
+        criterion.setFieldName("createTime");
+        criterion.setOperator(Criterion.DESC);
+        orders.add(criterion);
+
+        List<Criterion> conditions = paginatorParam.getConditions();
+        if (conditions == null) {
+            conditions = new ArrayList<>();
+            paginatorParam.setConditions(conditions);
+        }
+        Criterion criterion2 = new Criterion();
+        criterion2.setFieldName("reportType");
+        criterion2.setOperator(Criterion.EQ);
+        criterion2.setValue("1");
+        conditions.add(criterion2);
+        return ywkRainWaterReportDao.findAll(paginatorParam);
+    }
+
+    @Override
+    public RainWaterReportDto getCommonReportInfo(String reportId) {
+        RainWaterReportDto rainWaterReportDto = new RainWaterReportDto();
+        //查询简报信息
+        YwkRainWaterReport report = ywkRainWaterReportDao.findOneById(reportId);
+        //封装数据
+        rainWaterReportDto.setReportName(report.getReportName());
+        rainWaterReportDto.setRainInfo(report.getDescribeRainInfo());
+        rainWaterReportDto.setWaterInfo(report.getDescribeWaterInfo());
+        rainWaterReportDto.setYear(report.getYear());
+        Date createTime = report.getCreateTime();
+        rainWaterReportDto.setCreateTime(createTime);
+        String createTstr = DateUtil.dateToStringNormal(createTime);
+        //年份
+        int year = Integer.parseInt(createTstr.substring(0, 4));
+        rainWaterReportDto.setCreateTimeStr(year + "年" + createTstr.substring(5, 7) + "月" + createTstr.substring(8, 10) + "日" + createTstr.substring(11, 13) + "时");
+        rainWaterReportDto.setSerialNumber(report.getSerialNumber());
+        rainWaterReportDto.setDataTime(report.getReportStartTime());
+        rainWaterReportDto.setEndTime(report.getReportEndTime());
+        rainWaterReportDto.setSign(report.getSign());
+        rainWaterReportDto.setEngagement(report.getEngagement());
+        rainWaterReportDto.setVerification(report.getVerification());
+        rainWaterReportDto.setDarft(report.getDarft());
+        return rainWaterReportDto;
+    }
+
+    /**
+     * 根据公报id删除公报
+     * @param reportId
+     * @return
+     */
+    @Override
+    public Object deleteCommonReportInfo(String reportId) {
+        ywkRainWaterReportDao.delete(reportId);
+        return reportId;
     }
 }

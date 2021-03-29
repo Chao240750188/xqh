@@ -59,6 +59,28 @@ public class YwkRainWaterReport {
     @Column(name = "C_DESCRIBE_WATER_INFO")
     private String describeWaterInfo;
 
+    /**
+     * 公报签发
+     */
+    @Column(name = "C_SIGN")
+    private String sign;
+    /**
+     * 公报核定
+     */
+    @Column(name = "C_VERIFICATION")
+    private String verification;
+    /**
+     * 公报核稿
+     */
+    @Column(name = "C_ENGAGEMENT")
+    private String engagement;
+    /**
+     * 公报拟稿
+     */
+    @Column(name = "C_DARFT")
+    private String darft;
+
+
     public String getId() {
         return id;
     }
@@ -137,5 +159,37 @@ public class YwkRainWaterReport {
 
     public void setDescribeWaterInfo(String describeWaterInfo) {
         this.describeWaterInfo = describeWaterInfo;
+    }
+
+    public String getSign() {
+        return sign;
+    }
+
+    public void setSign(String sign) {
+        this.sign = sign;
+    }
+
+    public String getVerification() {
+        return verification;
+    }
+
+    public void setVerification(String verification) {
+        this.verification = verification;
+    }
+
+    public String getEngagement() {
+        return engagement;
+    }
+
+    public void setEngagement(String engagement) {
+        this.engagement = engagement;
+    }
+
+    public String getDarft() {
+        return darft;
+    }
+
+    public void setDarft(String darft) {
+        this.darft = darft;
     }
 }

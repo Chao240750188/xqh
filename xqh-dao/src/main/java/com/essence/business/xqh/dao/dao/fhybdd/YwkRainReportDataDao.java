@@ -15,4 +15,10 @@ public interface YwkRainReportDataDao extends EssenceJpaRepository<YwkRainReport
      * @param report
      */
     List<YwkRainReportData> findByReportIdOrderByDrpDesc(String reportId);
+
+    /**
+     * 根据简报id删除
+     * @param reportId
+     */
+    void deleteByReportId(String reportId);
 }

@@ -16,4 +16,10 @@ public interface YwkWaterReportDataDao extends EssenceJpaRepository<YwkWaterRepo
      * @return
      */
     List<YwkWaterReportData> findByReportId(String reportId);
+
+    /**
+     * 根据简报id删除
+     * @param reportId
+     */
+    void deleteByReportId(String reportId);
 }
