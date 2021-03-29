@@ -43,6 +43,18 @@ public class RainWaterReportDto implements Serializable {
      */
     private String waterInfo;
     /**
+     * 水情信息描述
+     */
+    private String reportName;
+    /**
+     * 年分
+     */
+    private Integer year;
+    /**
+     * 第几期
+     */
+    private Integer serialNumber;
+    /**
      * 雨量数据
      */
     private List<RainPartitionDataDto> rainMonthList;

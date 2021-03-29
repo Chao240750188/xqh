@@ -1,13 +1,13 @@
 package com.essence.business.xqh.web.waterandrain.controller;
 
 import com.essence.business.xqh.api.rainfall.vo.RainPartitionDto;
+import com.essence.business.xqh.api.rainfall.vo.RainWaterReportDto;
 import com.essence.business.xqh.api.waterandrain.service.RainPartitionService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
+import com.essence.framework.jpa.Paginator;
+import com.essence.framework.jpa.PaginatorParam;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 雨水情查询-雨量信息查询分区
@@ -47,6 +47,39 @@ public class RainPartitionController {
             return new SystemSecurityMessage("ok", "查询简报数据成功", rainPartitionService.getRainWaterSimpleReport(reqDto));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询简报数据失败！");
+        }
+    }
+
+    /**
+     * 保存简报信息
+     *
+     * @param reqDto
+     * @return
+     */
+    @PostMapping(value = "/saveRainWaterSimpleReport")
+    public SystemSecurityMessage saveRainWaterSimpleReport(@RequestBody RainWaterReportDto reqDto) {
+        try {
+            return new SystemSecurityMessage("ok", "保存简报数据成功", rainPartitionService.saveRainWaterSimpleReport(reqDto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "保存简报数据失败！");
+        }
+    }
+
+    /**
+     * 获取简报列表信息
+     *
+     * @param paginatorParam
+     * @return
+     */
+    @RequestMapping(value = "/getReportList", method = RequestMethod.POST)
+    public SystemSecurityMessage getReportList(@RequestBody PaginatorParam paginatorParam) {
+        try {
+            Paginator planList = rainPartitionService.getReportList(paginatorParam);
+            return SystemSecurityMessage.getSuccessMsg("获取简报列表成功！", planList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("获取简报列表失败！");
+
         }
     }
 }
