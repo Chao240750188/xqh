@@ -82,4 +82,20 @@ public class RainPartitionController {
 
         }
     }
+
+    /**
+     * 根据简报id查看简报详情
+     * @param reportId
+     * @return
+     */
+    @RequestMapping(value = "/getReportInfo/{reportId}", method = RequestMethod.GET)
+    public SystemSecurityMessage getReportInfo(@PathVariable String reportId) {
+        try {
+            return SystemSecurityMessage.getSuccessMsg("获取简报信息成功！", rainPartitionService.getReportInfo(reportId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("获取简报信息失败！");
+
+        }
+    }
 }

@@ -43,4 +43,11 @@ public interface RainPartitionService {
      * @return
      */
     Paginator getReportList(PaginatorParam paginatorParam);
+
+    /**
+     * 根据简报id获取简报信息内容
+     * @param reportId
+     * @return
+     */
+    RainWaterReportDto getReportInfo(String reportId);
 }
