@@ -10,6 +10,6 @@ import java.util.List;
 
 @Repository
 public interface StStsmtaskBDao extends EssenceJpaRepository<StStsmtaskB,String > {
-    List<StStsmtaskB> findByPfl(Long pfl);
+    List<StStsmtaskB> findByPfl(String pfl);
 
 }

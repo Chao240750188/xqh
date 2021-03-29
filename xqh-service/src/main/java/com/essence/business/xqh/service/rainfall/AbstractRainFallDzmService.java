@@ -72,7 +72,7 @@ public abstract class AbstractRainFallDzmService {
      **/
     protected Map<String, Object> getRainStation() {
         //查询所有雨量站
-        List<StStsmtaskB> stsmtaskBList = stStsmtaskBDao.findByPfl(1L);
+        List<StStsmtaskB> stsmtaskBList = stStsmtaskBDao.findByPfl("1");
         //查询所有开启的站
         List<StStbprpB> stbprpBList = tStbprpBOldDao.findByUsfl("1");
         List<String> stcdList = stbprpBList.stream().map(StStbprpB::getStcd).collect(Collectors.toList());
@@ -97,13 +97,13 @@ public abstract class AbstractRainFallDzmService {
         //所有开启的站的map  <测站编码， this>
         Map<String, StStbprpB> stcdBprpMap = (Map<String, StStbprpB>) rainStation.get(RainConstants.STCDBPRPMAP);
         //所有开启的雨量站
-        List<TStsmtaskBOld> validRainList = (List<TStsmtaskBOld>) rainStation.get(RainConstants.VALIDRAINLIST);
+        List<StStsmtaskB> validRainList = (List<StStsmtaskB>) rainStation.get(RainConstants.VALIDRAINLIST);
 
         //所有开启的雨量站编码
-        Set<String> validStcdList = validRainList.stream().map(TStsmtaskBOld::getStcd).collect(Collectors.toSet());
+        Set<String> validStcdList = validRainList.stream().map(StStsmtaskB::getStcd).collect(Collectors.toSet());
 
         List<THdmisTotalRainfallDto> dbCollect = getDbRainfall(req);
-        List<StStbprpB> selectedAll = tStbprpBOldDao.findByAdmauthIn(req.getSource());
+        List<StStbprpB> selectedAll = tStbprpBOldDao.findAll();
         Set<String> selectedStcdList = selectedAll.stream().map(StStbprpB::getStcd).collect(Collectors.toSet());
         //交集
         Sets.SetView<String> intersection = Sets.intersection(validStcdList, selectedStcdList);
