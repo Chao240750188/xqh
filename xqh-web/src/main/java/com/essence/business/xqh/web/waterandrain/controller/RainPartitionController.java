@@ -95,7 +95,21 @@ public class RainPartitionController {
         } catch (Exception e) {
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("获取简报信息失败！");
+        }
+    }
 
+    /**
+     *  创建成公报报告
+     *
+     * @param reqDto
+     * @return
+     */
+    @PostMapping(value = "/getRainWaterCommonReport")
+    public SystemSecurityMessage getRainWaterCommonReport(@RequestBody RainPartitionDto reqDto) {
+        try {
+            return new SystemSecurityMessage("ok", "查询公报内容成功", rainPartitionService.getRainWaterCommonReport(reqDto));
+        } catch (Exception e) {
+            return new SystemSecurityMessage("error", "查询公报内容失败！");
         }
     }
 }

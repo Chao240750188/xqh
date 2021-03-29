@@ -23,6 +23,13 @@ public class RainWaterReportDto implements Serializable {
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date dataTime;
+
+    /**
+     * 公报查询数据结束时间
+     */
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date endTime;
     /**
      * 简报生成时间
      */
@@ -54,6 +61,23 @@ public class RainWaterReportDto implements Serializable {
      * 第几期
      */
     private Integer serialNumber;
+
+    /**
+     * 公报签发
+     */
+    private String sign;
+    /**
+     * 公报核定
+     */
+    private String verification;
+    /**
+     * 公报核稿
+     */
+    private String engagement;
+    /**
+     * 公报拟稿
+     */
+    private String darft;
     /**
      * 雨量数据
      */

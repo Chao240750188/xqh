@@ -50,4 +50,11 @@ public interface RainPartitionService {
      * @return
      */
     RainWaterReportDto getReportInfo(String reportId);
+
+    /**
+     * 查询数据生成公报报告
+     * @param reqDto
+     * @return
+     */
+    RainWaterReportDto getRainWaterCommonReport(RainPartitionDto reqDto);
 }

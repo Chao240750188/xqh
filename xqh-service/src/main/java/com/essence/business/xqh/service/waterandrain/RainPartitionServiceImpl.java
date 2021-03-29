@@ -31,6 +31,17 @@ import java.util.stream.Collectors;
 @Service
 public class RainPartitionServiceImpl implements RainPartitionService {
 
+    //公报小清河流域面积㎡
+    private static final  double XQH_AREA = 9533094095.0;
+    //公报签发
+    private static final  String XQH_SIGN = "小清河流域中心";
+    //公报审定
+    private static final  String XQH_VERIFICATION = "张三";
+    //公报核稿
+    private static final  String XQH_ENGAGEMENT = "李四";
+    //公报拟稿
+    private static final  String XQH_DARFT = "王五";
+
     @Autowired
     private YwkRainWaterReportDao ywkRainWaterReportDao;
     @Autowired
@@ -181,15 +192,18 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         int year = Integer.parseInt(createTstr.substring(0, 4));
         rainWaterReportDto.setCreateTimeStr(year + "年" + createTstr.substring(5, 7) + "月" + createTstr.substring(8, 10) + "日" + createTstr.substring(11, 13) + "时");
         //简报名称
-        rainWaterReportDto.setReportName("小清河流域"+year + "年" + createTstr.substring(5, 7) + "月水雨情综述");
+        String dataTimestr = DateUtil.dateToStringNormal(startTime);
         //年份
-        rainWaterReportDto.setYear(year);
+        int reportYear = Integer.parseInt(dataTimestr.substring(0, 4));
+        rainWaterReportDto.setReportName("小清河流域"+reportYear + "年" + dataTimestr.substring(5, 7) + "月水雨情综述");
+        //年份
+        rainWaterReportDto.setYear(reportYear);
         //第几期
-        List<YwkRainWaterReport> reportsList = ywkRainWaterReportDao.findByYearAndReportTypeOrderBySerialNumberDesc(year, "0");
+        List<YwkRainWaterReport> reportsList = ywkRainWaterReportDao.findByYearAndReportTypeOrderBySerialNumberDesc(reportYear, "0");
         if(reportsList==null || reportsList.size()==0){
-            rainWaterReportDto.setSerialNumber(0);
+            rainWaterReportDto.setSerialNumber(1);
         }else{
-            rainWaterReportDto.setSerialNumber(reportsList.get(0).getSerialNumber());
+            rainWaterReportDto.setSerialNumber(reportsList.get(0).getSerialNumber()+1);
         }
         //查询数据结束时间
         Date endTime = DateUtil.getNextMonth(startTime, 1);
@@ -270,8 +284,9 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         rainStr += month + "月小清河流域降水情况见如下雨量实况分布图。";
         rainWaterReportDto.setRainInfo(rainStr);
         //水情
-        String waterInfo = "9月份，小清河流域月内";
+        String waterInfo = month+"月份，小清河流域月内";
         waterInfo = getWaterRegimenMessage(waterInfo, startTime, DateUtil.getNextMillis(endTime, -1));
+        waterInfo+="水库水位详情见下表。";
         rainWaterReportDto.setWaterInfo(waterInfo);
         //水库水位数据
         List<TRsvrR> swList = tRsvrRDao.findByTmBetweenOrderByRzDesc(startTime, DateUtil.getNextMillis(endTime, -1));
@@ -389,7 +404,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
             }
         }
         waterInfo += "河道站共记" + collectHD.size() + "个，其中超警戒水位共记" + cjjSet.size() + "个。";
-        waterInfo += "水库共记" + collectSK.size() + "个，其中超汛限水位共记" + cjjskSet.size() + "个。水库水位详情见下表。";
+        waterInfo += "水库共记" + collectSK.size() + "个，其中超汛限水位共记" + cjjskSet.size() + "个。";
         return waterInfo;
     }
 
@@ -402,6 +417,8 @@ public class RainPartitionServiceImpl implements RainPartitionService {
     @Override
     @Transient
     public Object saveRainWaterSimpleReport(RainWaterReportDto reqDto) {
+        //判断是否保存过
+
         YwkRainWaterReport ywkRainWaterReport = new YwkRainWaterReport();
         String reportId = StrUtil.getUUID();
         ywkRainWaterReport.setId(reportId);
@@ -473,6 +490,17 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         criterion.setFieldName("createTime");
         criterion.setOperator(Criterion.DESC);
         orders.add(criterion);
+
+        List<Criterion> conditions = paginatorParam.getConditions();
+        if(conditions==null){
+            conditions = new ArrayList<>();
+            paginatorParam.setConditions(conditions);
+        }
+        Criterion criterion2 = new Criterion();
+        criterion2.setFieldName("reportType");
+        criterion2.setOperator(Criterion.EQ);
+        criterion2.setValue("0");
+        conditions.add(criterion2);
         return ywkRainWaterReportDao.findAll(paginatorParam);
     }
 
@@ -544,6 +572,131 @@ public class RainPartitionServiceImpl implements RainPartitionService {
                 rsrMonthList.add(waterRsrDto);
             }
         }
+        return rainWaterReportDto;
+    }
+
+    /**
+     * 根据条件创建成公报报告
+     * @param reqDto
+     * @return
+     */
+    @Override
+    public RainWaterReportDto getRainWaterCommonReport(RainPartitionDto reqDto) {
+        RainWaterReportDto rainWaterReportDto = new RainWaterReportDto();
+        DecimalFormat df = new DecimalFormat("0.00");
+        //查询月份时间-数据时间
+        Date startTime = reqDto.getStartTime();
+        Date endTime = reqDto.getEndTime();
+        rainWaterReportDto.setDataTime(startTime);
+        rainWaterReportDto.setEndTime(endTime);
+        //简报生成时间
+        Date createTime = DateUtil.getCurrentTime();
+        rainWaterReportDto.setCreateTime(createTime);
+        String createTstr = DateUtil.dateToStringNormal(createTime);
+        //年份
+        int year = Integer.parseInt(createTstr.substring(0, 4));
+        rainWaterReportDto.setCreateTimeStr(year + "年" + createTstr.substring(5, 7) + "月" + createTstr.substring(8, 10) + "日" + createTstr.substring(11, 13) + "时");
+        //简报名称
+        String startTimeStr = DateUtil.dateToStringNormal(startTime);
+        String endTimeStr = DateUtil.dateToStringNormal(endTime);
+        //数据年份
+        int reportYear = Integer.parseInt(startTimeStr.substring(0, 4));
+        rainWaterReportDto.setReportName("小清河流域"+reportYear + "年" + startTimeStr.substring(5, 7) + "月水雨情综述");
+        //数据年份
+        rainWaterReportDto.setYear(reportYear);
+        //第几期
+        List<YwkRainWaterReport> reportsList = ywkRainWaterReportDao.findByYearAndReportTypeOrderBySerialNumberDesc(reportYear, "1");
+        if(reportsList==null || reportsList.size()==0){
+            rainWaterReportDto.setSerialNumber(1);
+        }else{
+            rainWaterReportDto.setSerialNumber(reportsList.get(0).getSerialNumber()+1);
+        }
+        //查时段分区雨量
+        List<RainPartitionDataDto> rainMonthList = getPartRain(new RainPartitionDto(startTime, endTime, "4"), true);
+        Double avgRain = 0.0;
+        for (RainPartitionDataDto rainDto : rainMonthList) {
+            avgRain += rainDto.getPartDrp();
+        }
+        try {
+            avgRain = avgRain / rainMonthList.size();
+        } catch (Exception e) {
+        }
+        //查询去年同期时段分区雨量
+        List<RainPartitionDataDto> rainLastMonthList = getPartRain(new RainPartitionDto(DateUtil.getNextYear(startTime, -1), DateUtil.getNextYear(endTime, -1), "4"), false);
+
+        Double lastAvgRain = 0.0;
+        for (RainPartitionDataDto rainDto : rainLastMonthList) {
+            lastAvgRain += rainDto.getPartDrp();
+        }
+        try {
+            lastAvgRain = lastAvgRain / rainLastMonthList.size();
+        } catch (Exception e) {
+        }
+        Double thisLast = avgRain - lastAvgRain;
+        String thisLastStr = thisLast > 0 ? "增加" : "减少";
+
+        //起始时间月日时
+        Integer startMonth = Integer.parseInt(startTimeStr.substring(5,7));
+        Integer startDay = Integer.parseInt(startTimeStr.substring(8,10));
+        Integer startHour = Integer.parseInt(startTimeStr.substring(11,13));
+        //起始时间月日时
+        Integer endMonth = Integer.parseInt(endTimeStr.substring(5,7));
+        Integer endtDay = Integer.parseInt(endTimeStr.substring(8,10));
+        Integer endHour = Integer.parseInt(endTimeStr.substring(11,13));
+        //降雨量折合成水量
+        Double rainToWater = (avgRain*XQH_AREA)/1000/10000;
+        //结束时间月日时
+        String rainStr = startMonth+"月"+startDay+"日"+startHour+"时至"+endMonth+"月"+endtDay+"日"+endHour+"时，小清河流域面平均降水量";
+        if (lastAvgRain == 0.0) {
+            rainStr += df.format(avgRain) + "mm,折合水量"+df.format(rainToWater)+"万立方米,上一年同期无降水。";
+        } else {
+            rainStr += df.format(avgRain) + "mm,折合水量"+df.format(rainToWater)+"万立方米,上一年同期降水量为" + df.format(lastAvgRain) + "，同比" + thisLastStr + df.format(thisLast) + "mm。";
+        }
+        rainStr += "各流域分区降水量为：";
+        for (RainPartitionDataDto rainDto : rainMonthList) {
+            rainStr += rainDto.getPartName() + df.format(rainDto.getPartDrp()) + "mm,";
+            if (rainDto.getMaxStnm() != null) {
+                rainStr += "分区最大雨量站为：" + rainDto.getMaxStnm() + df.format(rainDto.getMaxDrp()) + "mm,";
+            }
+        }
+        //今年雨量
+        Date thisYearStartTime = DateUtil.getNextHour(DateUtil.getThisYear(),8);
+        Date thisYearEndTime = DateUtil.getCurrentTime();
+        List<RainPartitionDataDto> thisYearList = getPartRain(new RainPartitionDto(thisYearStartTime, thisYearEndTime, "4"), true);
+        Double avgThisYearRain = 0.0;
+        for (RainPartitionDataDto rainDto : thisYearList) {
+            avgThisYearRain += rainDto.getPartDrp();
+        }
+        try {
+            avgThisYearRain = avgThisYearRain / thisYearList.size();
+        } catch (Exception e) {
+        }
+        rainStr+="今年以来（1月1日8时至"+endMonth+"月"+endtDay+"日"+endHour+"时）全流域平均降水量"+avgThisYearRain+"mm。";
+        //如果汛期
+        Date xqStartTm = DateUtil.getDateByStringNormal(reportYear+"-06-01 00:00:00");
+        Date xqEndTm = DateUtil.getDateByStringNormal(reportYear+"-09-15 00:00:00");
+        if(endTime.after(xqStartTm) && endTime.before(xqEndTm)){
+           //查询汛期雨量
+            List<RainPartitionDataDto> xqDataList = getPartRain(new RainPartitionDto(xqStartTm, endTime, "4"), true);
+            Double xqRain = 0.0;
+            for (RainPartitionDataDto rainDto : xqDataList) {
+                xqRain += rainDto.getPartDrp();
+            }
+            try {
+                xqRain = xqRain / xqDataList.size();
+            } catch (Exception e) {
+            }
+            rainStr+="入汛以来（6月1日8时至"+endMonth+"月"+endtDay+"日"+endHour+"时）全流域平均降水量"+xqRain+"mm。";
+        }
+        rainWaterReportDto.setRainInfo(rainStr);
+        //水情
+        String waterInfo = startMonth+"月"+startDay+"日"+startHour+"时至"+endMonth+"月"+endtDay+"日"+endHour+"时，小清河流域";
+        waterInfo = getWaterRegimenMessage(waterInfo, startTime, DateUtil.getNextMillis(endTime, -1));
+        rainWaterReportDto.setWaterInfo(waterInfo);
+        rainWaterReportDto.setSign(XQH_SIGN);
+        rainWaterReportDto.setEngagement(XQH_ENGAGEMENT);
+        rainWaterReportDto.setDarft(XQH_DARFT);
+        rainWaterReportDto.setVerification(XQH_VERIFICATION);
         return rainWaterReportDto;
     }
 }
