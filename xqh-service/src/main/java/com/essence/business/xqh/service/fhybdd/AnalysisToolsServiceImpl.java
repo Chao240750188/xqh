@@ -191,7 +191,7 @@ public class AnalysisToolsServiceImpl implements AnalysisToolsService {
             if (peakDischarge.compareTo(one) <= 0){
                 value = peakDischarge;
             }else if (peakDischarge.compareTo(one) > 0  && peakDischarge.compareTo(two) <= 0 ){
-                value = peakDischarge.subtract(two);
+                value = peakDischarge.subtract(one);
             }else {
                 value = two.subtract(one);
             }
