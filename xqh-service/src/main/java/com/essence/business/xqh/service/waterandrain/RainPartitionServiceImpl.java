@@ -587,7 +587,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
     @Transient
     public Object deleteReportInfo(String reportId) {
         //删除简报
-        ywkRainWaterReportDao.delete(reportId);
+        ywkRainWaterReportDao.deleteById(reportId);
         //删除雨量数据
         ywkRainReportDataDao.deleteByReportId(reportId);
         ywkWaterReportDataDao.deleteByReportId(reportId);
@@ -816,8 +816,9 @@ public class RainPartitionServiceImpl implements RainPartitionService {
      * @return
      */
     @Override
+    @Transient
     public Object deleteCommonReportInfo(String reportId) {
-        ywkRainWaterReportDao.delete(reportId);
+        ywkRainWaterReportDao.deleteById(reportId);
         return reportId;
     }
 }
