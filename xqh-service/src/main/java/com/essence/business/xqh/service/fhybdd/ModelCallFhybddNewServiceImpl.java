@@ -2286,14 +2286,16 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         //List<WrpRcsBsin> listByRiverId = wrpRcsBsinDao.findListByRiverId(riverId);
         List<WrpRcsBsin> listByRiverId = wrpRcsBsinDao.findListByRiverIds(riverIds);
         List<String> sections = listByRiverId.stream().map(WrpRcsBsin::getRvcrcrsccd).collect(Collectors.toList());
-
+        Map<String, String> sectionName = listByRiverId.stream().collect(Collectors.toMap(WrpRcsBsin::getRvcrcrsccd, WrpRcsBsin::getRvcrcrscnm));
         if(finalResult!=null && finalResult.size()>0){
             Date startTime = planInfo.getdCaculatestarttm();
             Date endTime = planInfo.getdCaculateendtm();
             for(String sectionId : sections){
+                String name = sectionName.get(sectionId);
                 JSONObject valObj = new JSONObject();
                 list.add(valObj);
                 valObj.put("RCS_ID",sectionId);
+                valObj.put("RCS_NAME",name);
                 JSONArray valList = new JSONArray();
                 valObj.put("values",valList);
                 List<String> dataList = finalResult.get(sectionId);
