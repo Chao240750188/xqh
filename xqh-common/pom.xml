@@ -101,6 +101,12 @@
             <artifactId>javacsv</artifactId>
             <version>2.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.essence</groupId>
+            <artifactId>euauth-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 

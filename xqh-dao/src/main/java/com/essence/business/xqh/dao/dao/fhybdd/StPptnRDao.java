@@ -73,8 +73,10 @@ public interface StPptnRDao extends EssenceJpaRepository<StPptnR, String> {
      * @Author xzc
      * @Date 14:05 2020/7/2
      **/
-//    @Query(value = "select stcd,tm,drp from st_pptn_r where  tm >  :startTime and  tm <=  :endTime", nativeQuery = true)
-    List<THdmisTotalRainfallDto> queryByTmBetween(Date startTime, Date endTime);
+    @Query(value = "select stcd,TO_CHAR(TM,'yyyy-mm-dd hh24:mi:ss') tm ,drp from st_pptn_r where " +
+            "TM BETWEEN to_date(?1,'yyyy-mm-dd hh24:mi:ss') and to_date(?2,'yyyy-mm-dd hh24:mi:ss')   ", nativeQuery = true)
+    List<Map<String, Object>> queryByTmBetween(String startTime, String endTime);
+//    List<Map<String, Object>> queryByTmBetween(Date startTime, Date endTime);
 
 
     List<THdmisTotalRainfallDto> queryByStcdInAndTmBetween(List<String> stcdList, Date startTime, Date endTime);

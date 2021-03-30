@@ -18,13 +18,13 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
 
     List<StStbprpB> findBySttpInAndUsflIs(List<String> sttps,Integer usfl);
 
-    @Query(value = "select t from StStbprpB t where t.admauth in(?1) and t.usfl=1")
+    @Query(value = "select t from StStbprpB t where t.admauth in(?1) and t.usfl='1'")
     List<StStbprpB> findByAdmauthIn(List<String> source);
 
-    @Query(value = "select t from StStbprpB t where t.admauth in(?1) and t.sttp=?2 and t.usfl=1")
+    @Query(value = "select t from StStbprpB t where t.admauth in(?1) and t.sttp=?2 and t.usfl='1'")
     List<StStbprpB> findByAdmauthInAndSttp(List<String> source, String sttp);
 
-    @Query(value = "select t from StStbprpB t where t.admauth in(?1) and t.sttp=?2 and t.usfl=1")
+    @Query(value = "select t from StStbprpB t where t.admauth in(?1) and t.sttp=?2 and t.usfl='1'")
     List<StStbprpB> findUseStationByAdmauthInAndSttp(List<String> source, String sttp);
 
     List<StStbprpB> findByUsflIsAndAdmauthIn(String usfl, List<String> source);

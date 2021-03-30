@@ -61,4 +61,13 @@ public class RainPartitionDto implements Serializable {
     public void setType(String type) {
         this.type = type;
     }
+
+    public RainPartitionDto() {
+    }
+
+    public RainPartitionDto(Date startTime, Date endTime, String type) {
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.type = type;
+    }
 }
