@@ -1,8 +1,9 @@
 package com.essence.business.xqh.dao.dao.fhybdd;
 
 import com.essence.business.xqh.dao.entity.fhybdd.YwkRainReportData;
-import com.essence.business.xqh.dao.entity.fhybdd.YwkRainWaterReport;
 import com.essence.framework.jpa.EssenceJpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,13 +13,17 @@ public interface YwkRainReportDataDao extends EssenceJpaRepository<YwkRainReport
 
     /**
      * 根据简报id查询
-     * @param report
+     *
+     * @param reportId
      */
     List<YwkRainReportData> findByReportIdOrderByDrpDesc(String reportId);
 
     /**
      * 根据简报id删除
+     *
      * @param reportId
      */
-    void deleteByReportId(String reportId);
+    @Modifying
+    @Query("delete from YwkRainReportData where reportId = ?1")
+    void delByReport(String reportId);
 }

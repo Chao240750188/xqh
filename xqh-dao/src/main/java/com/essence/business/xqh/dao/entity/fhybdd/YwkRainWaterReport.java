@@ -12,7 +12,7 @@ import java.util.Date;
 @Entity
 @Table(name = "YWK_RAIN_WATER_REPORT", schema = "XQH", catalog = "")
 public class YwkRainWaterReport {
-    //简报或公报表
+    //简报或公报或防洪报表
     @Id
     @Column(name = "C_ID")
     private String id;
@@ -35,19 +35,19 @@ public class YwkRainWaterReport {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createTime;
 
-    //简报数据结束时间
+    //报告数据结束时间
     @Column(name = "D_REPORT_START_TIME")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date reportStartTime;
 
-    //简报数据结束时间
+    //报告数据结束时间
     @Column(name = "D_REPORT_END_TIME")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date reportEndTime;
 
-    //简报类型（0简报，1公报）
+    //报告类型（0简报，1公报，2防洪形式分析报告）
     @Column(name = "C_REPORT_TYPE")
     private String reportType;
 
@@ -60,25 +60,32 @@ public class YwkRainWaterReport {
     private String describeWaterInfo;
 
     /**
-     * 公报签发
+     * 报告签发
      */
     @Column(name = "C_SIGN")
     private String sign;
     /**
-     * 公报核定
+     * 报告核定
      */
     @Column(name = "C_VERIFICATION")
     private String verification;
     /**
-     * 公报核稿
+     * 报告核稿
      */
     @Column(name = "C_ENGAGEMENT")
     private String engagement;
     /**
-     * 公报拟稿
+     * 报告拟稿
      */
     @Column(name = "C_DARFT")
     private String darft;
+
+    /**
+     * 报告状态（0草稿，1历史报告）
+     */
+    @Column(name = "C_REPORT_STATUS")
+    private String reportStatus;
+
 
 
     public String getId() {
@@ -191,5 +198,13 @@ public class YwkRainWaterReport {
 
     public void setDarft(String darft) {
         this.darft = darft;
+    }
+
+    public String getReportStatus() {
+        return reportStatus;
+    }
+
+    public void setReportStatus(String reportStatus) {
+        this.reportStatus = reportStatus;
     }
 }
