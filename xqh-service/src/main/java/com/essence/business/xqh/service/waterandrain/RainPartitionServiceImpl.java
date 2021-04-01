@@ -323,8 +323,8 @@ public class RainPartitionServiceImpl implements RainPartitionService {
             waterRsrDto.setRsnm(stStbprpB.getStnm());
             //水位数据
             List<TRsvrR> rsList = stcdRzMap.get(stcd);
-            int size = rsList.size();
-            if (size > 0) {
+            if (rsList != null && rsList.size() > 0) {
+                int size = rsList.size();
                 TRsvrR tRsvrRMax = rsList.get(0);
                 waterRsrDto.setMaxTime(tRsvrRMax.getTm());
                 waterRsrDto.setMaxZ(Double.parseDouble(df.format(Double.parseDouble(tRsvrRMax.getRz()))));
@@ -344,7 +344,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         return rainWaterReportDto;
     }
 
-
+    @Override
     public String getWaterRegimenMessage(String waterInfo, Date startTime, Date endTime) {
         //测站编码表
         List<StStbprpB> stStbprpBS = stStbprpBDao.findAll();

@@ -19,6 +19,15 @@ import java.util.List;
  */
 @Data
 public class RainPartitionDto implements Serializable {
+
+    /**
+     * 分区id
+     */
+    private String areaId;
+    /**
+     * 分区名字
+     */
+    private String areaName;
     /**
      * 起始时间
      */
@@ -69,5 +78,21 @@ public class RainPartitionDto implements Serializable {
         this.startTime = startTime;
         this.endTime = endTime;
         this.type = type;
+    }
+
+    public String getAreaName() {
+        return areaName;
+    }
+
+    public void setAreaName(String areaName) {
+        this.areaName = areaName;
+    }
+
+    public String getAreaId() {
+        return areaId;
+    }
+
+    public void setAreaId(String areaId) {
+        this.areaId = areaId;
     }
 }

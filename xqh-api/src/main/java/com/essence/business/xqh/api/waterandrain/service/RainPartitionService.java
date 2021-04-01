@@ -8,6 +8,7 @@ import com.essence.business.xqh.api.waterandrain.dto.*;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -93,4 +94,7 @@ public interface RainPartitionService {
      * @return
      */
     Object deleteCommonReportInfo(String reportId);
+
+
+    String getWaterRegimenMessage(String waterInfo, Date startTime, Date nextMillis);
 }
