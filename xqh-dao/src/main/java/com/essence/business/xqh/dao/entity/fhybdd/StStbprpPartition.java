@@ -16,7 +16,7 @@ public class StStbprpPartition {
     @Column(name = "C_ID")
     private String id;
     //测站名字
-    @Column(name = "C_PARTITION_NM")
+    @Column(name = "C_PARTITION_NAME")
     private String partiTionNM;
 
     public String getId() {
