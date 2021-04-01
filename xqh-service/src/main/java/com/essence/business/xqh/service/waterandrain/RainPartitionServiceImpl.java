@@ -17,8 +17,8 @@ import com.essence.framework.jpa.PaginatorParam;
 import com.essence.framework.util.DateUtil;
 import com.essence.framework.util.StrUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.annotation.Transient;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -34,7 +34,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
     //公报小清河流域面积㎡
     private static final double XQH_AREA = 9533094095.0;
     //公报签发
-    private static final String XQH_SIGN = "小清河流域中心";
+    private static final String XQH_SIGN = "流域中心";
     //公报审定
     private static final String XQH_VERIFICATION = "张三";
     //公报核稿
@@ -416,13 +416,14 @@ public class RainPartitionServiceImpl implements RainPartitionService {
      * @return
      */
     @Override
-    @Transient
+    @Transactional
     public Object saveRainWaterSimpleReport(RainWaterReportDto reqDto) {
         //判断是否保存过
 
         YwkRainWaterReport ywkRainWaterReport = new YwkRainWaterReport();
         String reportId = StrUtil.getUUID();
         ywkRainWaterReport.setId(reportId);
+        ywkRainWaterReport.setReportStatus("1");
         ywkRainWaterReport.setCreateTime(reqDto.getCreateTime());
         ywkRainWaterReport.setReportName(reqDto.getReportName());
         ywkRainWaterReport.setReportType("0");
@@ -584,13 +585,13 @@ public class RainPartitionServiceImpl implements RainPartitionService {
      * @return
      */
     @Override
-    @Transient
+    @Transactional
     public Object deleteReportInfo(String reportId) {
         //删除简报
         ywkRainWaterReportDao.deleteById(reportId);
         //删除雨量数据
-        ywkRainReportDataDao.deleteByReportId(reportId);
-        ywkWaterReportDataDao.deleteByReportId(reportId);
+        ywkRainReportDataDao.delByReport(reportId);
+        ywkWaterReportDataDao.delByReport(reportId);
         return reportId;
     }
 
@@ -693,7 +694,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
             avgThisYearRain = avgThisYearRain / thisYearList.size();
         } catch (Exception e) {
         }
-        rainStr += "今年以来（1月1日8时至" + endMonth + "月" + endtDay + "日" + endHour + "时）全流域平均降水量" + avgThisYearRain + "mm。";
+        rainStr += "今年以来（1月1日8时至" + endMonth + "月" + endtDay + "日" + endHour + "时）全流域平均降水量" + df.format(avgThisYearRain) + "mm。";
         //如果汛期
         Date xqStartTm = DateUtil.getDateByStringNormal(reportYear + "-06-01 00:00:00");
         Date xqEndTm = DateUtil.getDateByStringNormal(reportYear + "-09-15 00:00:00");
@@ -708,7 +709,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
                 xqRain = xqRain / xqDataList.size();
             } catch (Exception e) {
             }
-            rainStr += "入汛以来（6月1日8时至" + endMonth + "月" + endtDay + "日" + endHour + "时）全流域平均降水量" + xqRain + "mm。";
+            rainStr += "入汛以来（6月1日8时至" + endMonth + "月" + endtDay + "日" + endHour + "时）全流域平均降水量" + df.format(xqRain) + "mm。";
         }
         rainWaterReportDto.setRainInfo(rainStr);
         //水情
@@ -733,6 +734,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
         YwkRainWaterReport ywkRainWaterReport = new YwkRainWaterReport();
         String reportId = StrUtil.getUUID();
         ywkRainWaterReport.setId(reportId);
+        ywkRainWaterReport.setReportStatus("1");
         ywkRainWaterReport.setCreateTime(reqDto.getCreateTime());
         ywkRainWaterReport.setReportName(reqDto.getReportName());
         ywkRainWaterReport.setReportType("1");
@@ -816,7 +818,7 @@ public class RainPartitionServiceImpl implements RainPartitionService {
      * @return
      */
     @Override
-    @Transient
+    @Transactional
     public Object deleteCommonReportInfo(String reportId) {
         ywkRainWaterReportDao.deleteById(reportId);
         return reportId;
