@@ -1,10 +1,15 @@
 package com.essence.business.xqh.api.dataMaintenance;
 
+import com.essence.business.xqh.api.dataMaintenance.dto.StSkkrDto;
 import com.essence.business.xqh.api.dataMaintenance.dto.WrpRsrBsinTzDto;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
+import com.essence.business.xqh.dao.entity.fhybdd.StZvarlB;
 import com.essence.business.xqh.dao.entity.fhybdd.WrpRsrBsin;
+import com.essence.business.xqh.dao.entity.fhybdd.YwkRainLevel;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
+
+import java.util.List;
 
 /**
  * 数据维护系统-接口层
@@ -63,4 +68,30 @@ public interface DataMaintenanceService {
      * @return
      */
     WrpRsrBsinTzDto saveWrpRsrBsinTz(WrpRsrBsinTzDto wrpRsrBsinTzDto);
+
+    /**
+     * 获取库容曲线
+     * @return
+     */
+    Object getWrpRsrKr();
+
+    /**
+     * 批量修改调度目标维护-水库库容曲线
+     * @param stSkkrDto
+     * @return
+     */
+    Object updateWrpRsrKrList(StSkkrDto stSkkrDto);
+
+    /**
+     * 其它信息-雨情量级查询
+     * @return
+     */
+    Object getRainLevelList();
+
+    /**
+     * 批量修改其它信息-雨情量级查询
+     * @param rainLevelList
+     * @return
+     */
+    Object updateRainLevelList(List<YwkRainLevel> rainLevelList);
 }
