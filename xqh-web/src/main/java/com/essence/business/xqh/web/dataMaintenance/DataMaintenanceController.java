@@ -1,15 +1,20 @@
 package com.essence.business.xqh.web.dataMaintenance;
 
 import com.essence.business.xqh.api.dataMaintenance.DataMaintenanceService;
+import com.essence.business.xqh.api.dataMaintenance.dto.StSkkrDto;
 import com.essence.business.xqh.api.dataMaintenance.dto.WrpRsrBsinTzDto;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
+import com.essence.business.xqh.dao.entity.fhybdd.StZvarlB;
 import com.essence.business.xqh.dao.entity.fhybdd.WrpRsrBsin;
+import com.essence.business.xqh.dao.entity.fhybdd.YwkRainLevel;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 数据维护-系统控制层
@@ -149,5 +154,66 @@ public class DataMaintenanceController {
         }
     }
 
+    /**
+     * 获取调度目标维护-水库库容曲线
+     *
+     * @return
+     */
+    @RequestMapping(value = "/getWrpRsrKr", method = RequestMethod.GET)
+    public SystemSecurityMessage getWrpRsrKr() {
+        try {
+            return SystemSecurityMessage.getSuccessMsg("获取库容曲线成功！", dataMaintenanceService.getWrpRsrKr());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("获取库容曲线失败！",null);
+        }
+    }
+
+    /**
+     * 批量修改调度目标维护-水库库容曲线
+     *
+     * @return
+     */
+    @RequestMapping(value = "/updateWrpRsrKrList", method = RequestMethod.POST)
+    public SystemSecurityMessage updateWrpRsrKrList (@RequestBody StSkkrDto stSkkrDto) {
+        try {
+            return SystemSecurityMessage.getSuccessMsg("批量修改调度目标维护-水库库容曲线成功！", dataMaintenanceService.updateWrpRsrKrList(stSkkrDto));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("批量修改调度目标维护-水库库容曲线失败！",null);
+        }
+    }
+
+
+    /**
+     * 其它信息-雨情量级查询
+     *
+     * @return
+     */
+    @RequestMapping(value = "/getRainLevelList", method = RequestMethod.GET)
+    public SystemSecurityMessage getRainLevelList () {
+        try {
+            return SystemSecurityMessage.getSuccessMsg("查询其它信息-雨情量级查询成功！", dataMaintenanceService.getRainLevelList());
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return SystemSecurityMessage.getFailMsg("查询其它信息-雨情量级查询失败！",null);
+        }
+    }
+
+    /**
+     * 批量修改其它信息-雨情量级
+     *
+     * @return
+     */
+    @RequestMapping(value = "/updateRainLevelList", method = RequestMethod.POST)
+    public SystemSecurityMessage updateRainLevelList (@RequestBody List<YwkRainLevel> rainLevelList) {
+        try {
+            return SystemSecurityMessage.getSuccessMsg("批量修改其它信息-雨情量级成功！", dataMaintenanceService.updateRainLevelList(rainLevelList));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("批量修改其它信息-雨情量级失败！",null);
+        }
+    }
 }
 

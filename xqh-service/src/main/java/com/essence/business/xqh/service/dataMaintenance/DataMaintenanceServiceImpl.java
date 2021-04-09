@@ -1,15 +1,12 @@
 package com.essence.business.xqh.service.dataMaintenance;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.essence.business.xqh.api.dataMaintenance.DataMaintenanceService;
+import com.essence.business.xqh.api.dataMaintenance.dto.StSkkrDto;
 import com.essence.business.xqh.api.dataMaintenance.dto.WrpRsrBsinTzDto;
-import com.essence.business.xqh.dao.dao.fhybdd.StRsvrfcchBDao;
-import com.essence.business.xqh.dao.dao.fhybdd.StRsvrfsrBDao;
-import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
-import com.essence.business.xqh.dao.dao.fhybdd.WrpRsrBsinDao;
-import com.essence.business.xqh.dao.entity.fhybdd.StRsvrfcchB;
-import com.essence.business.xqh.dao.entity.fhybdd.StRsvrfsrB;
-import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
-import com.essence.business.xqh.dao.entity.fhybdd.WrpRsrBsin;
+import com.essence.business.xqh.dao.dao.fhybdd.*;
+import com.essence.business.xqh.dao.entity.fhybdd.*;
 import com.essence.framework.jpa.Criterion;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
@@ -21,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 数据维护业务控制层
@@ -39,6 +38,17 @@ public class DataMaintenanceServiceImpl implements DataMaintenanceService {
     //库（湖）汛限特征
     @Autowired
     private StRsvrfsrBDao stRsvrfsrBDao;
+  //库（湖）汛限特征
+    @Autowired
+    private StZvarlBDao stZvarlBDao;
+
+    /**
+     * 降雨等级
+     */
+    @Autowired
+    private YwkRainLevelDao ywkRainLevelDao;
+
+
     /**
      * 数据维护系统-接口层
      */
@@ -162,5 +172,51 @@ public class DataMaintenanceServiceImpl implements DataMaintenanceService {
             stRsvrfsrBDao.save(stRsvrfsrB);
         }
         return wrpRsrBsinTzDto;
+    }
+
+    @Override
+    public Object getWrpRsrKr() {
+        JSONArray jsonArray = new JSONArray();
+        //查询水库
+        List<WrpRsrBsin> rsrBsinList = wrpRsrBsinDao.findAll();
+        //查询库容曲线值
+        List<StZvarlB> krList = stZvarlBDao.findAllByPtno();
+        Map<String, List<StZvarlB>> krMap = krList.stream().collect(Collectors.groupingBy(StZvarlB::getStcd));
+        //封装数据
+        for(WrpRsrBsin rsrBsin:rsrBsinList){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("rscd",rsrBsin.getRscd());
+            jsonObject.put("rsnm",rsrBsin.getRsnm());
+            if(krMap!=null)
+                jsonObject.put("dataList",krMap.get(rsrBsin.getRscd()));
+            jsonArray.add(jsonObject);
+        }
+        return jsonArray;
+    }
+
+    @Override
+    @Transactional
+    public Object updateWrpRsrKrList(StSkkrDto stSkkrDto) {
+        //删除原来的库容曲线
+        stZvarlBDao.deleteByStcd(stSkkrDto.getRscd());
+        //存入新的库容曲线
+        stZvarlBDao.saveAll(stSkkrDto.getDataList());
+        return stSkkrDto;
+    }
+
+    @Override
+    public Object getRainLevelList() {
+       //查询雨情等级
+        List<YwkRainLevel> allByLevel = ywkRainLevelDao.findAllByLevel();
+        return allByLevel;
+    }
+
+    @Override
+    @Transactional
+    public Object updateRainLevelList(List<YwkRainLevel> rainLevelList) {
+        if(rainLevelList!=null && rainLevelList.size()>0){
+            return ywkRainLevelDao.saveAll(rainLevelList);
+        }
+        return rainLevelList;
     }
 }

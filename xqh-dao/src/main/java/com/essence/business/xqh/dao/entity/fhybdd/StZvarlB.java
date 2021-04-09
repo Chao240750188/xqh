@@ -1,5 +1,8 @@
 package com.essence.business.xqh.dao.entity.fhybdd;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -13,6 +16,8 @@ public class StZvarlB {
     private String stcd;
     @Id
     @Column(name = "MSTM")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date mstm;
     @Id
     @Column(name = "PTNO")
@@ -23,7 +28,10 @@ public class StZvarlB {
     private BigDecimal w;
     @Column(name = "WSFA")
     private BigDecimal wsfa;
+
     @Column(name = "MODITIME")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date moditime;
 
 
