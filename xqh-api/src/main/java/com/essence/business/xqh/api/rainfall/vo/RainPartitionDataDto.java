@@ -41,6 +41,40 @@ public class RainPartitionDataDto implements Serializable {
      */
     private String maxStnm;
 
+
+    /**
+     * 第二大监测站编码
+     */
+    private String secondStcd;
+    /**
+     * 第二大检测站雨量
+     */
+    private Double secondDrp;
+    /**
+     * 第二大检测站名称
+     */
+    private String secondStnm;
+
+
+    /**
+     * 最小监测站编码
+     */
+    private String minStcd;
+    /**
+     * 最小检测站雨量
+     */
+    private Double minDrp;
+    /**
+     * 最小检测站名称
+     */
+    private String minStnm;
+
+    /**
+     * 发生降雨的测站的个数
+     */
+    private Integer count;
+
+
     /**
      * 测站雨量
      */

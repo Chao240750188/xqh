@@ -86,7 +86,19 @@ public class YwkRainWaterReport {
     @Column(name = "C_REPORT_STATUS")
     private String reportStatus;
 
+    /**
+     * 分区编码
+     */
+    @Column(name = "C_PART_ID")
+    private String cPartId;
 
+    public String getcPartId() {
+        return cPartId;
+    }
+
+    public void setcPartId(String cPartId) {
+        this.cPartId = cPartId;
+    }
 
     public String getId() {
         return id;

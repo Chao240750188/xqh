@@ -18,6 +18,23 @@ import java.util.List;
 @Data
 public class RainWaterReportDto implements Serializable {
     /**
+     * 报告id
+     */
+    private String reportId;
+    /**
+     * 草稿跟历史
+     */
+    private String reportStatus;
+    /**
+     * 分区id
+     */
+    private String cPartId;
+
+    /**
+     * 分区名字
+     */
+    private String cPartName;
+    /**
      * 简报查询数据时间
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")

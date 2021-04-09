@@ -5,14 +5,19 @@ import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.StPptnRDao;
 import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
+import com.essence.business.xqh.dao.dao.fhybdd.StStbprpPartitionDao;
 import com.essence.business.xqh.dao.dao.fhybdd.WrpRsrBsinDao;
 import com.essence.business.xqh.dao.dao.realtimemonitor.*;
 import com.essence.business.xqh.dao.entity.fhybdd.StPptnR;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
+import com.essence.business.xqh.dao.entity.fhybdd.StStbprpPartition;
 import com.essence.business.xqh.dao.entity.fhybdd.WrpRsrBsin;
+import com.essence.business.xqh.dao.entity.information.StBRiver;
+import com.essence.business.xqh.dao.entity.realtimemonitor.TRiverR;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRsvrR;
 import com.essence.framework.util.StrUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -127,6 +132,81 @@ public class CreateDataConrtroller {
         }catch (Exception e){
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("入库失败！");
+
+        }
+    }
+
+    @Autowired
+    StStbprpPartitionDao stStbprpPartitionDao;
+    @Autowired
+    private TRiverRODao tRiverRDao; //河道水情
+
+
+    @Transactional
+    @RequestMapping(value = "/test1", method = RequestMethod.GET)
+    public SystemSecurityMessage test1() {
+        String areaId = "0";
+        List<String> areaIds = new ArrayList<>();
+        try {
+            if ("0".equals(areaId)){
+                areaIds.addAll(stStbprpPartitionDao.findAll().stream().map(StStbprpPartition::getId).collect(Collectors.toList()));
+            }else {
+                areaIds.add(areaId);
+            }
+            List<String> sttps = new ArrayList<>();
+            sttps.add("ZQ");
+            sttps.add("ZZ");
+            sttps.add("RR");//水库
+            //筛选后的河道站监测站
+            List<StStbprpB> allSTBB = stStbprpBDao.findByAreaIdAndSttp(areaIds, sttps);//todo 后面再改 findByAreaIdAndSttp(areaIds, sttps);
+            List<StStbprpB> collectHD = allSTBB.stream().filter(t -> "ZQ".equals(t.getSttp()) || "ZZ".equals(t.getSttp())).collect(Collectors.toList());
+
+            List<StStbprpB> collectSK = allSTBB.stream().filter(t -> "RR".equals(t.getSttp())).collect(Collectors.toList());
+
+            List<TRsvrR> tRsvrRS = new ArrayList<>();
+            Date time = DateUtil.getDateByStringNormal("2021/02/01 00:00:00");
+            int num = 2782637;
+            for (int i = 0; i < 720; i++) {
+                Date times = DateUtil.getNextHour(time,i);
+                for (StStbprpB stStbprpB:collectSK) {//ST_RIVER_R
+
+                    TRsvrR rsvrR = new TRsvrR();
+                    rsvrR.setStcd(stStbprpB.getStcd());
+                    rsvrR.setTm(times);
+                    Double RZ =(int)(Math.random()*10+1)*1.0;
+                    Double INQ =(int)(Math.random()*10+1)*1.0;
+                    Double W =(int)(Math.random()*10+1)*1.0;
+                    Double blrz =(int)(Math.random()*10+1)*1.0;
+                    Double otq =(int)(Math.random()*10+1)*1.0;
+                    rsvrR.setRz(RZ+"");
+                    rsvrR.setInq(INQ+"");
+                    rsvrR.setW(W+"");
+                    rsvrR.setBlrz(blrz+"");
+                    rsvrR.setOtq(otq+"");
+                    rsvrR.setRwptn("1");
+                    rsvrR.setInqdr("1");
+                    tRsvrRS.add(rsvrR);
+                    /*TRiverR tRiverR = new TRiverR();
+                    tRiverR.setStcd(stStbprpB.getStcd());
+                    tRiverR.setId(num+"");
+                    num++;
+                    Double Q=(int)(Math.random()*10+30)*1.5;
+                    Double Z=(int)(Math.random()*10+1)*1.0;
+                    tRiverR.setQ(Q+"");
+                    tRiverR.setZ(Z+"");
+                    tRiverR.setTm(times);
+                    tRiverR.setType("2");
+                    tRiverRS.add(tRiverR);*/
+                }
+
+            }
+            System.out.println("入库中…………");
+            if(tRsvrRS.size()>0)
+                tRsvrRDao.saveAll(tRsvrRS);
+            return SystemSecurityMessage.getSuccessMsg("数据处理成功！");
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("数据处理器失败！");
 
         }
     }

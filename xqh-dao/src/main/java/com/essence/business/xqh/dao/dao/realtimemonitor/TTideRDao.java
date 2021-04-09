@@ -26,4 +26,8 @@ public interface TTideRDao extends EssenceJpaRepository<TTideR, String> {
 
     @Query(value="SELECT * FROM (SELECT STCD,TM,TDZ WATERLEVEL,row_number() over(partition BY STCD ORDER BY TM DESC) rn FROM ST_TIDE_R WHERE STCD IN (?1) AND TM<=?2) WHERE rn<3",nativeQuery=true)
     List<Map<String,Object>> findTideLastData(List<String> stcdList,Date endTime);
+
+    @Query(value = "select stcd ,max(TDZ) as TDZ from ST_TIDE_R where tm between " +
+            " :startTime  and :endTime  group by stcd  \n",nativeQuery = true)
+    List<Map<String, Object>> getWaterLevelMaxByTime(Date startTime, Date endTime);
 }

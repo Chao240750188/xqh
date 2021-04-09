@@ -2,6 +2,7 @@ package com.essence.business.xqh.dao.dao.fhybdd;
 
 import com.essence.business.xqh.dao.dao.rainfall.dto.FxEventTypeDetailInfoDto;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
+import com.essence.business.xqh.dao.entity.fhybdd.StStbprpPartRelate;
 import com.essence.framework.jpa.EssenceJpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -166,4 +167,11 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
      */
     @Query(value = "SELECT b.STCD,b.STNM,b.RVNM FROM ST_STBPRP_B B LEFT JOIN ST_STSMTASK_B M ON B.STCD = M.STCD WHERE B.USFL = '1' AND M.QFL = '1'", nativeQuery = true)
     List<Map<String, Object>> findUseWaterFlowStbprpb();
+
+
+    @Query(value = "select b.* from ST_STBPRP_PART_RELATE a " +
+            "INNER JOIN ST_STBPRP_B b " +
+            "on a.C_STCD = b.STCD where C_PART in ?1\n" +
+            "and b.STTP in ?2  ",nativeQuery = true)
+    List<StStbprpB> findByAreaIdAndSttp(List<String> areaId, List<String> sttps);//('RFQ_002')  //in ('ZQ','ZZ')
 }

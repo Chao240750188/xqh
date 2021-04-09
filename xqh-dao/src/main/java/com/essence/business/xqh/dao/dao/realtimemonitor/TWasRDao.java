@@ -35,4 +35,8 @@ public interface TWasRDao extends EssenceJpaRepository<TWasR, String> {
     List<Map<String,Object>> findSluiceLastData(List<String> stcdList,Date endTime);
 
     List<TWasR> findByStcdAndTmBetweenOrderByTmDesc(String stcd, Date startTime, Date endTime);
+
+    @Query(value = "select stcd ,max(UPZ) as UPZ from ST_WAS_R where tm between " +
+            " :startTime  and :endTime  group by stcd  \n",nativeQuery = true)
+    List<Map<String, Object>> getWaterLevelMaxByTime(Date startTime, Date endTime);
 }
