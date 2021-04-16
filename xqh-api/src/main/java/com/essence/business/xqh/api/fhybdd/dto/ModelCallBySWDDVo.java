@@ -31,6 +31,11 @@ public class ModelCallBySWDDVo {
     private int step;
 
     /**
+     * 0是分钟，1是小时
+     */
+    private int timeType;
+
+    /**
      * 预见期
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -51,6 +56,14 @@ public class ModelCallBySWDDVo {
     private String catchmentAreaModelId;
     //河段模型id
     private String reachId;
+
+    public int getTimeType() {
+        return timeType;
+    }
+
+    public void setTimeType(int timeType) {
+        this.timeType = timeType;
+    }
 
     public String getCatchmentAreaModelId() {
         return catchmentAreaModelId;
