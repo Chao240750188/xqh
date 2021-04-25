@@ -23,5 +23,8 @@ import org.springframework.stereotype.Component;
 public class RemoteProperties {
     //雨晴等值面
     private String yqdzm;
+    //空间信息查询
+    private String vecindexintegrate;
+    private String identi;
 
 }
