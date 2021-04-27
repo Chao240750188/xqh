@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityManager;
 import java.io.*;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -101,7 +102,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             endTIme = periodEndTime;
         }
         int step = vo.getStep();//以小时为单位
-
+        int timeType = vo.getTimeType();
         //方案基本信息入库
         YwkPlaninfo ywkPlaninfo = new YwkPlaninfo();
         ywkPlaninfo.setnPlanid(UuidUtil.get32UUIDStr());
@@ -112,7 +113,11 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         ywkPlaninfo.setdCaculatestarttm(startTime);//方案计算开始时间
         ywkPlaninfo.setdCaculateendtm(endTIme);//方案计算结束时间
         ywkPlaninfo.setnPlanstatus(0l);//方案状态
-        ywkPlaninfo.setnOutputtm(step * 60L);//设置间隔分钟
+        if (0 == timeType){
+            ywkPlaninfo.setnOutputtm(Long.parseLong(step+""));//设置间隔分钟
+        }else {
+            ywkPlaninfo.setnOutputtm(step * 60L);//设置间隔分钟\
+        }
         ywkPlaninfo.setnModelid(vo.getCatchmentAreaModelId());
         ywkPlaninfo.setnSWModelid(vo.getReachId());
         ywkPlaninfo.setdRainstarttime(startTime);
@@ -132,20 +137,22 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
 
     @Override
-    public List<Map<String,Object>> getRainfalls(YwkPlaninfo planInfo) {
+    public List<Map<String,Object>> getRainfalls(YwkPlaninfo planInfo)throws Exception {
 
 
         SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat formatHour = new SimpleDateFormat("yyyy-MM-dd HH:");
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
 
         String startTimeStr = format1.format(startTime);
         String endTimeStr = format1.format(endTime);
-        Long step = planInfo.getnOutputtm() / 60;//步长
-
+        //Long step = planInfo.getnOutputtm() / 60;//步长
+        Long step = planInfo.getnOutputtm();//分钟
+        //switch (step)
         Long count = ywkPlaninRainfallDao.countByPlanId(planInfo.getnPlanid());
         List<Map<String, Object>> stPptnRWithSTCD = new ArrayList<>();
-        if (count != 0){
+        if (count != 0){//原来是小时  实时数据是小时  都先按照整点来
             stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planInfo.getnPlanid());
         }
         else {
@@ -166,27 +173,30 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             handles.add(datas);
             handleMap.put(datas.get("STCD")+"", handles);//存在有时间但是drp为null的 后面被优化了
         }
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         List<Map<String,Object>> results = new ArrayList<>();
         List<String> timeResults = new ArrayList();
         while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
             String hourStart = format.format(startTime);
             timeResults.add(hourStart);
-            startTime = DateUtil.getNextHour(startTime, step.intValue());
+            startTime = DateUtil.getNextMinute(startTime, step.intValue());//h获取分钟
         }
         Set<Map.Entry<String, List<Map<String, Object>>>> entries = handleMap.entrySet();
 
         for (Map.Entry<String, List<Map<String, Object>>> entry : entries) {
             List<Map<String, Object>> list = entry.getValue();
             Iterator<Map<String, Object>> iterator = list.iterator();
-            if (CollectionUtils.isEmpty(list)){
+           /* if (CollectionUtils.isEmpty(list)){
                 continue;
-            }
+            }*/
             Map<String,Object> resultMap = new HashMap<>();
             resultMap.put("STCD",entry.getKey());//TODO 现在存在库里每个小时多个数据点
-            resultMap.put("STNM",list.get(0).get("STNM"));
-            resultMap.put("LGTD",list.get(0).get("LGTD"));
-            resultMap.put("LTTD",list.get(0).get("LTTD"));
+            String stnm = list.get(0).get("STNM")+"";
+            String lgtd = list.get(0).get("LGTD")+"";
+            String lttd = list.get(0).get("LTTD")+"";
+            resultMap.put("STNM",stnm);
+            resultMap.put("LGTD",lgtd);
+            resultMap.put("LTTD",lttd);
 
             while (iterator.hasNext()){
                 Map<String, Object> next = iterator.next();//为啥要remove呢。
@@ -195,24 +205,62 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                     iterator.remove();
                 }
             }
+
             Map<String,Map<String,Object>> dataM = new HashMap();
             for(Map<String, Object> m : list){
                 String tm = m.get("TM")+"";
                 dataM.put(tm,m);
             }
+            boolean flag = false;
             List<Map<String,Object>> ll = new ArrayList<>();
             for (String time : timeResults){
-                Map<String, Object> stringObjectMap = dataM.get(time);
+                String newTime = "";
+                if (dataM.get(time) == null && step.intValue() < 60){//9点 是8点到9点的降雨量  都是整点的 9：00 9:30   10:00 算5 10 30步长
+                    //if (dataM.get(newTime) != null && step.intValue() < 30){ //实时数据30分钟一个点整点的时候，算5   10步长
+                    //if (dataM.get(newTime) != null && step.intValue() < 10){ //实时数据10分钟一个点整点的时候，算步长
+                    newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),60));//TODO 一个小时的整点 算5 15 30
+                    //newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),30));//TODO 30分钟的整点数据，算5 15
+                    //newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),10));//TODO 10分钟的整点数据 算5
+                }else{
+                    newTime = time;
+                }
+
+                Map<String, Object> stringObjectMap = dataM.get(newTime);
                 if (stringObjectMap == null){
                     stringObjectMap = new HashMap<>();
                     stringObjectMap.put("STCD",entry.getKey());
-                    stringObjectMap.put("STNM",list.get(0).get("STNM"));
-                    stringObjectMap.put("LGTD",list.get(0).get("LGTD"));
-                    stringObjectMap.put("LTTD",list.get(0).get("LTTD"));
+                    stringObjectMap.put("STNM",stnm);
+                    stringObjectMap.put("LGTD",lgtd);
+                    stringObjectMap.put("LTTD",lttd);
                     stringObjectMap.put("TM",time);
+
                     stringObjectMap.put("DRP",null);
+
+                }else {
+                    if (dataM.get(time) == null && step.intValue()<60){ //todo if (step.intValue()<30){ 更上面的一样
+                        Long divise = 60L/step;
+                        //Long divise = 30L/step; TODO
+                        //Long divise = 10L/step;
+                        Map mm = new HashMap(stringObjectMap);
+                        mm.put("TM",time);
+                        if (mm.get("DRP")!= null){
+                            mm.put("DRP",new BigDecimal(mm.get("DRP")+"").divide(new BigDecimal(divise),2,BigDecimal.ROUND_HALF_UP));
+                        }
+                        stringObjectMap = mm;
+                    }
+                }
+                if(stringObjectMap.get("DRP") != null){
+                    flag = true;
                 }
                 ll.add(stringObjectMap);
+            }
+            if (flag){
+                for (Map map : ll){
+                    if(map.get("DRP") == null ){
+                        map.put("DRP",0);
+                    }
+
+                }
             }
 
             resultMap.put("LIST",ll);
@@ -257,18 +305,19 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     public List<Map<String,Object>> getTriggerFlow(YwkPlaninfo planInfo, String rcsId) {//
         List<Map<String,Object>> results = new ArrayList<>();
         YwkPlanTriggerRcs ywkPlanTriggerRcs = ywkPlanTriggerRcsDao.findByNPlanidAndRcsId(planInfo.getnPlanid(),rcsId);
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         if (ywkPlanTriggerRcs == null){
             Date startTime = planInfo.getdCaculatestarttm();
             Date endTime = planInfo.getdCaculateendtm();
-            Long step = planInfo.getnOutputtm() / 60;//步长
+            //Long step = planInfo.getnOutputtm() / 60;//步长
+            Long step = planInfo.getnOutputtm();//步长
             while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
                 Map<String,Object> map = new HashMap();
                 String hourStart = format.format(startTime);
                 map.put("date",hourStart);
                 map.put("flow",null);
                 results.add(map);
-                startTime = DateUtil.getNextHour(startTime, step.intValue());
+                startTime = DateUtil.getNextMinute(startTime, step.intValue());
             }
         }else {
            List<YwkPlanTriggerRcsFlow> triggerRcsFlows = ywkPlanTriggerRcsFlowDao.findByTriggerRcsId(ywkPlanTriggerRcs.getId());
@@ -288,7 +337,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
         //封装边界模板数据
         XSSFWorkbook workbook = new XSSFWorkbook();
-
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         //设置样式
         XSSFFont font = workbook.createFont();
         font.setFontHeightInPoints((short) 11);//字体高度
@@ -314,14 +363,15 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         //封装时间列
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
-        Long step = planInfo.getnOutputtm() / 60;//步长
+        //Long step = planInfo.getnOutputtm() / 60;//步长
+        Long step = planInfo.getnOutputtm();//步长
         int beginLine = 1;
         //封装数据
         while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
             XSSFRow row1 = sheet.createRow(beginLine);
-            row1.createCell(0).setCellValue(DateUtil.dateToStringNormal3(startTime));
+            row1.createCell(0).setCellValue(format.format(startTime));
             beginLine++;
-            startTime = DateUtil.getNextHour(startTime, step.intValue());
+            startTime = DateUtil.getNextMinute(startTime, step.intValue());
         }
         return workbook;
     }
@@ -331,7 +381,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     @Override
     public List<Map<String,Object>> importTriggerFlowData(MultipartFile mutilpartFile, YwkPlaninfo planInfo,String rcsId) {
         List<Map<String,Object>> result = new ArrayList<>();
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
         //解析ecxel数据 不包含第一行
         List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile, 1);
@@ -365,10 +415,11 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
         int size = 0;
-        Long step = planInfo.getnOutputtm() / 60;//步长
+        //Long step = planInfo.getnOutputtm() / 60;//步长
+        Long step = planInfo.getnOutputtm();//步长
         while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
             size++;
-            startTime = DateUtil.getNextHour(startTime, step.intValue());
+            startTime = DateUtil.getNextMinute(startTime, step.intValue());
         }
         if (result.size() != size){//TODO 必须数量跟时间序列一致
             return new ArrayList<>();
@@ -405,13 +456,14 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     }
 
     @Override
-    public Workbook exportRainfallTemplate(YwkPlaninfo planInfo) {
+    public Workbook exportRainfallTemplate(YwkPlaninfo planInfo) throws Exception{
 
         //封装时间列
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
-        Long step = planInfo.getnOutputtm() / 60;//步长
-       
+       // Long step = planInfo.getnOutputtm() / 60;//步长
+        Long step = planInfo.getnOutputtm();//步长
+       SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         //封装边界模板数据
         XSSFWorkbook workbook = new XSSFWorkbook();
 
@@ -444,9 +496,9 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             beginLine++;
             sheet.setColumnWidth(beginLine, 5100);
             XSSFCell c = row.createCell(beginLine);
-            c.setCellValue(DateUtil.dateToStringNormal3(startTime));
+            c.setCellValue(format.format(startTime));
             c.setCellStyle(style);
-            startTime = DateUtil.getNextHour(startTime, step.intValue());
+            startTime = DateUtil.getNextMinute(startTime, step.intValue());
         }
 
         List<Map<String, Object>> rainfalls = getRainfalls(planInfo);
@@ -488,7 +540,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         List<StStbprpB> stbp = stStbprpBDao.findAll();
         Map<String, StStbprpB> collect = stbp.stream().collect(Collectors.toMap(StStbprpB::getStcd, Function.identity()));
         List<Map<String,Object>> result = new ArrayList<>();
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         //解析ecxel数据 不包含第一行
         List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile, 0);
 
@@ -506,7 +558,8 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
         int size = 0;
-        Long step = planInfo.getnOutputtm() / 60;//步长
+        //Long step = planInfo.getnOutputtm() / 60;//步长
+        Long step = planInfo.getnOutputtm();//步长
         List<String> timeResults = new ArrayList();
         try {
             while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
@@ -518,7 +571,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 }
                 timeResults.add(format);
                 size++;
-                startTime = DateUtil.getNextHour(startTime, step.intValue());
+                startTime = DateUtil.getNextMinute(startTime, step.intValue());
             }
         }catch (Exception e){
             System.out.println("时间序列不一致");
@@ -616,15 +669,16 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     public void saveRainfallsFromCacheToDb(YwkPlaninfo planInfo,List<Map<String,Object>> results) {
 
 
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         List<String> timeResults = new ArrayList();
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
-        Long step = planInfo.getnOutputtm() / 60;//步长
+        //Long step = planInfo.getnOutputtm() / 60;//步长
+        Long step = planInfo.getnOutputtm();//分钟
         while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
             String hourStart = format.format(startTime);
             timeResults.add(hourStart);
-            startTime = DateUtil.getNextHour(startTime, step.intValue());
+            startTime = DateUtil.getNextMinute(startTime, step.intValue());
         }
         List<YwkPlaninRainfall> insertList = new ArrayList<>();
         for (Map<String,Object> map : results){//
@@ -636,7 +690,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             }
             for (Map<String,Object> m : list){//TODO null值不存
                 Object drp = m.get("DRP");
-                String time = timeResults.get(z);
+                String time = timeResults.get(z);//TODO 为什么不用tm时间呢  防止表格被人 改 用程序的时间
                 z++;
                 if (drp == null){
                     continue;
@@ -948,7 +1002,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 }
                 break;
             case "MODEL_SWYB_CATCHMENT_XAJ"://todo 并未进行测试
-                //3 修改率定的单位线xaj.csv文件
+                //3 修改率定的v文件
                 int result2 = writeCalibrationXajCsv(SHUIWEN_MODEL_TEMPLATE_INPUT,SHUIWEN_MODEL_TEMPLATE_INPUT_CALIBRATION,planInfo);
                 if (result2 == 0){
                     System.out.println("率定: 率定交互新安江watershed.csv输入文件失败");
@@ -1611,6 +1665,10 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         String shuiku_chushishujuUrl = "shuiku_chushishuju&&" + shuiwen_model_template_input + File.separator + "shuiku_chushishuju.csv";
         String chufayubaoUrl = "chufayubao&&" + shuiwen_model_template_input + File.separator + "chufaduanmian.csv";
         String chufa_shuruUrl = "chufa_shuru&&" + shuiwen_model_template_input + File.separator + "chufaduanmian_shuru.csv";
+
+        String duanmian_shuiweiUrl = "duanmian_shuiwei&&" + shuiwen_model_template_input + File.separator + "duanmian_shuiweiliuliang.csv";
+        String jishuiqu_tongjiUrl = "jishuiqu_tongji&&" + shuiwen_model_template_input + File.separator + "jishuiqu_tongji.csv";
+
         String hru_pUrl = "hru_p&&" + shuiwen_model_template_input + File.separator + "hru_p_result.csv";
         //String model_functionUrl = "model_function&&" + shuiwen_model_template_input + File.separator + "model_function.csv";
         String hru_scaler_modelUrl = "hru_scaler_model&&" + shuiwen_model_template_input + File.separator + "bpscaler.model";
@@ -1689,6 +1747,8 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         list.add(resultUrl);
         list.add(shuiku_resultUrl);
         list.add(errorUrl);
+        list.add(duanmian_shuiweiUrl);
+        list.add(jishuiqu_tongjiUrl);
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, false)); // 附加
             // 写路径
@@ -1750,6 +1810,12 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         String shuikuShuiweiKuRongRead = shuiwen_model_template + File.separator + "shuiku_shuiwei_kurong.csv";
         String shuikuShuiweiKuRongInput = shuiwen_model_template_input + File.separator + "shuiku_shuiwei_kurong.csv";
 
+        String duanmianShuiweiLiuLiangRead = shuiwen_model_template + File.separator + "duanmian_shuiweiliuliang.csv";
+        String duanmianShuiweiLiuLiangInput = shuiwen_model_template_input + File.separator + "duanmian_shuiweiliuliang.csv";
+
+        String jishuiquTongjiRead = shuiwen_model_template + File.separator + "jishuiqu_tongji.csv";
+        String jishuiquTongjiInput = shuiwen_model_template_input + File.separator + "jishuiqu_tongji.csv";
+
         String unitRead = shuiwen_model_template + File.separator + "unit.csv";
         String unitInput = shuiwen_model_template_input + File.separator + "unit.csv";
 
@@ -1774,6 +1840,8 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         try {
             FileUtil.copyFile(reachRead, reachInput, true);
             //FileUtil.copyFile(reachXiangGuanShujvRead, reachXiangGuanShujvInput, true);
+            FileUtil.copyFile(duanmianShuiweiLiuLiangRead, duanmianShuiweiLiuLiangInput, true);
+            FileUtil.copyFile(jishuiquTongjiRead, jishuiquTongjiInput, true);
             FileUtil.copyFile(shuikuChushiShujuRead, shuikuChushiShujuInput, true);
             FileUtil.copyFile(shuikuShuiweiKuRongRead, shuikuShuiweiKuRongInput, true);
             FileUtil.copyFile(unitRead, unitInput, true);
@@ -2122,13 +2190,16 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             Date startTime = planInfo.getdCaculatestarttm();
             Date endTime = planInfo.getdCaculateendtm();
             int size = 0;
-            Long step = planInfo.getnOutputtm() / 60;//步长
+            //Long step = planInfo.getnOutputtm() / 60;//步长
+            Long step = planInfo.getnOutputtm();//步长
+            DecimalFormat format = new DecimalFormat("0.00");
+            Double hour = Double.parseDouble(format.format(step* 1.0 / 60 ));
             while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
                 size++;
-                startTime = DateUtil.getNextHour(startTime, step.intValue());
+                startTime = DateUtil.getNextMinute(startTime, step.intValue());
             }
             for (int i = 0 ;i < size;i++){
-                bw.write("," + i);
+                bw.write("," + i*hour);
             }
             bw.newLine();
             for (Map<String, Object> map : results){
@@ -2196,13 +2267,18 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             Date startTime = planInfo.getdCaculatestarttm();
             Date endTime = planInfo.getdCaculateendtm();
             int size = 0;
-            Long step = planInfo.getnOutputtm() / 60;//步长
+            //Long step = planInfo.getnOutputtm() / 60;//步长
+            Long step = planInfo.getnOutputtm() ;//
+
+            DecimalFormat format = new DecimalFormat("0.00");
+            Double hour = Double.parseDouble(format.format(step*1.0 / 60));
+
             while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
-                size++;
-                startTime = DateUtil.getNextHour(startTime, step.intValue());
+                size++;//TODO 修改这个地方的时间序列值。
+                startTime = DateUtil.getNextMinute(startTime, step.intValue());
             }
             for (int i = 0 ;i < size;i++){
-                bw.write("," + i);
+                bw.write("," + i*hour);
             }
             bw.newLine();
             for (int i = 1; i < readDatas.size(); i++) {
@@ -2251,7 +2327,8 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         DecimalFormat df = new DecimalFormat("0.000");
         JSONArray list = new JSONArray();
 
-        Long step = planInfo.getnOutputtm() / 60;//步长(小时)
+        //Long step = planInfo.getnOutputtm() / 60;//步长(小时)
+        Long step = planInfo.getnOutputtm();//步长(小时)
 
         String riverId = planInfo.getRiverId();
 
@@ -2298,17 +2375,51 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 valObj.put("RCS_NAME",name);
                 JSONArray valList = new JSONArray();
                 valObj.put("values",valList);
+                JSONArray ZList = new JSONArray();
+                valObj.put("zValues",ZList);
+                JSONArray rainList = new JSONArray();
+                valObj.put("rainValues",rainList);
                 List<String> dataList = finalResult.get(sectionId);
                 if(dataList!=null && dataList.size()>0){
                     int index = 0;
-                    int count = 0;
-                    for (Date time = startTime; time.before(endTime); time = DateUtil.getNextHour(startTime, count)) {
+                    //int count = 0;
+                    for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextMinute(time, step.intValue())) {
                         try{
                             JSONObject dataObj = new JSONObject();
                             dataObj.put("time",DateUtil.dateToStringNormal3(time));
                             dataObj.put("q",df.format(Double.parseDouble(dataList.get(index)+"")));
                             valList.add(dataObj);
-                            count+=step;
+                            //count+=step;
+                            index++;
+                        }catch (Exception e){
+                            break;
+                        }
+                    }
+                    for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextMinute(time, step.intValue())) {
+                        try{
+                            JSONObject dataObjZ = new JSONObject();
+                            dataObjZ.put("time",DateUtil.dateToStringNormal3(time));
+                            dataObjZ.put("z",df.format(Double.parseDouble(dataList.get(index)+"")));
+                            ZList.add(dataObjZ);
+                            //count+=step;
+                            index++;
+                        }catch (Exception e){
+                            break;
+                        }
+                    }
+                    valObj.put("hfQ",df.format(Double.parseDouble(dataList.get(index)+"")));
+                    index++;
+                    valObj.put("hfTime",DateUtil.getNextMinute(startTime,step.intValue()*Integer.parseInt(dataList.get(index)+"")));
+                    index++;
+                    valObj.put("hfTotal",df.format(Double.parseDouble(dataList.get(index)+"")));
+                    index++;
+                    for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime,1)); time = DateUtil.getNextMinute(time, step.intValue())) {
+                        try{
+                            JSONObject dataObjRain = new JSONObject();
+                            dataObjRain.put("time",DateUtil.dateToStringNormal3(time));
+                            dataObjRain.put("rain",df.format(Double.parseDouble(dataList.get(index)+"")));
+                            rainList.add(dataObjRain);
+                            //count+=step;
                             index++;
                         }catch (Exception e){
                             break;
@@ -2322,7 +2433,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
 
     @Override
-    public Object getModelResultQCalibration(YwkPlaninfo planInfo) {
+    public Object getModelResultQCalibration(YwkPlaninfo planInfo) {//TODO 这个地方也得需要优化一下
         JSONArray modelResultQ = (JSONArray) getModelResultQ(planInfo, 0);
         JSONArray modelResultQCalibration = (JSONArray) getModelResultQ(planInfo, 1);
         List<Map> resultQ = JSON.parseArray(JSON.toJSONString(modelResultQ), Map.class);
@@ -2334,23 +2445,46 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             handleMap.put(rcs_id,values);
         }
 
+        Map<String, Map> recOldMap = resultQ.stream().collect(Collectors.toMap(t -> t.get("RCS_ID").toString(), Function.identity()));
+
         List<Map<String,Object>>  results = new ArrayList<>();
+
 
         for (Map m : resultQCalibration){
             Map<String,Object> resultMap = new HashMap();
             Object rcs_idNew = m.get("RCS_ID");
+            Object rcs_nameNew = m.get("RCS_NAME");
+
             resultMap.put("RCS_ID",rcs_idNew);
+            resultMap.put("RCS_NAME",rcs_nameNew);
 
             List<Map<String,Object>>  valueList = new ArrayList<>();
+            List<Map<String,Object>>  rainList = new ArrayList<>();
+            List<Map<String,Object>>  ZList = new ArrayList<>();
 
             List<Map<String,Object>> valuesNew = (List<Map<String, Object>>) m.get("values");
-            List<Map<String,Object>> values = (List<Map<String, Object>>) handleMap.get(rcs_idNew);
+            List<Map<String,Object>> rainValuesNew = (List<Map<String, Object>>) m.get("rainValues");
+            List<Map<String,Object>> zValuesNew = (List<Map<String, Object>>) m.get("zValues");
+            String hfQNew =  m.get("hfQ")+"";
+            String hfTimeNew =  DateUtil.dateToStringNormal(new Date(Long.parseLong(m.get("hfTime")+"")));
+            String hfTotalNew =  m.get("hfTotal")+"";
+            //List<Map<String,Object>> values = (List<Map<String, Object>>) handleMap.get(rcs_idNew);
+            Map rcsIdOldMap = recOldMap.get(rcs_idNew);
+            List<Map<String,Object>> values = (List<Map<String, Object>>)rcsIdOldMap.get("values");
+            List<Map<String,Object>> rainValues = (List<Map<String, Object>>)rcsIdOldMap.get("rainValues");
+            List<Map<String,Object>> zValues = (List<Map<String, Object>>)rcsIdOldMap.get("zValues");
+            String hfQ =  rcsIdOldMap.get("hfQ")+"";
+            String hfTime =  DateUtil.dateToStringNormal(new Date(Long.parseLong(rcsIdOldMap.get("hfTime")+"")));
+            String hfTotal =  rcsIdOldMap.get("hfTotal")+"";
             Map<String,Object> valueMap = new HashMap<>();
             for (Map<String,Object> value : values){
                 String time = value.get("time")+"";
                 Object q = value.get("q");
                 valueMap.put(time,q);
             }
+            Map<String, Object> rainValueMap = rainValues.stream().collect(Collectors.toMap(t -> t.get("time").toString(), t -> t.get("rain").toString()));
+            Map<String, Object> zValueMap = zValues.stream().collect(Collectors.toMap(t -> t.get("time").toString(), t -> t.get("z").toString()));
+
             for (Map<String,Object> valueNew: valuesNew){
                 Map map = new HashMap();
                 String time = valueNew.get("time")+"";
@@ -2361,8 +2495,34 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 map.put("q",qOld);
                 valueList.add(map);
             }
-            resultMap.put("RCS_ID",rcs_idNew);
+            for (Map<String,Object> rainValueNew: rainValuesNew){
+                Map map = new HashMap();
+                String time = rainValueNew.get("time")+"";
+                Object rainNew = rainValueNew.get("rain");
+                Object rainOld = rainValueMap.get(time);
+                map.put("time",time);
+                map.put("rainNew",rainNew);
+                map.put("rain",rainOld);
+                rainList.add(map);
+            }for (Map<String,Object> zValueNew: zValuesNew){
+                Map map = new HashMap();
+                String time = zValueNew.get("time")+"";
+                Object zNew = zValueNew.get("z");
+                Object zOld = zValueMap.get(time);
+                map.put("time",time);
+                map.put("zNew",zNew);
+                map.put("z",zOld);
+                ZList.add(map);
+            }
             resultMap.put("values",valueList);
+            resultMap.put("rainValues",rainList);
+            resultMap.put("zValues",ZList);
+            resultMap.put("hfQ",hfQ);
+            resultMap.put("hfQNew",hfQNew);
+            resultMap.put("hfTime",hfTime);
+            resultMap.put("hfTimeNew",hfTimeNew);
+            resultMap.put("hfTotal",hfTotal);
+            resultMap.put("hfTotalNew",hfTotalNew);
             results.add(resultMap);
         }
         return results;

@@ -27,6 +27,8 @@ public class YwkBoundaryBasic {
     private String branchnm;
     @Column(name = "RVNM")
     private String rvnm;
+    @Column(name = "REF_RCS_ID")
+    private String rcsId;
 
     public String getStcd() {
         return stcd;
@@ -98,5 +100,13 @@ public class YwkBoundaryBasic {
 
     public void setRvnm(String rvnm) {
         this.rvnm = rvnm;
+    }
+
+    public String getRcsId() {
+        return rcsId;
+    }
+
+    public void setRcsId(String rcsId) {
+        this.rcsId = rcsId;
     }
 }

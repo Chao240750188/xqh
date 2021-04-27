@@ -133,8 +133,9 @@ public class ModelPlanInfoManageServiceImpl implements ModelPlanInfoManageServic
         if (!CollectionUtils.isEmpty(triggerRcs)){
             ywkPlanTriggerRcsDao.deleteByNPlanid(planInfo.getnPlanid());
             List<String> triggerIds = triggerRcs.stream().map(YwkPlanTriggerRcs::getId).collect(Collectors.toList());
-            ywkPlanTriggerRcsFlowDao.deleteByTriggerRcsIds(triggerIds);
-
+            if (!CollectionUtils.isEmpty(triggerIds)){
+                ywkPlanTriggerRcsFlowDao.deleteByTriggerRcsIds(triggerIds);
+            }
         }
         ywkPlaninfoDao.delete(planInfo.getnPlanid());
 

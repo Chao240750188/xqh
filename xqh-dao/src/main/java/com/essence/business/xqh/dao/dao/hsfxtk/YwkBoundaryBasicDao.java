@@ -20,6 +20,12 @@ public interface YwkBoundaryBasicDao extends EssenceJpaRepository<YwkBoundaryBas
     List<YwkBoundaryBasic> findByStcdInOrderByStcd(List<String> stcdList);
 
     /**
+     * 根据关联水文预报模型边界数据
+     * @return
+     */
+    List<YwkBoundaryBasic> findByRcsIdNotNull();
+
+    /**
      * 根据边界编码查询边界条件数据
      * @param stcdList
      * @return

@@ -33,7 +33,7 @@ public interface ModelCallFhybddNewService {
      * @param planInfo
      * @return
      */
-    List<Map<String, Object>> getRainfalls(YwkPlaninfo planInfo);
+    List<Map<String, Object>> getRainfalls(YwkPlaninfo planInfo) throws Exception;
 
 
     /**
@@ -87,7 +87,7 @@ public interface ModelCallFhybddNewService {
      * @param planinfo
      * @return
      */
-    Workbook exportRainfallTemplate(YwkPlaninfo planinfo);
+    Workbook exportRainfallTemplate(YwkPlaninfo planinfo)throws Exception;
 
     /**
      * 上传监测站雨量数据excel

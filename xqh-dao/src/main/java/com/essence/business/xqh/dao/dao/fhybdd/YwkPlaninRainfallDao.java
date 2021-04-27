@@ -17,7 +17,7 @@ public interface YwkPlaninRainfallDao extends EssenceJpaRepository<YwkPlaninRain
 
 
     @Query(value = "select A.STCD,A.STNM,A.LGTD,A.LTTD,B.TM,B.DRP from ST_STBPRP_B A LEFT JOIN(\n" +
-            "SELECT TO_CHAR(D_TIME,'yyyy-mm-dd hh24') TM,C_STCD STCD ,N_DRP DRP FROM YWK_PLANIN_RAINFALL  " +
+            "SELECT TO_CHAR(D_TIME,'yyyy-mm-dd hh24:mi') TM,C_STCD STCD ,N_DRP DRP FROM YWK_PLANIN_RAINFALL  " +
             "where D_TIME BETWEEN to_date(?1,'yyyy-mm-dd hh24:mi:ss')\n" +
             "and to_date(?2,'yyyy-mm-dd hh24:mi:ss') and N_PLANID = ?3\n" +
             ")B on A.STCD = B.STCD ORDER BY tm asc",nativeQuery = true)
