@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SpaceInfoController {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+
     @Autowired
     RemoteProperties remoteProperties;
 
