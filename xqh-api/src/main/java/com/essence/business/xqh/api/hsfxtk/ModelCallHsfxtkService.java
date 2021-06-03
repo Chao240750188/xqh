@@ -129,4 +129,6 @@ public interface ModelCallHsfxtkService {
      * @param picId
      */
     void previewPicFile(HttpServletRequest request, HttpServletResponse response, String planId, String picId);
+
+    void testMakePic(String planId, String modelId);
 }
