@@ -649,7 +649,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                         System.out.println("雨量值不正确");
                         continue;
                     }
-                }
+            }
                 list11.add(m);
 
             }//里层for循环

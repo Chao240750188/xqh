@@ -2,6 +2,7 @@ package com.essence.business.xqh.service.realtimemonitor;
 
 import com.essence.business.xqh.api.realtimemonitor.dto.*;
 import com.essence.business.xqh.api.realtimemonitor.service.RealTimeMonitorService;
+import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.StPptnRDao;
 import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
 import com.essence.business.xqh.dao.dao.fhybdd.WrpRsrBsinDao;
@@ -9,6 +10,7 @@ import com.essence.business.xqh.dao.dao.realtimemonitor.*;
 import com.essence.business.xqh.dao.entity.fhybdd.StPptnR;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 import com.essence.business.xqh.dao.entity.realtimemonitor.*;
+import com.essence.framework.util.StrUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -98,9 +100,10 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
         stopwatch.start("2");
         //根据步长返回数据
         while (startT.isBefore(endT)){
+            LocalDateTime endTim = startT.plusHours(step);
             Date time = Date.from(startT.atZone(ZoneId.systemDefault()).toInstant());
-            Double collect = stPptnRS.stream().filter(t -> t.getTm().after(time)).filter(t -> t.getTm()
-                    .before(Date.from(endT.atZone(ZoneId.systemDefault()).toInstant()))).collect(Collectors.summingDouble(StPptnR::getDrp));
+            Double collect = stPptnRS.stream().filter(t -> (t.getTm().compareTo(time))>=0).filter(t -> t.getTm()
+                    .before(Date.from(endTim.atZone(ZoneId.systemDefault()).toInstant()))).collect(Collectors.summingDouble(StPptnR::getDrp));
             RainDataResultDto dataResultDto = new RainDataResultDto();
             dataResultDto.setRainfall(collect);
             dataResultDto.setStep(step);
