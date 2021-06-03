@@ -16,6 +16,13 @@ public class TideListDto {
     private BigDecimal airp;
     private String color;
 
+    //超历史最高水位
+    private Integer isThanWaterLevelHistory;
+    //超警戒水位
+    private Integer isThanWaterLevelWarning;
+    //超保证水位
+    private Integer isThanWaterLevelGuarantee;
+
     public TideListDto(String stcd, String stnm, BigDecimal lgtd, BigDecimal lttd, BigDecimal tdz, BigDecimal airp) {
     }
 
@@ -27,6 +34,9 @@ public class TideListDto {
         this.tdz = tdz;
         this.airp = airp;
         this.color = color;
+        this.isThanWaterLevelHistory = 0;
+        this.isThanWaterLevelWarning = 0;
+        this.isThanWaterLevelGuarantee = 0;
     }
 
     public String getStcd() {
@@ -83,5 +93,30 @@ public class TideListDto {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+
+    public Integer getIsThanWaterLevelHistory() {
+        return isThanWaterLevelHistory;
+    }
+
+    public void setIsThanWaterLevelHistory(Integer isThanWaterLevelHistory) {
+        this.isThanWaterLevelHistory = isThanWaterLevelHistory;
+    }
+
+    public Integer getIsThanWaterLevelWarning() {
+        return isThanWaterLevelWarning;
+    }
+
+    public void setIsThanWaterLevelWarning(Integer isThanWaterLevelWarning) {
+        this.isThanWaterLevelWarning = isThanWaterLevelWarning;
+    }
+
+    public Integer getIsThanWaterLevelGuarantee() {
+        return isThanWaterLevelGuarantee;
+    }
+
+    public void setIsThanWaterLevelGuarantee(Integer isThanWaterLevelGuarantee) {
+        this.isThanWaterLevelGuarantee = isThanWaterLevelGuarantee;
     }
 }

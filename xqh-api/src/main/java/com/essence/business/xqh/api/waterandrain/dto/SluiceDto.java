@@ -18,6 +18,19 @@ public class SluiceDto {
     private BigDecimal wrz;//警戒水位
     private String color;//展示颜色
 
+    //超历史最高水位
+    private Integer isThanWaterLevelHistory;
+    //超警戒水位
+    private Integer isThanWaterLevelWarning;
+    //超保证水位
+    private Integer isThanWaterLevelGuarantee;
+
+    public SluiceDto() {
+        this.isThanWaterLevelHistory = 0;
+        this.isThanWaterLevelWarning = 0;
+        this.isThanWaterLevelGuarantee = 0;
+    }
+
     public String getStcd() {
         return stcd;
     }
@@ -96,5 +109,29 @@ public class SluiceDto {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public Integer getIsThanWaterLevelHistory() {
+        return isThanWaterLevelHistory;
+    }
+
+    public void setIsThanWaterLevelHistory(Integer isThanWaterLevelHistory) {
+        this.isThanWaterLevelHistory = isThanWaterLevelHistory;
+    }
+
+    public Integer getIsThanWaterLevelWarning() {
+        return isThanWaterLevelWarning;
+    }
+
+    public void setIsThanWaterLevelWarning(Integer isThanWaterLevelWarning) {
+        this.isThanWaterLevelWarning = isThanWaterLevelWarning;
+    }
+
+    public Integer getIsThanWaterLevelGuarantee() {
+        return isThanWaterLevelGuarantee;
+    }
+
+    public void setIsThanWaterLevelGuarantee(Integer isThanWaterLevelGuarantee) {
+        this.isThanWaterLevelGuarantee = isThanWaterLevelGuarantee;
     }
 }

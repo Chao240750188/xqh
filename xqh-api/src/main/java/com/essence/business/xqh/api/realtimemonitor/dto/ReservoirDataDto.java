@@ -47,4 +47,11 @@ public class ReservoirDataDto implements Serializable {
 
     private String sttp;
 
+
+    /**
+     * 汛险水位
+     */
+    private Integer isThanWaterLevelLine;
+
+
 }

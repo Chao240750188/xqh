@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StopWatch;
 
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -272,6 +273,7 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
         Map<String, Map<String, Object>> riverWayDataMap = riverRLastData.stream().collect(Collectors.toMap(t -> t.get("stcd").toString(), Function.identity()));
         //获取河道站，堰闸站，潮汐站警戒信息
         Map<String, TRvfcchB> collectWarningHD = tRvfcchBS.stream().collect(Collectors.toMap(TRvfcchB::getStcd, Function.identity()));
+
         for (StStbprpB stStbprpB : collectHD) {
             try {
                 RiverWayDataDto dataDto = new RiverWayDataDto();
@@ -285,8 +287,28 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
                     dataDto.setFlow(Double.parseDouble(map.get("q").toString()));
                 }
                 TRvfcchB tRvfcchStandard = collectWarningHD.get(stcd);
-                if(tRvfcchStandard != null && tRvfcchStandard.getWrz() != null){
-                    dataDto.setWarningWaterLevel(Double.parseDouble(tRvfcchStandard.getWrz()));
+
+                if(tRvfcchStandard != null){
+                    if (tRvfcchStandard.getWrz() != null){
+                        dataDto.setWarningWaterLevel(Double.parseDouble(tRvfcchStandard.getWrz()));
+                    }
+                    //警戒水位
+                    double wrz = Double.parseDouble(tRvfcchStandard.getWrz()==null?"0":tRvfcchStandard.getWrz());
+                    //保证水位
+                    double grz = Double.parseDouble(tRvfcchStandard.getGrz()==null?"0":tRvfcchStandard.getGrz());
+                    //历史最高水位
+                    double obhtz = Double.parseDouble(tRvfcchStandard.getObhtz()==null?"0":tRvfcchStandard.getObhtz());
+
+                    if(obhtz < dataDto.getWaterLevel()){
+                        dataDto.setIsThanWaterLevelHistory(1);
+                    }
+                    if(wrz <  dataDto.getWaterLevel()){
+                        dataDto.setIsThanWaterLevelWarning(1);
+                    }
+                    if(grz <  dataDto.getWaterLevel()){
+                        dataDto.setIsThanWaterLevelGuarantee(1);
+                    }
+
                 }
                 results.add(dataDto);
             } catch (BeansException e) {
@@ -315,6 +337,7 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
     @Override
     public Object getRiverWayWaterLevelByTime(String stcd, String startTime, String endTime) throws ParseException {
         RiverWayDataTimeDto result = new RiverWayDataTimeDto();
+        DecimalFormat format = new DecimalFormat("0.00");
         double low = 0;
         double high = 0;
         Date startDate = sdf.parse(startTime);
@@ -328,11 +351,11 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
             BeanUtils.copyProperties(tRvfcchB,dto);
             if(riverR.getQ()!=null){
                 double flow = Double.parseDouble(riverR.getQ());
-                dto.setFlow(flow);
+                dto.setFlow(Double.parseDouble(format.format(flow)));
             }
             if(riverR.getZ()!=null){
                 double waterLevel = Double.parseDouble(riverR.getZ());
-                dto.setWaterLevel(waterLevel);
+                dto.setWaterLevel(Double.parseDouble(format.format(waterLevel)));
             }
             //获取警戒水位
             String wrz = tRvfcchB.getWrz();
@@ -397,16 +420,16 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
             }
         }).collect(Collectors.toList());
         if(!CollectionUtils.isEmpty(collectQ)){
-            double max = Double.parseDouble(collectQ.get(collectQ.size() - 1).getQ());
-            double min = Double.parseDouble(collectQ.get(0).getQ());
+            double max = Double.parseDouble(format.format(Double.parseDouble(collectQ.get(collectQ.size() - 1).getQ())));
+            double min = Double.parseDouble(format.format(Double.parseDouble(collectQ.get(0).getQ())));
             result.setMaxFlow(max);
             result.setMinFlow(min);
             result.setMaxFlowTm(collectQ.get(collectQ.size()-1).getTm());
             result.setMinFlowTm(collectQ.get(0).getTm());
         }
         if(!CollectionUtils.isEmpty(collectZ)){
-            double max = Double.parseDouble(collectZ.get(collectZ.size() - 1).getZ());
-            double min = Double.parseDouble(collectZ.get(0).getZ());
+            double max =  Double.parseDouble(format.format(Double.parseDouble(collectZ.get(collectZ.size() - 1).getZ())));
+            double min =  Double.parseDouble(format.format(Double.parseDouble(collectZ.get(0).getZ())));
             result.setMaxWaterLevel(max);
             result.setMinWaterLevel(min);
             result.setMaxWaterLevelTm(collectZ.get(collectZ.size()-1).getTm());
@@ -432,18 +455,27 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
         Map<String, TRsvrfsrB> collectWarningSK = tRsvrfsrBS.stream().collect(Collectors.toMap(TRsvrfsrB::getStcd, Function.identity()));
         List<Map<String, Object>> rsvrLastData = tRsvrRDao.getRsvrLastData();
         Map<String, Map<String, Object>> rsvrLastDataMap = rsvrLastData.stream().collect(Collectors.toMap(t -> t.get("stcd").toString(), Function.identity()));
+
         for (StStbprpB stStbprpB : stStbprpBS) {
             try {
                 ReservoirDataDto dataDto = new ReservoirDataDto();
                 BeanUtils.copyProperties(stStbprpB,dataDto);
+                dataDto.setIsThanWaterLevelLine(0);
                 String stcd = stStbprpB.getStcd();
                 Map<String, Object> map = rsvrLastDataMap.get(stcd);
                 if(map!=null && map.get("RZ") != null){
                     dataDto.setWaterLevel(Double.parseDouble(map.get("RZ").toString()));
                 }
                 TRsvrfsrB tRsvrfsrB = collectWarningSK.get(stcd);
-                if(tRsvrfsrB != null && tRsvrfsrB.getFsltdz() != null){
-                    dataDto.setWaterLevelLine(Double.parseDouble(tRsvrfsrB.getFsltdz()));
+                if(tRsvrfsrB != null ){
+                    if ( tRsvrfsrB.getFsltdz() != null) {
+                        dataDto.setWaterLevelLine(Double.parseDouble(tRsvrfsrB.getFsltdz()));
+                    }
+                    //汛险水位
+                    double fsltdz = Double.parseDouble(tRsvrfsrB.getFsltdz()==null?"0":tRsvrfsrB.getFsltdz());
+                    if(fsltdz < dataDto.getWaterLevel()){
+                        dataDto.setIsThanWaterLevelLine(1);
+                    }
                 }
                 results.add(dataDto);
             } catch (BeansException e) {
@@ -767,10 +799,31 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
             }else {
                 WaterWayFloodWarningDetailDto dataDto = new WaterWayFloodWarningDetailDto();
                 BeanUtils.copyProperties(stbprpB,dataDto);
+                TRvfcchB tRvfcchB = collectWarningHD.get(stcd);
+                if(tRvfcchB != null) {
+                    //超过警戒
+                    String wrz = tRvfcchB.getWrz();
+                    if (wrz != null) {
+                        double v = Double.parseDouble(wrz);
+                        dataDto.setWaterLevelLine(v);
+                    }
+                    String grz = tRvfcchB.getGrz();
+                    //超过保证
+                    if (grz != null) {
+                        double v = Double.parseDouble(grz);
+                        dataDto.setWaterLevelDesign(v);
+                    }
+                    //超历史
+                    String obhtz = tRvfcchB.getObhtz();
+                    if (obhtz != null) {
+                        double v = Double.parseDouble(obhtz);
+                        dataDto.setWaterLevelHistory(v);
+                    }
+                }
                 dataDto.setFlag24("1");
                 surpassSafeCount++;
                 surpassList.add(dataDto);
-            }
+            }//todo else
 
         }
         result.setSurpassList(surpassList);
@@ -978,8 +1031,34 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
                 reservoirFloodWarningDetailDto.setFlag24("1");
                 surpassSafeCount++;
             }else {
+
                 ReservoirFloodWarningDetailDto dataDto = new ReservoirFloodWarningDetailDto();
                 BeanUtils.copyProperties(stbprpB,dataDto);
+
+                TRsvrfsrB tRvfcchB = collectWarningSK.get(stcd);
+                TRsvrfcchB tRsvrfcchB = collectWarning.get(stcd);
+                if(tRvfcchB != null){
+                    //汛险
+                    String fsltdz = tRvfcchB.getFsltdz();
+                    if(fsltdz!=null){
+                        double v = Double.parseDouble(fsltdz);
+                        dataDto.setWaterLevelLine(v);
+                    }
+                }
+                if(tRsvrfcchB != null){
+                    String dsflz = tRsvrfcchB.getDsflz();
+                    //设计=
+                    if(dsflz!=null){
+                        double v = Double.parseDouble(dsflz);
+                        dataDto.setWaterLevelDesign(v);
+                    }
+                    //历史
+                    String hhrz = tRsvrfcchB.getHhrz();
+                    if(hhrz!=null){
+                        double v = Double.parseDouble(hhrz);
+                        dataDto.setWaterLevelHistory(v);
+                    }
+                }
                 dataDto.setFlag24("1");
                 surpassSafeCount++;
                 surpassList.add(dataDto);
