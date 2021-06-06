@@ -18,6 +18,6 @@ public interface YwkPlanTriggerRcsFlowDao extends EssenceJpaRepository<YwkPlanTr
 
     void deleteByTriggerRcsId(String id);
 
-    @Query(value = "DELETE * FROM YWK_PLAN_TRIGGER_RCS_FLOW WHERE TRIGGER_RCS_ID IN ?1",nativeQuery = true)
+    @Query(value = "DELETE FROM YWK_PLAN_TRIGGER_RCS_FLOW WHERE TRIGGER_RCS_ID IN ?1",nativeQuery = true)
     void deleteByTriggerRcsIds(Iterable<String> ids);
 }
