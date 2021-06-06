@@ -49,7 +49,17 @@ public class RiverWayDataDto implements Serializable {
 
     private String sttp;
 
+    //超历史最高水位
+    private Integer isThanWaterLevelHistory;
+    //超警戒水位
+    private Integer isThanWaterLevelWarning;
+    //超保证水位
+    private Integer isThanWaterLevelGuarantee;
+
     public RiverWayDataDto() {
+        this.isThanWaterLevelHistory = 0;
+        this.isThanWaterLevelWarning = 0;
+        this.isThanWaterLevelGuarantee = 0;
     }
 
     public RiverWayDataDto(String stcd, String stnm, Double lgtd, Double lttd, String rvnm, String sttp) {
@@ -59,5 +69,9 @@ public class RiverWayDataDto implements Serializable {
         this.lttd = lttd;
         this.rvnm = rvnm;
         this.sttp = sttp;
+
+        this.isThanWaterLevelHistory = 0;
+        this.isThanWaterLevelWarning = 0;
+        this.isThanWaterLevelGuarantee = 0;
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -39,11 +40,12 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
 
         int total = 0;
         StringBuffer buffer = new StringBuffer();
+        buffer.append("其中");
         for (Map<String, Object> map : list) {
             String sttp = map.get("STTP").toString();
             Integer count = Integer.valueOf(map.get("count").toString());
             String desc = STTPEnum.getDesc(sttp);
-            buffer.append("其中").append(desc).append(count).append("个，");
+            buffer.append(desc).append(count).append("个，");
             total += count;
         }
         StringBuffer stringBuffer = new StringBuffer("小清河流域报汛站点共").append(total).append("个，");
@@ -155,6 +157,7 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
     //实时监测-水情监测-闸坝
     @Override
     public List<SluiceDto> getSluiceList() {
+
         List<Map<String, Object>> list = stStbprpBDao.getSluiceList();
         List<SluiceDto> resultList = new ArrayList<>();
         for (Map<String, Object> map : list) {
@@ -181,6 +184,17 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
                 color = "blue";
             }
             dto.setColor(color);
+
+            if(obhtz.doubleValue() < upz.doubleValue()){
+                dto.setIsThanWaterLevelHistory(1);
+            }
+            if(wrz.doubleValue() < upz.doubleValue()){
+                dto.setIsThanWaterLevelWarning(1);
+            }
+            if(grz.doubleValue() < upz.doubleValue()){
+                dto.setIsThanWaterLevelGuarantee(1);
+            }
+
             resultList.add(dto);
         }
         return resultList;
@@ -277,7 +291,17 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             } else if (tdz.compareTo(obhtz) == 1) {
                 color = "blue";
             }
+
             TideListDto dto = new TideListDto(stcd, stnm, lgtd, lttd, tdz, airp, color);
+            if(obhtz.doubleValue() < dto.getTdz().doubleValue()){
+                dto.setIsThanWaterLevelHistory(1);
+            }
+            if(wrz.doubleValue() < dto.getTdz().doubleValue()){
+                dto.setIsThanWaterLevelWarning(1);
+            }
+            if(grz.doubleValue() < dto.getTdz().doubleValue()){
+                dto.setIsThanWaterLevelGuarantee(1);
+            }
             list.add(dto);
         }
         return list;

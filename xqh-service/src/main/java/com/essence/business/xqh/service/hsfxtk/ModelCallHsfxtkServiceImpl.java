@@ -1539,4 +1539,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         }
     }
 
+    @Override
+    public void testMakePic(String planId, String modelId) {
+
+    }
+
 }

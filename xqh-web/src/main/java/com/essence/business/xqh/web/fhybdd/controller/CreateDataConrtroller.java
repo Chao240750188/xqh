@@ -7,13 +7,12 @@ import com.essence.business.xqh.dao.dao.fhybdd.StPptnRDao;
 import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
 import com.essence.business.xqh.dao.dao.fhybdd.StStbprpPartitionDao;
 import com.essence.business.xqh.dao.dao.fhybdd.WrpRsrBsinDao;
-import com.essence.business.xqh.dao.dao.realtimemonitor.*;
+import com.essence.business.xqh.dao.dao.realtimemonitor.TRiverRODao;
+import com.essence.business.xqh.dao.dao.realtimemonitor.TRsvrRDao;
 import com.essence.business.xqh.dao.entity.fhybdd.StPptnR;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpPartition;
 import com.essence.business.xqh.dao.entity.fhybdd.WrpRsrBsin;
-import com.essence.business.xqh.dao.entity.information.StBRiver;
-import com.essence.business.xqh.dao.entity.realtimemonitor.TRiverR;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRsvrR;
 import com.essence.framework.util.StrUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -53,13 +52,20 @@ public class CreateDataConrtroller {
             List<StStbprpB> list = stStbprpBDao.findAll();
             List<StStbprpB> newLIst = list.stream().filter(StStbprpB->"1".equals(StStbprpB.getAddvcd())).collect(Collectors.toList());
             List<StPptnR> stPptnRList = new ArrayList<>();
-            Date time = DateUtil.getDateByStringNormal("2021/04/15 20:00:00");
+            Date time = DateUtil.getDateByStringNormal("2021/06/03 17:00:00");
             for (int i = 0; i < 500; i++) {
                 Date times = DateUtil.getNextHour(time,i);
                 for (StStbprpB stStbprpB:newLIst) {
                     StPptnR stPptnR = new StPptnR();
                     stPptnR.setStcd(stStbprpB.getStcd());
-                    Double drp=(int)(Math.random()*8+1)*1.0;
+
+                    //取0-4一位随机数 保留一位小数
+                    BigDecimal bigDecimal = makeRandom(4f, 0f, 1);
+                    double a = bigDecimal.doubleValue()%1;
+                    //小数位取0.5 或整数
+                    Double drp = bigDecimal.intValue()+(a==0.0?0.0:(a>0.5?1.0:0.5));
+
+//                  Double drp=(int)(Math.random()*6+1)*1.0;
                     stPptnR.setDrp(drp);
                     stPptnR.setTm(times);
                     stPptnR.setId(StrUtil.getUUID());
@@ -86,6 +92,7 @@ public class CreateDataConrtroller {
     public SystemSecurityMessage cjsk() {
         try {
             //测站编码表
+            System.out.println("开始同步");
             List<WrpRsrBsin> list = wrpRsrBsinDao.findAll();
             Date time = DateUtil.getDateByStringNormal("2017/01/01 00:00:00");
             List<TRsvrR> rlist = new ArrayList<>();
@@ -211,4 +218,24 @@ public class CreateDataConrtroller {
         }
     }
 
+    /**
+     * 生成指定范围，指定小数位数的随机数
+     * @param max 最大值
+     * @param min 最小值
+     * @param scale 小数位数
+     * @return
+     */
+    private static BigDecimal makeRandom(float max,float min,int scale){
+        BigDecimal cha = new BigDecimal(Math.random() * (max-min) + min);
+        return cha.setScale(scale,BigDecimal.ROUND_HALF_UP);//保留 scale 位小数，并四舍五入
+    }
+
+    public static void main(String[] args) {
+        for (int i = 0; i < 10; i++) {
+            BigDecimal bigDecimal = makeRandom(4f, 0f, 1);
+            double a = bigDecimal.doubleValue()%1;
+            Double b = bigDecimal.intValue()+(a==0.0?0.0:(a>0.5?1.0:0.5));
+            System.out.println(b);
+        }
+    }
 }
