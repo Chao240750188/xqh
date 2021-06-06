@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.essence.business.xqh.api.fbc.FbcPlanInfoManageService;
 import com.essence.business.xqh.api.hsfxtk.PlanInfoManageService;
+import com.essence.business.xqh.common.util.FileUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -188,5 +190,26 @@ public class FbcPlanInfoManageServiceImpl implements FbcPlanInfoManageService {
         //删除方案基本信息
         ywkPlaninfoDao.deleteById(planId);
 
+        //删除模型相关文件
+        try {
+            //写入模型输入文件路径
+            String fbc_path = PropertiesUtil.read("/filePath.properties").getProperty("FBC_MODEL");
+            String fbc_model_template_output = fbc_path +
+                    File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                    + File.separator + planId; //输出的地址
+            String fbc_model_template = fbc_path +
+                    File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");//默认文件对位置
+            String fbc_model_template_input = fbc_model_template
+                    + File.separator + "INPUT" + File.separator + planId; //输入的地址
+            String fbc_model_template_run = fbc_path +
+                    File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
+            String fbc_model_template_run_plan = fbc_model_template_run + File.separator + planId;
+
+            FileUtil.deleteFile(new File(fbc_model_template_output));
+            FileUtil.deleteFile(new File(fbc_model_template_input));
+            FileUtil.deleteFile(new File(fbc_model_template_run_plan));
+        }catch (Exception e){
+
+        }
     }
 }
