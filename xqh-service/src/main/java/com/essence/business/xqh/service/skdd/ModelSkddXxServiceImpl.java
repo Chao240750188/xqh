@@ -887,18 +887,15 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
         Map<String, List<String>> finalResult = new HashMap<>();
         String SKDD_XX_MODEL_OUTPUT_SHUIKU = SKDD_XX_MODEL_TEMPLATE_OUTPUT + File.separator + "shuiku_result.txt";//输出的地址
         finalResult = getModelResult(SKDD_XX_MODEL_OUTPUT_SHUIKU);
-        System.out.println(finalResult);
 
         //解析result.txt
         Map<String, List<String>> result = new HashMap<>();
         String SKDD_XX_MODEL_OUTPUT_RESULT = SKDD_XX_MODEL_TEMPLATE_OUTPUT + File.separator + "result.txt";//输出的地址
         result = getModelResult(SKDD_XX_MODEL_OUTPUT_RESULT);
-        System.out.println(result);
 
         //找到方案水库关联的断面
         WrpRcsBsin wrpRcsBsin = wrpRcsBsinDao.findById(planInfo.getRscd()).get();
         String wrpName = wrpRcsBsin.getRvcrcrscnm();
-
 
         if (finalResult != null && finalResult.size() > 0) {
 
@@ -917,6 +914,7 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
 
             if(result !=null && result.size()>0){
                 JSONArray iValList = new JSONArray();
+                int rIndex = 0;
                 valObj.put("iValues", iValList); //入库流量
                 List<String> resultString = result.get(planInfo.getRscd());
                 if(resultString !=null && resultString.size() > 0){
@@ -924,8 +922,9 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
                         try {
                             JSONObject dataObj = new JSONObject();
                             dataObj.put("time", DateUtil.dateToStringNormal3(time));
-                            dataObj.put("i", df.format(Double.parseDouble(needResult.get(0) + "")));
+                            dataObj.put("i", df.format(Double.parseDouble(resultString.get(rIndex) + "")));
                             iValList.add(dataObj);
+                            rIndex++;
                         } catch (Exception e) {
                             break;
                         }
