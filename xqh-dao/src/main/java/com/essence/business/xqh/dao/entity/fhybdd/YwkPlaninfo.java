@@ -98,6 +98,12 @@ public class YwkPlaninfo {
     @Column(name = "N_PUBLISH_TIME")
     public  Date nPublishTime;
 
+    @Column(name = "C_RSCD")
+    private String rscd;
+
+    @Transient
+    private String rname; //水库名称
+
     @Transient
     private Long leadTime;//预见期
 
@@ -334,5 +340,21 @@ public class YwkPlaninfo {
 
     public void setPlanSystem(String planSystem) {
         this.planSystem = planSystem;
+    }
+
+    public String getRscd() {
+        return rscd;
+    }
+
+    public void setRscd(String rscd) {
+        this.rscd = rscd;
+    }
+
+    public String getRname() {
+        return rname;
+    }
+
+    public void setRname(String rname) {
+        this.rname = rname;
     }
 }

@@ -6,6 +6,7 @@ import com.essence.framework.jpa.EssenceJpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -29,4 +30,5 @@ public interface YwkPlaninfoDao extends EssenceJpaRepository<YwkPlaninfo,String 
      * @param planSystem
      */
     List<YwkPlaninfo> findByPlanSystem(String planSystem);
+
 }

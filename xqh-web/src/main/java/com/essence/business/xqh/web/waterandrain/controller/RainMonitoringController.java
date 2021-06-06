@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
+import java.util.Date;
 
 /**
  * @author fengpp
@@ -209,6 +210,7 @@ public class RainMonitoringController {
         try {
             return new SystemSecurityMessage("ok", "查询成功", floodWarningService.getSluiceFloodWarningList(dto));
         } catch (Exception e) {
+            e.printStackTrace();
             return new SystemSecurityMessage("error", "查询失败");
         }
     }
@@ -324,6 +326,7 @@ public class RainMonitoringController {
         try {
             return new SystemSecurityMessage("ok", "查询成功", waterBriefingService.getReservoirList(dto));
         } catch (Exception e) {
+            e.printStackTrace();
             return new SystemSecurityMessage("error", "查询失败");
         }
     }
@@ -473,7 +476,29 @@ public class RainMonitoringController {
                                                     @PathVariable(name = "mth") Integer mth,
                                                     @PathVariable(name = "prdtp") Integer prdtp) {
         try {
-            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getMonthRainfall(year, mth, prdtp));
+            //return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getMonthRainfall(year, mth, prdtp));
+            QueryParamDto dto = new QueryParamDto();
+            Date startTime = DateUtil.getDateByStringNormal(year+"/"+mth+"/01 00:00:00");
+
+            Date endTime = null;
+
+            switch (prdtp){
+                case 1:
+                    endTime = DateUtil.getNextDay(startTime,10);
+                    break;
+                case 2:
+                    startTime = DateUtil.getNextDay(startTime,10);
+                    endTime = DateUtil.getNextDay(startTime,10);
+                    break;
+                case 3:
+                    startTime = DateUtil.getNextDay(startTime,20);
+                    endTime = DateUtil.getMonthEndDay(startTime);
+                    break;
+            }
+            dto.setStartTime(startTime);
+            dto.setEndTime(endTime);
+
+            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getDayRainfall(dto));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询失败");
         }
@@ -490,7 +515,14 @@ public class RainMonitoringController {
     public SystemSecurityMessage getMonthRainfall(@PathVariable(name = "year") Integer year,
                                                   @PathVariable(name = "mth") Integer mth) {
         try {
-            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getMonthRainfall(year, mth, 4));
+            //return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getMonthRainfall(year, mth, 4));
+            QueryParamDto dto = new QueryParamDto();
+            Date startTime = DateUtil.getDateByStringNormal(year+"/"+mth+"/01 00:00:00");
+            Date endTime = DateUtil.getMonthEndDay(startTime);
+
+            dto.setStartTime(startTime);
+            dto.setEndTime(endTime);
+            return new SystemSecurityMessage("ok", "查询成功", rainfallSearchService.getDayRainfall(dto));
         } catch (Exception e) {
             return new SystemSecurityMessage("error", "查询失败");
         }

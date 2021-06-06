@@ -39,7 +39,8 @@ public class AuthConfig extends WebMvcConfigurerAdapter {
                        "/lawEnforcementInspectionc/**",
                        "/licenseApproval/**",
                         "/modelResult/**",
-                        "/space/**"
+                        "/space/**",
+                       "/thirdAction/**"
                        /* "/floodSchedulingMajorUnit/**",
                         "/floodSchedulingRiverMajorUnit/**",
                         "/floodSchedulingFxqxzz/**",

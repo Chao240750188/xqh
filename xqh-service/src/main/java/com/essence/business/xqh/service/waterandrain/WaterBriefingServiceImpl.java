@@ -586,8 +586,8 @@ public class WaterBriefingServiceImpl implements WaterBriefingService {
             ReservoirListDto dto = new ReservoirListDto();
             String stcd = tempMap.get("STCD").toString();
             dto.setStcd(stcd);
-            dto.setHnnm(tempMap.get("HNNM").toString());
-            dto.setStnm(tempMap.get("STNM").toString());
+            dto.setHnnm(tempMap.get("HNNM")==null?null:tempMap.get("HNNM").toString());
+            dto.setStnm(tempMap.get("STNM")==null?null:tempMap.get("STNM").toString());
             if (rsvrfsrMap.get(stcd) != null) {
                 dto.setFsltdz(new BigDecimal(rsvrfsrMap.get(stcd)));
             }

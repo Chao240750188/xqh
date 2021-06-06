@@ -80,7 +80,6 @@ public class ModelHsfxtkController {
     public SystemSecurityMessage getModelHsfxList() {
         try {
             List<Object> modelList =  modelCallHsfxtkService.getModelList();
-
             return SystemSecurityMessage.getSuccessMsg("获取模型列表成功",modelList);
 
         }catch (Exception e){
@@ -323,14 +322,12 @@ public class ModelHsfxtkController {
 
 
 
-    @RequestMapping(value = "/test/{modelId}/{planId}", method = RequestMethod.GET)
-    public SystemSecurityMessage savePlanToDb(@PathVariable String modelId,@PathVariable String planId) {
+    @RequestMapping(value = "/test/{modelId}/{planId}/{dataType}", method = RequestMethod.GET)
+    public SystemSecurityMessage savePlanToDb(@PathVariable String modelId,@PathVariable String planId,@PathVariable String dataType) {
         try {
-            String filePath = "D:\\XQH_HSFX_MODEL\\MODEL_OUT\\6868e40ae5cd4eab8d4b6141efd836868";
-            String dataType = "process";
+            String filePath = "D:\\XQH_HSFX_MODEL\\MODEL_OUT\\"+planId;
             planProcessDataService.readDepthCsvFile(filePath,dataType,modelId,planId);
             return SystemSecurityMessage.getSuccessMsg("洪水风险调控方案保存成功",planId);
-
         }catch (Exception e){
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("洪水风险调控方案保存失败！",null);
