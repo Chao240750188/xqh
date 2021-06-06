@@ -3,6 +3,7 @@ package com.essence.business.xqh.service.hsfxtk;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.essence.business.xqh.api.hsfxtk.PlanInfoManageService;
+import com.essence.business.xqh.common.util.FileUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkModelDao;
 import com.essence.business.xqh.dao.dao.fhybdd.YwkPlaninfoDao;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -172,7 +174,6 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
     @Transactional
     @Override
     public void deleteAllInputByPlanId(String planId) {
-
         //删除边界条件
         ywkPlaninFloodBoundaryDao.deleteByPlanId(planId);
         //删除糙率
@@ -181,12 +182,31 @@ public class PlanInfoManageServiceImpl implements PlanInfoManageService {
             ywkPlaninRiverRoughnessDao.deleteByPlanRoughnessId(byPlanId.get(0).getPlanRoughnessid());
         }
         ywkPlaninFloodRoughnessDao.deleteByPlanId(planId);
-
         //删除溃点
         ywkPlaninFloodBreakDao.deleteByNPlanid(planId);
-
         //删除方案基本信息
         ywkPlaninfoDao.deleteById(planId);
 
+        //删除模型相关文件
+        try {
+            String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
+            String hsfx_model_template_output = hsfx_path +
+                    File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                    + File.separator + planId; //输出的地址
+
+            String hsfx_model_template_input = hsfx_path +
+                    File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE")
+                    + File.separator + "INPUT" + File.separator + planId; //输入的地址
+
+            String hsfx_model_template_run = hsfx_path +
+                    File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
+            String hsfx_model_template_run_plan = hsfx_model_template_run + File.separator + planId;
+
+            FileUtil.deleteFile(new File(hsfx_model_template_output));
+            FileUtil.deleteFile(new File(hsfx_model_template_input));
+            FileUtil.deleteFile(new File(hsfx_model_template_run_plan));
+        }catch (Exception e){
+
+        }
     }
 }

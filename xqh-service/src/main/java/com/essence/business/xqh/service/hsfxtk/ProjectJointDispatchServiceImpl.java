@@ -3429,5 +3429,7 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         //删除方案基本信息
         ywkPlaninfoDao.deleteById(planId);
 
+        //删除模型相关文件
+
     }
 }
