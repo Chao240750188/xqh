@@ -7,6 +7,7 @@ import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.common.util.ExcelUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
+import com.essence.business.xqh.dao.entity.hsfxtk.YwkMileageInfo;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 洪水风险调控模型相关控制层
@@ -332,6 +334,39 @@ public class ModelHsfxtkController {
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("洪水风险调控方案保存失败！",null);
 
+        }
+    }
+
+
+    /**
+     * 获取所有里程信息
+     * @return
+     */
+    @GetMapping(value = "/getAllMileageInfo")
+    public SystemSecurityMessage getAllMileageInfo() {
+        try {
+            List<YwkMileageInfo> result = modelCallHsfxtkService.getAllMileageInfo();
+            return SystemSecurityMessage.getSuccessMsg("获取里程信息成功！", result);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("获取里程信息失败！",null);
+        }
+    }
+
+
+    /**
+     * 纵断面洪水过程
+     * @param ywkMileageInfoVo
+     * @return
+     */
+    @PostMapping(value = "/verticalSectionFloodProcess")
+    public SystemSecurityMessage verticalSectionFloodProcess(@RequestBody YwkMileageInfoVo ywkMileageInfoVo) {
+        try {
+            List<Map<Object, Object>> result = modelCallHsfxtkService.verticalSectionFloodProcess(ywkMileageInfoVo);
+            return SystemSecurityMessage.getSuccessMsg("获取纵断面洪水过程信息成功！", result);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("获取纵断面洪水过程信息失败！",null);
         }
     }
 

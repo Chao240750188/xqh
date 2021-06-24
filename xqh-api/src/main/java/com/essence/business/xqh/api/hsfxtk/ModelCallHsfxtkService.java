@@ -1,6 +1,7 @@
 package com.essence.business.xqh.api.hsfxtk;
 
 import com.essence.business.xqh.api.hsfxtk.dto.*;
+import com.essence.business.xqh.dao.entity.hsfxtk.YwkMileageInfo;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -8,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 洪水风险调控模型相关业务层
@@ -131,4 +133,19 @@ public interface ModelCallHsfxtkService {
     void previewPicFile(HttpServletRequest request, HttpServletResponse response, String planId, String picId);
 
     void testMakePic(String planId, String modelId);
+
+    /**
+     * 获取所有里程信息
+     * @return
+     */
+    List<YwkMileageInfo> getAllMileageInfo();
+
+    /**
+     * 纵断面洪水过程
+     * @param ywkMileageInfoVo
+     * @return
+     */
+    List<Map<Object, Object>> verticalSectionFloodProcess(YwkMileageInfoVo ywkMileageInfoVo);
+
+
 }

@@ -13,12 +13,15 @@ import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
 import com.essence.business.xqh.dao.entity.hsfxtk.*;
 import com.essence.framework.util.StrUtil;
+import com.google.gson.internal.$Gson$Preconditions;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -28,7 +31,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.io.*;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -72,6 +77,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     @Autowired
     PlanProcessDataService planProcessDataService;//模型结果解析
+
+    @Autowired
+    YwkMileageInfoDao ywkMileageInfoDao; //方案里程信息
 
     /**
      * 根据方案名称校验方案是否存在
@@ -1544,4 +1552,88 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     }
 
+    /**
+     * 获取所有里程信息
+     * @return
+     */
+    @Override
+    public List<YwkMileageInfo> getAllMileageInfo() {
+        List<YwkMileageInfo> allMileage = ywkMileageInfoDao.findAll(new Sort(Sort.Direction.ASC, "mileage"));
+
+        List<YwkMileageInfo> newMileage = new ArrayList<>();
+        for (int i = 0; i < allMileage.size(); i++) {
+            if(i == 0 || i%10 == 0 || i==allMileage.size()-1){
+                newMileage.add(allMileage.get(i));
+            }
+        }
+        return newMileage;
+    }
+
+    /**
+     * 纵断面洪水过程
+     * @param ywkMileageInfoVo
+     * @return
+     */
+    @Override
+    public List<Map<Object, Object>> verticalSectionFloodProcess(YwkMileageInfoVo ywkMileageInfoVo) {
+        List<Map<Object, Object>> result = new ArrayList<>();
+        List<YwkMileageInfo> all = ywkMileageInfoDao.findByMileageBetween(ywkMileageInfoVo.getStartMileage(), ywkMileageInfoVo.getEndMileage());
+        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(ywkMileageInfoVo.getnPlanid());
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        DecimalFormat df = new DecimalFormat("0.00");
+        Date startTime = planInfo.getdCaculatestarttm();
+        Date endTime = planInfo.getdCaculateendtm();
+        Integer aLong = Math.toIntExact(planInfo.getnOutputtm());
+
+        //Waterlevel.csv文件路径
+            String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
+            String hsfx_model_template_output = hsfx_path +
+                    File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                    + File.separator + ywkMileageInfoVo.getnPlanid(); //输出的地址
+            String yiweiInputWaterlevelUrl = hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterlevel.csv";
+
+            try {
+                FileReader fileReader = new FileReader(yiweiInputWaterlevelUrl);
+                if(fileReader != null){
+                    BufferedReader reader = new BufferedReader(new FileReader(yiweiInputWaterlevelUrl));
+                    String line = null;
+                    List<List<String>> datas = new ArrayList<>();
+                    while ((line = reader.readLine()) != null) {
+                        String item[] = line.split(",");//CSV格式文件为逗号分隔符文件，这里根据逗号切分
+                        datas.add(Arrays.asList(item));
+                    }
+
+                    Map<Object, Object> map = new TreeMap<>();
+                    List<Map<Object, String>> zlist = new ArrayList<>();
+                    for (YwkMileageInfo ywkMileageInfo : all) {
+                        map = new TreeMap<>();
+                        zlist = new ArrayList<>();
+                        map.put("mileage", ywkMileageInfo.getMileage());
+                        map.put("lgtd", ywkMileageInfo.getLgtd());
+                        map.put("lttd", ywkMileageInfo.getLttd());
+                        map.put("leftBankElevation", ywkMileageInfo.getLeftBankElevation());
+                        map.put("rightBankElevation", ywkMileageInfo.getRightBankElevation());
+                        map.put("riverBottomElevation", ywkMileageInfo.getRiverBottomElevation());
+
+                        for (int i = 0; i < datas.get(0).size(); i++) {
+                            if(datas.get(0).get(i).equals("L" + ywkMileageInfo.getMileage())){
+                                Map<Object, String> zListMap = new HashMap<>();
+                                for(int j = 1; j < datas.size(); j++){
+                                    zListMap = new HashMap<>();
+                                    zListMap.put(format.format(DateUtils.addMinutes(startTime, aLong * (j-1))), df.format(Double.valueOf(datas.get(j).get(i))));
+                                    zlist.add(zListMap);
+                                }
+                                map.put("z", zlist);
+                            }
+                        }
+                        result.add(map);
+                    }
+
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        return  result;
+    }
 }
