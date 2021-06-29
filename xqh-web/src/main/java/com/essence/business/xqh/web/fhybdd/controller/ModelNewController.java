@@ -653,13 +653,13 @@ public class ModelNewController {
     /**
      * 计算上下游的洪峰传播时间
      */
-    @RequestMapping(value = "/calculationRcs/{planId}/{oneRcs}/{twoRcs}",method = RequestMethod.GET)
-    public SystemSecurityMessage calculationRcs(@PathVariable String planId,@PathVariable String oneRcs,@PathVariable String twoRcs){
+    @RequestMapping(value = "/calculationRcs/{planId}/{oneRcs}/{twoRcs}/{tag}",method = RequestMethod.GET)
+    public SystemSecurityMessage calculationRcs(@PathVariable String planId,@PathVariable String oneRcs,@PathVariable String twoRcs,@PathVariable int tag){
         YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
         if (planInfo == null){
             return SystemSecurityMessage.getFailMsg("方案不存在");
         }
-        Object results = modelCallFhybddNewService.calculationRcs(planInfo,oneRcs,twoRcs);
+        Object results = modelCallFhybddNewService.calculationRcs(planInfo,oneRcs,twoRcs,tag);
         return SystemSecurityMessage.getSuccessMsg("计算上下游的洪峰传播时间",results);
 
     }

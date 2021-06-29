@@ -217,5 +217,5 @@ public interface ModelCallFhybddNewService {
      * @param twoRcs
      * @return
      */
-    Object calculationRcs(YwkPlaninfo planInfo,String oneRcs, String twoRcs);
+    Object calculationRcs(YwkPlaninfo planInfo,String oneRcs, String twoRcs,int tag);
 }

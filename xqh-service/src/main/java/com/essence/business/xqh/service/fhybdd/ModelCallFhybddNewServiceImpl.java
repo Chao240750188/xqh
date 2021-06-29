@@ -3635,9 +3635,9 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
 
     @Override
-    public Object calculationRcs(YwkPlaninfo planInfo,String oneRcs, String twoRcs) {
+    public Object calculationRcs(YwkPlaninfo planInfo,String oneRcs, String twoRcs,int tag) {
         DecimalFormat format = new DecimalFormat("0.00");
-        JSONArray modelResultQ = (JSONArray) getModelResultQ(planInfo, 0);//todo 先按照tag为0来取
+        JSONArray modelResultQ = (JSONArray) getModelResultQ(planInfo, tag);//todo 先按照tag为0来取
         JSONArray array = modelResultQ.stream().filter(item->{
             JSONObject object = (JSONObject) item;
             if (oneRcs.equals(object.get("RCS_ID"))||twoRcs.equals(object.get("RCS_ID"))){
