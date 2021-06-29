@@ -404,8 +404,8 @@ public class RainPartitionServiceImpl implements RainPartitionService {
                 e.printStackTrace();
             }
         }
-        waterInfo += "河道站共记" + collectHD.size() + "个，其中超警戒水位共记" + cjjSet.size() + "个。";
-        waterInfo += "水库共记" + collectSK.size() + "个，其中超汛限水位共记" + cjjskSet.size() + "个。";
+        waterInfo += "河道站共计" + collectHD.size() + "个，其中超警戒水位共计" + cjjSet.size() + "个。";
+        waterInfo += "水库共计" + collectSK.size() + "个，其中超汛限水位共计" + cjjskSet.size() + "个。";
         return waterInfo;
     }
 
