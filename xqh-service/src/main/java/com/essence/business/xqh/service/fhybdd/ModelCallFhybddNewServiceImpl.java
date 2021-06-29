@@ -3654,4 +3654,5 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         Double hour = Double.parseDouble(format.format(i*1.0 / 60));
         return hour;
     }
+
 }
