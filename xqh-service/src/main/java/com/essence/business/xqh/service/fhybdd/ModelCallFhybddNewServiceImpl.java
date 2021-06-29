@@ -15,6 +15,7 @@ import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.*;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -138,8 +139,6 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
     @Override
     public List<Map<String,Object>> getRainfalls(YwkPlaninfo planInfo)throws Exception {
-
-
         SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         SimpleDateFormat formatHour = new SimpleDateFormat("yyyy-MM-dd HH:");
         Date startTime = planInfo.getdCaculatestarttm();
@@ -147,10 +146,12 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
         String startTimeStr = format1.format(startTime);
         String endTimeStr = format1.format(endTime);
+
         //Long step = planInfo.getnOutputtm() / 60;//步长
         Long step = planInfo.getnOutputtm();//分钟
         //switch (step)
-        Long count = ywkPlaninRainfallDao.countByPlanId(planInfo.getnPlanid());
+        //Long count = ywkPlaninRainfallDao.countByPlanId(planInfo.getnPlanid());
+        Long count = ywkPlaninRainfallDao.countByPlanIdWithTime(planInfo.getnPlanid(),startTime,endTime);
         List<Map<String, Object>> stPptnRWithSTCD = new ArrayList<>();
         if (count != 0){//原来是小时  实时数据是小时  都先按照整点来
             stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planInfo.getnPlanid());
@@ -257,7 +258,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             if (flag){
                 for (Map map : ll){
                     if(map.get("DRP") == null ){
-                        map.put("DRP",0);
+                        map.put("DRP",0.5);
                     }
 
                 }
@@ -541,6 +542,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         Map<String, StStbprpB> collect = stbp.stream().collect(Collectors.toMap(StStbprpB::getStcd, Function.identity()));
         List<Map<String,Object>> result = new ArrayList<>();
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         //解析ecxel数据 不包含第一行
         List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile, 0);
 
@@ -658,7 +660,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         }
 
         //TODO 修改雨量值并不修改基础表的数据，只修改缓存的的数据
-        CacheUtil.saveOrUpdate("rainfall", planInfo.getnPlanid()+"new", inSertList);
+        CacheUtil.saveOrUpdate("rainfall", planInfo.getnPlanid()+"new"+format1.format(planInfo.getdCaculatestarttm()), inSertList);
         return inSertList;
     }
 
@@ -745,8 +747,260 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         return ;
 
     }
-
     @Async
+    @Override
+    public void modelCallPCP(YwkPlaninfo planInfo) {
+        System.out.println("模型运算线程！"+Thread.currentThread().getName());
+        try {
+            //雨量信息表
+            long startTime=System.currentTimeMillis();   //获取开始时间
+
+            Long aLong = ywkPlaninRainfallDao.countByPlanId(planInfo.getnPlanid());
+            if (aLong == 0L) {
+                System.out.println("方案雨量表没有保存数据");
+                throw new RuntimeException("方案雨量表没有保存数据");
+            }
+            YwkPlaninfo newPlan = new YwkPlaninfo();
+            BeanUtils.copyProperties(planInfo,newPlan);
+            newPlan.setdCaculatestarttm(DateUtil.getNextHour(planInfo.getdCaculatestarttm(),-72));
+            newPlan.setdCaculateendtm(planInfo.getdCaculatestarttm());
+            List<Map<String, Object>> before72results = getRainfalls(newPlan);//todo 这个地方先获取72小时之前的雨量，后获取现在的雨量。保证缓存的准去行
+
+            List<Map<String, Object>> results = getRainfalls(planInfo);//todo 这个地方先获取72小时之前的雨量，后获取现在的雨量。保证缓存的准去行
+            Map<Object, Map<String, Object>> resultMap = results.stream().collect(Collectors.toMap(t -> t.get("STCD"), Function.identity()));
+
+            for (Map<String,Object> map : before72results){
+                String stcd = map.get("STCD")+"";
+                List<Map<String,Object>> beforeList = (List<Map<String, Object>>) map.get("LIST");
+                Map<String, Object> thisMap = resultMap.get(stcd);
+                List<Map<String,Object>> thisList = (List<Map<String, Object>>) thisMap.get("LIST");
+                if (!CollectionUtils.isEmpty(beforeList)){
+                    beforeList = beforeList.subList(0,beforeList.size()-1);
+                }
+                beforeList.addAll(thisList);
+                map.put("LIST",beforeList);
+            }
+
+            //before72results.addAll(results);
+            if (CollectionUtils.isEmpty(before72results)) {
+                System.out.println("雨量信息为空，无法计算");
+                throw new RuntimeException("雨量信息为空，无法计算");
+            }
+            //创建入参、出参
+            String SWYB_PCP_HANDLE_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_NEW_PCP_HANDLE_MODEL_PATH");
+            String template = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
+            String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
+            String run = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
+
+
+            String PCP_HANDLE_MODEL_TEMPLATE = SWYB_PCP_HANDLE_MODEL_PATH + File.separator + template;
+
+            String PCP_HANDLE_MODEL_TEMPLATE_INPUT = PCP_HANDLE_MODEL_TEMPLATE
+                    + File.separator + "INPUT" + File.separator + planInfo.getnPlanid(); //输入的地址
+            String PCP_HANDLE_MODEL_TEMPLATE_OUTPUT = SWYB_PCP_HANDLE_MODEL_PATH + File.separator + out
+                    + File.separator + planInfo.getnPlanid();//输出的地址
+
+            String PCP_HANDLE_MODEL_RUN = SWYB_PCP_HANDLE_MODEL_PATH + File.separator + run;
+
+            String PCP_HANDLE_MODEL_RUN_PLAN = PCP_HANDLE_MODEL_RUN + File.separator + planInfo.getnPlanid();
+
+
+            File inputPcpPath = new File(PCP_HANDLE_MODEL_TEMPLATE_INPUT);
+            File outPcpPath = new File(PCP_HANDLE_MODEL_TEMPLATE_OUTPUT);
+            File runPcpPath = new File(PCP_HANDLE_MODEL_RUN_PLAN);
+
+            inputPcpPath.mkdir();
+            outPcpPath.mkdir();
+            runPcpPath.mkdir();
+
+            //TODO 模型先算第一步，数据处理模型pcp_model
+            //1，写入pcp_HRU.csv
+            int result0 = writeDataToInputPcpHRUCsv(PCP_HANDLE_MODEL_TEMPLATE_INPUT, PCP_HANDLE_MODEL_TEMPLATE, planInfo);
+            if (result0 == 0) {
+                System.out.println("水文模型之PCP模型:写入pcp_HRU失败");
+                throw new RuntimeException("水文模型之PCP模型:写入pcp_HRU失败");
+            }
+            //2,写入pcp_station.csv
+            int result1 = writeDataToInputPcpStationCsv(PCP_HANDLE_MODEL_TEMPLATE_INPUT, before72results, planInfo);
+            if (result1 == 0) {
+                System.out.println("水文模型之PCP模型:写入pcp_station失败");
+                throw new RuntimeException("水文模型之PCP模型:写入pcp_station失败");
+            }
+            //3.复制cofig以及可执行文件
+            int result2 = copyPCPExeFile(PCP_HANDLE_MODEL_RUN, PCP_HANDLE_MODEL_RUN_PLAN);
+            if (result2 == 0) {
+                System.out.println("水文模型之PCP模型:复制执行文件与config文件写入失败。。。");
+                throw new RuntimeException("水文模型之PCP模型:复制执行文件与config文件写入失败。。。");
+
+            }
+            //4,修改config文件
+            int result3 = writeDataToPcpConfig(PCP_HANDLE_MODEL_RUN_PLAN, PCP_HANDLE_MODEL_TEMPLATE_INPUT, PCP_HANDLE_MODEL_TEMPLATE_OUTPUT);
+            if (result3 == 0) {
+                System.out.println("水文模型之PCP模型:修改config文件失败");
+                throw new RuntimeException("水文模型之PCP模型:修改config文件失败");
+
+            }
+            long endTime =System.currentTimeMillis();   //获取开始时间
+            System.out.println("水文模型之PCP模型:组装pcp模型所用的参数的时间为:"+(endTime-startTime) +"毫秒");
+            //5.调用模型
+            //调用模型计算
+            startTime = System.currentTimeMillis();
+            System.out.println("水文模型之PCP模型:开始水文模型PCP模型计算。。。");
+            System.out.println("水文模型之PCP模型:模型计算路径为。。。" + PCP_HANDLE_MODEL_RUN_PLAN + File.separator + "startUp.bat");
+            runModelExe(PCP_HANDLE_MODEL_RUN_PLAN + File.separator + "startUp.bat");
+            endTime = System.currentTimeMillis();
+            System.out.println("水文模型之PCP模型:模型计算结束。。。，所用时间为:"+(endTime-startTime) +"毫秒");
+            //TODO 判断模型是否执行成功
+            //判断是否执行成功，是否有error文件
+            String pcp_result = PCP_HANDLE_MODEL_TEMPLATE_OUTPUT + File.separator + "hru_p_result.csv";
+            File pcp_resultFile = new File(pcp_result);
+            if (pcp_resultFile.exists()) {//存在表示执行成功
+                System.out.println("水文模型之PCP模型:pcp模型执行成功hru_p_result.csv文件存在");
+                planInfo.setnPlanstatus(3L);//todo 3L表示模型pcp成功 -1l是失败。2L是俩个模型都成功
+                ywkPlaninfoDao.save(planInfo);
+                CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
+                return;//todo  执行成功
+            } else {
+                System.out.println("水文模型之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");//todo 执行失败
+                throw new RuntimeException("水文模型之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+            System.out.println("模型执行失败了。。。。。。联系管理员"+e.getMessage());
+            planInfo.setnPlanstatus(-1L);
+            ywkPlaninfoDao.save(planInfo);
+            CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
+        }
+    }
+    @Async
+    @Override
+    public void modelCall(YwkPlaninfo planInfo) {
+
+        System.out.println("模型运算线程！"+Thread.currentThread().getName());
+        try {
+
+            //创建入参、出参
+            String SWYB_PCP_HANDLE_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_NEW_PCP_HANDLE_MODEL_PATH");
+            String SWYB_SHUIWEN_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_NEW_SHUIWEN_MODEL_PATH");
+            String template = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
+            String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
+            String run = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
+
+
+            String PCP_HANDLE_MODEL_TEMPLATE_OUTPUT = SWYB_PCP_HANDLE_MODEL_PATH + File.separator + out
+                    + File.separator + planInfo.getnPlanid();//输出的地址
+            //TODO 判断模型是否执行成功  执行不成功不让执行
+            //判断是否执行成功，是否有error文件
+            String pcp_result = PCP_HANDLE_MODEL_TEMPLATE_OUTPUT + File.separator + "hru_p_result.csv";
+            File pcp_resultFile = new File(pcp_result);
+            if (pcp_resultFile.exists() && planInfo.getnPlanstatus() == 3L) {//存在表示执行成功 todo 3L表示pcp模型执行成功
+                System.out.println("水文模型之PCP模型:pcp模型执行成功hru_p_result.csv文件存在");
+            } else {
+                System.out.println("水文模型之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");//todo 执行失败
+                throw new RuntimeException("水文模型之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");
+            }
+
+            //另一个模型
+            String SHUIWEN_MODEL_TEMPLATE = SWYB_SHUIWEN_MODEL_PATH + File.separator + template;
+            String SHUIWEN_MODEL_TEMPLATE_INPUT = SHUIWEN_MODEL_TEMPLATE
+                    + File.separator + "INPUT" + File.separator + planInfo.getnPlanid(); //输入的地址
+            String SHUIWEN_MODEL_TEMPLATE_OUTPUT = SWYB_SHUIWEN_MODEL_PATH + File.separator + out
+                    + File.separator + planInfo.getnPlanid();//输出的地址
+            //模型运行的config
+            String SHUIWEN_MODEL_RUN = SWYB_SHUIWEN_MODEL_PATH + File.separator + run;
+
+            String SHUIWEN_MODEL_RUN_PLAN = SHUIWEN_MODEL_RUN + File.separator + planInfo.getnPlanid();
+
+
+            File inputShuiWenPath = new File(SHUIWEN_MODEL_TEMPLATE_INPUT);
+            File outShuiWenPath = new File(SHUIWEN_MODEL_TEMPLATE_OUTPUT);
+            File runShuiWenPath = new File(SHUIWEN_MODEL_RUN_PLAN);
+
+            inputShuiWenPath.mkdir();
+            outShuiWenPath.mkdir();
+            runShuiWenPath.mkdir();
+
+            //TODO 上面的入参条件没存库
+            //TODO 第二个shuiwen模型
+            //6，预报断面ChuFaDuanMian、ChuFaDuanMian_shuru.csv组装
+            int result4 = writeDataToInputShuiWenChuFaDuanMianCsv(SHUIWEN_MODEL_TEMPLATE_INPUT, planInfo);
+
+            if (result4 == 0) {
+                System.out.println("水文模型之水文模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
+                throw new RuntimeException("水文模型之水文模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
+
+            }
+            //7 cope pcp模型的输出文件到水文模型的输入文件里
+            int result5 = copeFirstOutPutHruP(PCP_HANDLE_MODEL_TEMPLATE_OUTPUT, SHUIWEN_MODEL_TEMPLATE_INPUT);
+            if (result5 == 0) {
+                System.out.println("水文模型之水文模型:copy数据处理模型PCP输出文件hru_p_result失败");
+                throw new RuntimeException("水文模型之水文模型:copy数据处理模型PCP输出文件hru_p_result失败");
+
+            }
+            //8 写入model_selection.csv 输入文件
+            int result6 = writeDataToInputShuiWenModelSelectionCsv(SHUIWEN_MODEL_TEMPLATE_INPUT, planInfo);
+            if (result6 == 0) {
+                System.out.println("水文模型之水文模型:写入model_selection.csv 输入文件失败");
+                throw new RuntimeException("水文模型之水文模型:写入model_selection.csv 输入文件失败");
+
+            }
+
+            //9 copy剩下的率定csv输入文件
+            int result7 = copyOtherShuiWenLvDingCsv(SHUIWEN_MODEL_TEMPLATE, SHUIWEN_MODEL_TEMPLATE_INPUT);
+            if (result7 == 0) {
+                System.out.println("水文模型之水文模型: copy剩下的率定csv输入文件失败");
+                throw new RuntimeException("水文模型之水文模型: copy剩下的率定csv输入文件失败");
+
+            }
+            //10 复制shuiwen cofig以及可执行文件
+            int result8 = copyShuiWenExeFile(SHUIWEN_MODEL_RUN, SHUIWEN_MODEL_RUN_PLAN);
+            if (result8 == 0) {
+                System.out.println("水文模型之水文模型:复制执行文件与config文件写入失败。。。");
+                throw new RuntimeException("水文模型之水文模型:复制执行文件与config文件写入失败。。。");
+
+            }
+            //11,修改shuiwen config文件
+            int result9 = writeDataToShuiWenConfig(SHUIWEN_MODEL_RUN_PLAN, SHUIWEN_MODEL_TEMPLATE_INPUT, SHUIWEN_MODEL_TEMPLATE_OUTPUT, 0, planInfo);
+            if (result9 == 0) {
+                System.out.println("水文模型之水文模型:修改config文件失败");
+                throw new RuntimeException("水文模型之水文模型:修改config文件失败");
+
+            }
+            //12,
+            //调用模型计算
+            System.out.println("水文模型之水文模型:开始水文模型shuiwen模型计算。。。");
+            System.out.println("水文模型之水文模型:模型计算路径为。。。" + SHUIWEN_MODEL_RUN_PLAN + File.separator + "startUp.bat");
+            runModelExe(SHUIWEN_MODEL_RUN_PLAN + File.separator + "startUp.bat");
+
+            //判断是否执行成功，是否有error文件
+            String errorStr = SHUIWEN_MODEL_TEMPLATE_OUTPUT + File.separator + "error_log.txt";
+            File errorFile = new File(errorStr);
+            if (errorFile.exists()) {//存在表示执行失败
+                System.out.println("水文模型之水文模型:模型计算失败。。存在error_log文件");
+                planInfo.setnPlanstatus(-1L);
+                ywkPlaninfoDao.save(planInfo);
+                CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
+                return;//todo 执行失败
+            } else {
+                System.out.println("水文模型之水文模型:模型计算成功。。不存在error_log文件");
+                planInfo.setnPlanstatus(2L);
+                ywkPlaninfoDao.save(planInfo);
+                CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
+                return;//todo  执行成功
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+            System.out.println("模型执行失败了。。。。。。联系管理员"+e.getMessage());
+            planInfo.setnPlanstatus(-1L);
+            ywkPlaninfoDao.save(planInfo);
+            CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
+        }
+
+
+    }
+    /*@Async
     @Override
     public void modelCall(YwkPlaninfo planInfo) {
 
@@ -944,7 +1198,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         }
 
 
-    }
+    }*/
     @Autowired
     YwkPlanCalibrationZoneXajDao ywkPlanCalibrationZoneXajDao;
     @Async
@@ -1224,7 +1478,10 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         String reachInput = shuiwen_model_template_input + File.separator + "Reach.csv";
         String reachInputUpdate = shuiwen_model_template_input_calibration + File.separator + "Reach.csv";
         //String reachXiangGuanShujvInput = shuiwen_model_template_input + File.separator + "reach_xiangguan_shujv.csv";
+        String SWYB_SHUIWEN_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_NEW_SHUIWEN_MODEL_PATH");
+        String template = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
 
+        String reachTemplateInput = SWYB_SHUIWEN_MODEL_PATH + File.separator +template+File.separator+ "ReachTemplate.csv";//todo 表格模板
         String riverId = planinfo.getRiverId();
         List<WrpRiverZone> wrpRiverZones = wrpRiverZoneDao.findByRvcd(riverId);
 
@@ -1305,8 +1562,10 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                 e.printStackTrace();
             }
         }
+
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(reachInputUpdate, false)); // 附加
+            //FileUtil.copyFile(reachTemplateInput, reachInputUpdate, true);
+            BufferedWriter bw = new BufferedWriter(new FileWriter(reachInputUpdate, false)); // 附加 todo 追加在模板表头后数据
             // 添加新的数据行
             String head = "";
             List<String> strings1 = readDatas.get(0);
@@ -1678,6 +1937,21 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         String resultUrl = "result&&" + shuiwen_model_template_output + File.separator + "result.txt";
         String shuiku_resultUrl = "shuiku_result&&" + shuiwen_model_template_output + File.separator + "shuiku_result.txt";
         String errorUrl = "error&&" + shuiwen_model_template_output + File.separator + "error_log.txt";
+       //todo 新增的 输出文件
+        String jinduUrl = "jindu&&"+ shuiwen_model_template_output + File.separator + "jindu.txt";
+        String rugan_resultUrl = "rugan_result&&"+shuiwen_model_template_output + File.separator + "zhiliurugan.txt";
+
+        /**
+         * difangyujing&&E:\Xiaoqinghe\HY_1_13\deal2_4\input\difangyujing.csv
+         * jindu&&E:\Xiaoqinghe\HY_1_13\deal2_4\output\jindu.txt
+         * rugan_k&&E:\Xiaoqinghe\HY_1_13\deal2_4\input\rugan_k.csv
+         * shuiku_jishuiqu&&E:\Xiaoqinghe\HY_1_13\deal2_4\input\shuiku_jishuiqu.csv
+         * rugan_result&&E:\Xiaoqinghe\HY_1_13\deal2_4\output\zhiliurugan.txt
+         */
+        //todo 新增的输入文件
+        String difangyujingUrl = "difangyujing&&"+shuiwen_model_template_input+File.separator+"difangyujing.csv";
+        String rugan_kUrl = "rugan_k&&"+shuiwen_model_template_input+File.separator+"rugan_k.csv";
+        String shuiku_jishuiquUrl = "shuiku_jishuiqu&&"+shuiwen_model_template_input+File.separator+"shuiku_jishuiqu.csv";
 
         if (tag == 1){
             String catchMentAreaModelId = planinfo.getnModelid(); //集水区模型id   // 1是SCS  2是单位线
@@ -1749,6 +2023,11 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         list.add(errorUrl);
         list.add(duanmian_shuiweiUrl);
         list.add(jishuiqu_tongjiUrl);
+        list.add(jinduUrl);
+        list.add(rugan_resultUrl);
+        list.add(difangyujingUrl);
+        list.add(rugan_kUrl);
+        list.add(shuiku_jishuiquUrl);
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, false)); // 附加
             // 写路径
@@ -1837,6 +2116,24 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         String m3H5Read = shuiwen_model_template + File.separator + "m3.h5";
         String m3H5Input = shuiwen_model_template_input + File.separator + "m3.h5";
 
+        String difangyujingRead = shuiwen_model_template + File.separator + "difangyujing.csv";
+        String difangyujingInput = shuiwen_model_template_input + File.separator + "difangyujing.csv";
+
+        String rugan_kRead = shuiwen_model_template + File.separator + "rugan_k.csv";
+        String rugan_kInput = shuiwen_model_template_input + File.separator + "rugan_k.csv";
+
+        String shuiku_jishuiquRead = shuiwen_model_template + File.separator + "shuiku_jishuiqu.csv";
+        String shuiku_jishuiquInput = shuiwen_model_template_input + File.separator + "shuiku_jishuiqu.csv";
+
+
+        /**
+         * difangyujing&&E:\Xiaoqinghe\HY_1_13\deal2_4\input\difangyujing.csv
+         * jindu&&E:\Xiaoqinghe\HY_1_13\deal2_4\output\jindu.txt
+         * rugan_k&&E:\Xiaoqinghe\HY_1_13\deal2_4\input\rugan_k.csv
+         * shuiku_jishuiqu&&E:\Xiaoqinghe\HY_1_13\deal2_4\input\shuiku_jishuiqu.csv
+         * rugan_result&&E:\Xiaoqinghe\HY_1_13\deal2_4\output\zhiliurugan.txt
+         */
+
         try {
             FileUtil.copyFile(reachRead, reachInput, true);
             //FileUtil.copyFile(reachXiangGuanShujvRead, reachXiangGuanShujvInput, true);
@@ -1852,6 +2149,9 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             FileUtil.copyFile(bpH5Read, bpH5Input, true);
             FileUtil.copyFile(bbpp1Read, bbpp1Input, true);
             FileUtil.copyFile(m3H5Read, m3H5Input, true);
+            FileUtil.copyFile(difangyujingRead, difangyujingInput, true);
+            FileUtil.copyFile(rugan_kRead, rugan_kInput, true);
+            FileUtil.copyFile(shuiku_jishuiquRead, shuiku_jishuiquInput, true);
             System.err.println("水文模型之水文模型：copy剩下的率定csv输入文件成功");
             return 1;
         } catch (Exception e) {
@@ -2151,6 +2451,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         String pcp_HRUUrl = "pcp_HRU&&" + pcp_handle_model_template_input + File.separator + "pcp_HRU.csv";
         String pcp_stationUrl = "pcp_station&&" + pcp_handle_model_template_input + File.separator + "pcp_station.csv";
         String hru_p_resultUrl = "hru_p_result&&" + pcp_handle_model_template_output + File.separator + "hru_p_result.csv";
+        String jinduUrl = "jindu&&" + pcp_handle_model_template_output + File.separator + "jindu.txt";
 
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, false)); // 附加
@@ -2160,6 +2461,8 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             bw.write(pcp_stationUrl);
             bw.newLine();
             bw.write(hru_p_resultUrl);
+            bw.newLine();
+            bw.write(jinduUrl);
             bw.newLine();
             bw.close();
             System.out.println("水文模型之PCP模型:写入水文模型config成功");
@@ -2188,6 +2491,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             // 添加新的数据行
             bw.write("" + ",STNM,LGTD,LTTD"); //编写表头
             Date startTime = planInfo.getdCaculatestarttm();
+            startTime = DateUtil.getNextHour(startTime,-72);
             Date endTime = planInfo.getdCaculateendtm();
             int size = 0;
             //Long step = planInfo.getnOutputtm() / 60;//步长
@@ -2265,6 +2569,7 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             bw.write("" + "," + "LGTD" + "," + "LTTD"); //编写表头
 
             Date startTime = planInfo.getdCaculatestarttm();
+            startTime = DateUtil.getNextHour(startTime,-72);
             Date endTime = planInfo.getdCaculateendtm();
             int size = 0;
             //Long step = planInfo.getnOutputtm() / 60;//步长
@@ -2304,9 +2609,9 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
 
     @Override
-    public String getModelRunStatus(YwkPlaninfo planInfo,Integer tag) {
+    public Object getModelRunStatus(YwkPlaninfo planInfo,Integer tag) {
 
-        Long status;
+        /*Long status;
         if (tag == 0){
             status  = planInfo.getnPlanstatus();
         }else {
@@ -2317,8 +2622,149 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             return "1"; //1的话停止
         }else {
             return "0";
+        }*/
+        Long status;
+        if (tag == 0){
+            status  = planInfo.getnPlanstatus();
+        }else {
+            status  = planInfo.getnCalibrationStatus();
+        }
+        JSONObject jsonObject = new JSONObject();
+        String SWYB_SHUIWEN_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_NEW_SHUIWEN_MODEL_PATH");
+        String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
+        String SHUIWEN_MODEL_TEMPLATE_OUTPUT ="";
+        if (tag == 0){
+            SHUIWEN_MODEL_TEMPLATE_OUTPUT = SWYB_SHUIWEN_MODEL_PATH + File.separator + out
+                    + File.separator + planInfo.getnPlanid();//输出的地址
+        }else {
+            SHUIWEN_MODEL_TEMPLATE_OUTPUT = SWYB_SHUIWEN_MODEL_PATH + File.separator + out
+                    + File.separator + planInfo.getnPlanid() + File.separator +"calibration";//输出的地址
         }
 
+        String jinduPath = SHUIWEN_MODEL_TEMPLATE_OUTPUT + File.separator + "jindu.txt";
+        File path = new File(jinduPath);
+        if (!path.exists()) {
+            if (status == -1L){
+                //运行进度
+                jsonObject.put("process", 0.0);
+                //运行状态 1运行结束 0运行中
+                jsonObject.put("runStatus", 1);
+                //运行时间
+                jsonObject.put("describ", "模型运行出现异常！");
+                return jsonObject;
+            }
+            //运行进度
+            jsonObject.put("process", 0.0);
+            //运行状态 1运行结束 0运行中
+            jsonObject.put("runStatus", 0);
+            //运行时间
+            jsonObject.put("describ", "模型运行准备中！");
+            return jsonObject;
+        } else {
+            //运行状态 1运行结束 0运行中
+            BufferedReader br = null;
+            try {
+                br = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
+                String lineTxt2 = br.readLine();
+                //if (lineTxt2 != null) {
+                String[] split = lineTxt2.split("&&");
+                //运行进度
+                double process = Double.parseDouble(split[1] + "");
+                if (status == -1){
+                    jsonObject.put("runStatus", 1);
+                    jsonObject.put("describ", "模型运行出现异常！");
+                    jsonObject.put("process", process * 1.0);
+                    return jsonObject;
+                }
+                jsonObject.put("runStatus", 0);
+                jsonObject.put("describ", "模型运行中！");
+                jsonObject.put("process", process * 1.0);
+                if (process == 100.0 && status == 2L){
+                    jsonObject.put("runStatus", 1);
+                    jsonObject.put("describ", "模型运行成功！");
+                    jsonObject.put("process", process * 1.0);
+                    return jsonObject;
+                }
+                return jsonObject;
+            } catch (Exception e) {
+                System.err.println("进度读取错误！" + e.getMessage());
+            } finally {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return jsonObject;
+
+    }
+
+    @Override
+    public Object getModelRunPcPStatus(YwkPlaninfo planInfo) {
+        Long status = planInfo.getnPlanstatus();
+
+        /*if ( status == 3L || status == -1L){
+            return "1"; //1的话停止
+        }else {
+            return "0";
+        }*/
+        JSONObject jsonObject = new JSONObject();
+
+        String SWYB_PCP_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_NEW_PCP_HANDLE_MODEL_PATH");
+        String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
+        String PCP_MODEL_TEMPLATE_OUTPUT = SWYB_PCP_MODEL_PATH + File.separator + out
+                    + File.separator + planInfo.getnPlanid();//输出的地址
+        String jinduPath = PCP_MODEL_TEMPLATE_OUTPUT + File.separator + "jindu.txt";
+        File path = new File(jinduPath);
+        if (!path.exists()) {
+            if (status == -1){
+                return jsonObject;
+            }
+            //运行进度
+            jsonObject.put("process", 0.0);
+            //运行状态 1运行结束 0运行中
+            jsonObject.put("runStatus", 0);
+            //运行时间
+            jsonObject.put("describ", "模型运行准备中！");
+            return jsonObject;
+        } else {
+            //运行状态 1运行结束 0运行中
+            BufferedReader br = null;
+            try {
+                br = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
+                String lineTxt2 = br.readLine();
+                //if (lineTxt2 != null) {
+                String[] split = lineTxt2.split("&&");
+                //运行进度
+                double process = Double.parseDouble(split[1] + "");
+                if (status == -1){
+                    jsonObject.put("runStatus", 1);
+                    jsonObject.put("describ", "模型运行出现异常！");
+                    jsonObject.put("process", process * 1.0);
+                    return jsonObject;
+                }
+                jsonObject.put("runStatus", 0);
+                jsonObject.put("describ", "模型运行中！");
+                jsonObject.put("process", process * 1.0);
+                if (process == 100.0 && status == 3L){
+                    jsonObject.put("runStatus", 1);
+                    jsonObject.put("describ", "模型运行成功！");
+                    jsonObject.put("process", process * 1.0);
+                    return jsonObject;
+                }
+                return jsonObject;
+            } catch (Exception e) {
+                System.err.println("进度读取错误！" + e.getMessage());
+            } finally {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return jsonObject;
     }
 
     @Override
@@ -2353,11 +2799,11 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         //解析河道断面
         Map<String, List<String>> finalResult = getModelResult(SHUIWEN_MODEL_TEMPLATE_OUTPUT+File.separator+"result.txt");
         //如果时小清河模型则解析水库断面
-        Map<String, List<String>> shuikuResult = new HashMap<>();
+        //Map<String, List<String>> shuikuResult = new HashMap<>();
 
          String SWYB_MODEL_OUTPUT_SHUIKU = SHUIWEN_MODEL_TEMPLATE_OUTPUT+File.separator+"shuiku_result.txt";//输出的地址
-         shuikuResult = getModelResult(SWYB_MODEL_OUTPUT_SHUIKU);
-         finalResult.putAll(shuikuResult);
+         //shuikuResult = getModelResult(SWYB_MODEL_OUTPUT_SHUIKU);todo 水库文件不要了 出库数据
+         //finalResult.putAll(shuikuResult);
 
         //找到河系关联的断面
         //List<WrpRcsBsin> listByRiverId = wrpRcsBsinDao.findListByRiverId(riverId);
@@ -2424,6 +2870,35 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
                         }catch (Exception e){
                             break;
                         }
+                    }
+                    //todo 新增断面安全,type 0 是安全 1是满溢风险 2 是超警戒
+                    String secretyType = dataList.get(index)+"";
+                    index++;
+                    String secretyTime = dataList.get(index)+"";
+                    index++;
+                    String secretyPosition = dataList.get(index)+"";
+                    if ("anquan_00".equals(secretyType)){
+                        valObj.put("type",0);
+                        valObj.put("message","安全");
+                        valObj.put("time",00);
+                        valObj.put("position",00);
+
+                    }else if ("manyi_01".equals(secretyType)){
+                        valObj.put("type",1);
+                        valObj.put("message","满溢风险");
+                        valObj.put("time",DateUtil.dateToStringNormal3(DateUtil.getNextMinute(startTime,step.intValue()*Integer.parseInt(secretyTime))));
+                        valObj.put("position",secretyPosition);
+                    }else if ("yujing_02".equals(secretyType)){
+                        valObj.put("type",2);
+                        valObj.put("message","超警戒");
+                        valObj.put("time",DateUtil.dateToStringNormal3(DateUtil.getNextMinute(startTime,step.intValue()*Integer.parseInt(secretyTime))));
+                        valObj.put("position",secretyPosition);
+                    }else {
+                        System.out.println("解析错误");
+                        valObj.put("type",0);
+                        valObj.put("message","安全");
+                        valObj.put("time",00);
+                        valObj.put("position",00);
                     }
                 }
             }
@@ -3123,5 +3598,40 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         }
 
         return 1;
+    }
+
+    @Autowired
+    WrpRcsSwybDao wrpRcsSwybDao;
+    /**
+     * 获取每个河系下的上下游断面关系。
+     * @param rvcd
+     * @return
+     */
+    @Override
+    public Object getRcsUpAndDownWithRiver(String rvcd) {
+        List<WrpRcsSwyb> listByRvcd = wrpRcsSwybDao.findListByRvcd(rvcd);
+        return listByRvcd;
+    }
+
+
+    @Override
+    public Object calculationRcs(YwkPlaninfo planInfo,String oneRcs, String twoRcs) {
+        DecimalFormat format = new DecimalFormat("0.00");
+        JSONArray modelResultQ = (JSONArray) getModelResultQ(planInfo, 0);//todo 先按照tag为0来取
+        JSONArray array = modelResultQ.stream().filter(item->{
+            JSONObject object = (JSONObject) item;
+            if (oneRcs.equals(object.get("RCS_ID"))||twoRcs.equals(object.get("RCS_ID"))){
+                return true;
+            }else {
+                return false;
+            }
+        }).collect(Collectors.toCollection(JSONArray::new));
+        JSONObject obj1 = (JSONObject) array.get(0);
+        JSONObject obj2 = (JSONObject) array.get(1);
+        Date time1 = (Date) obj1.get("hfTime");
+        Date time2 = (Date) obj2.get("hfTime");
+        int i = Math.abs(DateUtil.dValueOfTime(time1, time2));
+        Double hour = Double.parseDouble(format.format(i*1.0 / 60));
+        return hour;
     }
 }

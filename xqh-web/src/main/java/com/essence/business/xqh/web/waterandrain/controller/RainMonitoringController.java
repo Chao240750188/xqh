@@ -60,6 +60,7 @@ public class RainMonitoringController {
         try {
             return new SystemSecurityMessage("ok", "查询成功", rainMonitoringService.getRainDistributionList(dto));
         } catch (Exception e) {
+            e.printStackTrace();
             return new SystemSecurityMessage("error", "查询失败");
         }
     }

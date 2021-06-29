@@ -44,6 +44,13 @@ public interface ModelCallFhybddNewService {
     void modelCall(YwkPlaninfo ywkPlaninfo);
 
     /**
+     * 模型计算,计算pcp模型
+     * @param ywkPlaninfo
+     * @return
+     */
+    void modelCallPCP(YwkPlaninfo ywkPlaninfo);
+
+    /**
      * 集水区模型选择跟河段模型选择
      * @return
      */
@@ -108,7 +115,7 @@ public interface ModelCallFhybddNewService {
      * @param ywkPlaninfo
      * @return
      */
-    String getModelRunStatus(YwkPlaninfo ywkPlaninfo,Integer tag);
+    Object getModelRunStatus(YwkPlaninfo ywkPlaninfo,Integer tag);
 
     /**
      * 获取模型运行输出结果
@@ -190,5 +197,25 @@ public interface ModelCallFhybddNewService {
     int saveOrDeleteResultCsv(YwkPlaninfo planInfo, Integer tag);
 
 
+    /**
+     * pcp模型运行状态
+     * @param planInfo
+     * @return
+     */
+    Object getModelRunPcPStatus(YwkPlaninfo planInfo);
 
+    /**
+     * 获取每个河系下的上下游断面关系列表
+     * @param rvcd
+     * @return
+     */
+    Object getRcsUpAndDownWithRiver(String rvcd);
+
+    /**
+     * 计算上下游断面的传播时间
+     * @param oneRcs
+     * @param twoRcs
+     * @return
+     */
+    Object calculationRcs(YwkPlaninfo planInfo,String oneRcs, String twoRcs);
 }

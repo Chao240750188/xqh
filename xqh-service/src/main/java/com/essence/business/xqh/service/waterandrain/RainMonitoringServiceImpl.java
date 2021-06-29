@@ -1,19 +1,26 @@
 package com.essence.business.xqh.service.waterandrain;
 
+import com.essence.business.xqh.api.rainfall.dto.RainFallDto;
 import com.essence.business.xqh.api.waterandrain.STTPEnum;
 import com.essence.business.xqh.api.rainfall.dto.rainmonitoring.*;
 import com.essence.business.xqh.api.waterandrain.dto.*;
 import com.essence.business.xqh.api.waterandrain.service.RainMonitoringService;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
 import com.essence.business.xqh.common.util.DateUtil;
+import com.essence.business.xqh.dao.dao.fhybdd.StPptnRDao;
 import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
+import com.essence.business.xqh.dao.dao.rainfall.dto.THdmisTotalRainfallDto;
 import com.essence.business.xqh.dao.dao.realtimemonitor.*;
+import com.essence.business.xqh.dao.entity.baseInfoManage.HbmAddvcdD;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 import com.essence.business.xqh.dao.entity.realtimemonitor.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -119,12 +126,13 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             return "≥250";
         }
     }
-
+    @Autowired
+    private StPptnRDao pptnRDao;
     @Override
     public List<Map<String, Object>> getRainDistributionList(QueryParamDto dto) {
         List<Map<String, Object>> rainDistributionList = stStbprpBDao.getRainDistributionList(dto.getStartTime(), dto.getEndTime(), dto.getName());
         List<Map<String, Object>> list = new ArrayList<>();
-        //Oracle默认大写改为小写返回
+
         for (Map<String, Object> map : rainDistributionList) {
             Map<String, Object> hashMap = new HashMap<>();
             hashMap.put("stcd", map.get("STCD"));
@@ -133,8 +141,87 @@ public class RainMonitoringServiceImpl implements RainMonitoringService {
             hashMap.put("total", map.get("TOTAL"));
             hashMap.put("lgtd", map.get("LGTD"));
             hashMap.put("lttd", map.get("LTTD"));
+            //todo 告警
+            hashMap.put("time3",new BigDecimal("0"));
+            hashMap.put("time6",new BigDecimal("0"));
+            hashMap.put("time12",new BigDecimal("0"));
             list.add(hashMap);
         }
+        //todo 这个地方不能用引用方式，因为参数
+        Map<String, Map<String, Object>> warnAllMap = list.stream().collect(Collectors.toMap(t -> {return t.get("stcd")+"";}, Function.identity()));
+
+        //Oracle默认大写改为小写返回
+        LocalDateTime currentTime = LocalDateTime.now();
+        //当前时间
+        Date time = Date.from(currentTime.atZone(ZoneId.systemDefault()).toInstant());
+
+        //前3小时
+        Date preHourTime3 = Date.from(currentTime.plusHours(-3).atZone(ZoneId.systemDefault()).toInstant());
+            //前3小时
+        Date preHourTime6 = Date.from(currentTime.plusHours(-6).atZone(ZoneId.systemDefault()).toInstant());
+        //前12小时
+        Date preHourTime12 = Date.from(currentTime.plusHours(-12).atZone(ZoneId.systemDefault()).toInstant());
+
+        //List<THdmisTotalRainfallDto> hdmisTotalRainfallDtoList = pptnRDao.queryByStcdInAndTmBetween(stcdList, preHourTime24, time);
+        List<Map<String, Object>> pptns = pptnRDao.findByTime(preHourTime12, time);
+
+        for (Map pptnMap : pptns) {
+            String stcd = pptnMap.get("STCD")+"";
+            Date tm = (Date) pptnMap.get("TM");
+            BigDecimal drp = (BigDecimal) pptnMap.get("DRP");
+            Map<String, Object> warnNewMap = warnAllMap.get(stcd);
+
+            if (drp == null || drp.doubleValue() == 0d || "null".equals(stcd) || tm == null||warnNewMap == null){
+                continue;
+            }
+
+
+            //前3小时数据
+            if (tm.getTime() >= preHourTime3.getTime() && tm.getTime() <= time.getTime()) {
+                BigDecimal drpValue = (BigDecimal) warnNewMap.get("time3");
+                drpValue = drpValue.add(drp);
+                warnNewMap.put("time3",drpValue);
+            }
+
+            //前6小时数据
+            if (tm.getTime() >= preHourTime6.getTime() && tm.getTime() <= time.getTime()) {
+                BigDecimal drpValue = (BigDecimal) warnNewMap.get("time6");
+                drpValue = drpValue.add(drp);
+                warnNewMap.put("time6",drpValue);
+            }
+
+            //前12小时数据
+            if (tm.getTime() >= preHourTime12.getTime() && tm.getTime() <= time.getTime()) {
+                BigDecimal drpValue = (BigDecimal) warnNewMap.get("time12");
+                drpValue = drpValue.add(drp);
+                warnNewMap.put("time12",drpValue);
+            }
+
+        }
+        for (Map<String, Object> map : list){
+            BigDecimal time12Drp = ((BigDecimal) map.get("time12")).setScale(2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal time6Drp = ((BigDecimal) map.get("time6")).setScale(2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal time3Drp = ((BigDecimal) map.get("time3")).setScale(2, BigDecimal.ROUND_HALF_UP);
+            String stnm = map.get("stnm") + "";
+            int level = 0; //todo 0是安全 1是暴雨蓝色 2是暴雨黄色 3是暴雨橙色 4是暴雨红色
+            String message = "无暴雨";
+            if (time3Drp.compareTo(new BigDecimal("100")) >= 0){ //大于等于
+                level = 4;
+                message = stnm+"3小时内降雨量为"+time3Drp+"毫米，超过100毫米";
+            }else if (time3Drp.compareTo(new BigDecimal("50")) >= 0){
+                level = 3;
+                message = stnm+"3小时内降雨量为"+time3Drp+"毫米，超过50毫米";
+            }else if (time6Drp.compareTo(new BigDecimal("50")) >= 0){
+                level = 2;
+                message = stnm+"6小时内降雨量为"+time6Drp+"毫米，超过50毫米";
+            }else  if (time12Drp.compareTo(new BigDecimal("50")) >= 0){
+                level = 1;
+                message = stnm+"12小时内降雨量为"+time12Drp+"毫米，超过50毫米";
+            }
+            map.put("level",level);
+            map.put("message",message);
+        }
+
         return list;
     }
 

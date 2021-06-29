@@ -318,6 +318,19 @@ public class ModelNewController {
 
     }
 
+    @RequestMapping(value = "/modelCallPcP/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage modelCallPcP(@PathVariable String planId) {
+        //TODO 这个地方优化从库里取
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return  SystemSecurityMessage.getFailMsg( "方案不存在！，模型调用失败", null);
+        }
+        modelCallFhybddNewService.modelCallPCP(planInfo);
+        System.out.println("水文预报pcp模型正在运行中。。。请稍等！"+Thread.currentThread().getName());
+        return SystemSecurityMessage.getSuccessMsg("水文预报pcp模型正在运行中。。。请稍等！");
+
+    }
+
     /**
      * 获取模型运行状态
      * @return //0是第一次
@@ -329,7 +342,24 @@ public class ModelNewController {
         if (planInfo == null){
             return  SystemSecurityMessage.getFailMsg( "方案不存在！", null);
         }
-        String status = modelCallFhybddNewService.getModelRunStatus(planInfo,tag);
+        Object status = modelCallFhybddNewService.getModelRunStatus(planInfo,tag);
+        return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",status);
+
+    }
+
+
+    /**
+     * 获取pcp模型运行状态
+     * @return
+     */
+    @RequestMapping(value = "/getModelRunPcPStatus/{planId}",method = RequestMethod.GET)
+    public SystemSecurityMessage getModelRunPcPStatus(@PathVariable String planId){
+
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return  SystemSecurityMessage.getFailMsg( "方案不存在！", null);
+        }
+        Object status = modelCallFhybddNewService.getModelRunPcPStatus(planInfo);
         return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",status);
 
     }
@@ -608,6 +638,29 @@ public class ModelNewController {
                 return SystemSecurityMessage.getFailMsg(message+"失败");
 
         }
+
+    }
+
+    //获取每个河系下的上下游断面关系列表
+    @RequestMapping(value = "/getRcsUpAndDownWithRiver/{rvcd}",method = RequestMethod.GET)
+    public SystemSecurityMessage getRcsUpAndDownWithRiver(@PathVariable String rvcd){
+
+        Object results = modelCallFhybddNewService.getRcsUpAndDownWithRiver(rvcd);
+        return SystemSecurityMessage.getSuccessMsg("获取每个河系下的上下游断面关系列表",results);
+
+    }
+
+    /**
+     * 计算上下游的洪峰传播时间
+     */
+    @RequestMapping(value = "/calculationRcs/{planId}/{oneRcs}/{twoRcs}",method = RequestMethod.GET)
+    public SystemSecurityMessage calculationRcs(@PathVariable String planId,@PathVariable String oneRcs,@PathVariable String twoRcs){
+        YwkPlaninfo planInfo = modelCallFhybddNewService.getPlanInfoByPlanId(planId);
+        if (planInfo == null){
+            return SystemSecurityMessage.getFailMsg("方案不存在");
+        }
+        Object results = modelCallFhybddNewService.calculationRcs(planInfo,oneRcs,twoRcs);
+        return SystemSecurityMessage.getSuccessMsg("计算上下游的洪峰传播时间",results);
 
     }
 
