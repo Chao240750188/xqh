@@ -114,7 +114,8 @@ public class ModelPlanInfoManageController {
         }*/
         try { //1是 发布 0 是撤销发布
              modelPlanInfoManageService.publishPlan(planIds,tag);
-            return SystemSecurityMessage.getSuccessMsg("发布方案成功！");
+             String message = tag ==0?"发布方案成功!":"撤销发布方案成功";
+            return SystemSecurityMessage.getSuccessMsg(message);
         } catch (Exception e) {
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("发布方案失败！");
