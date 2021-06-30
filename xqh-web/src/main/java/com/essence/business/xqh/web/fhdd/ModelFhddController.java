@@ -140,8 +140,7 @@ public class ModelFhddController {
     }
 
     /**
-     * 下载监测站雨量数据模板
-     *
+     * Excel导出
      * @param response
      * @throws Exception
      */
@@ -167,8 +166,7 @@ public class ModelFhddController {
     }
 
     /**
-     * 上传监测站雨量数据解析-Excel导入
-     *
+     * Excel导入
      * @return SystemSecurityMessage 返回结果json
      */
     @RequestMapping(value = "/importRainfallData/{planId}", method = RequestMethod.POST)
@@ -224,7 +222,44 @@ public class ModelFhddController {
     }
 
     /**
-     * 水库调度汛限模型计算
+     * 水库调度-防洪Pcp模型
+     * @param planId
+     * @return
+     */
+    @RequestMapping(value = "/modelPcpCall/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage modelPcpCall(@PathVariable String planId) {
+        //TODO 这个地方优化从库里取
+        YwkPlaninfo planinfo = modelFhddService.getPlanInfoByPlanId(planId);
+        if (planinfo == null){
+            return  SystemSecurityMessage.getFailMsg( "方案不存在！，模型调用失败", null);
+        }
+        modelFhddService.modelPcpCall(planinfo);
+        System.out.println("水库调度-防洪Pcp模型正在运行中...请稍等！"+Thread.currentThread().getName());
+        return SystemSecurityMessage.getSuccessMsg("水库调度-防洪Pcp模型正在运行中...请稍等！");
+
+    }
+
+    /**
+     * 水库调度-防洪水文模型
+     * @param planId
+     * @return
+     */
+    @RequestMapping(value = "/modelHydrologyCall/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage modelHydrologyCall(@PathVariable String planId) {
+        YwkPlaninfo planinfo = modelFhddService.getPlanInfoByPlanId(planId);
+        if (planinfo == null){
+            return  SystemSecurityMessage.getFailMsg( "方案不存在，模型调用失败", null);
+        }
+        Boolean aBoolean = modelFhddService.modelHydrologyCall(planinfo);
+        System.out.println(aBoolean);
+        System.out.println("水库调度-防洪水文模型正在运行中...请稍等！" + Thread.currentThread().getName());
+        return SystemSecurityMessage.getSuccessMsg("水库调度-防洪水文模型正在运行中...请稍等！");
+
+    }
+
+
+    /**
+     * 水库调度防洪模型计算
      * @return
      */
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)

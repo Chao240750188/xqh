@@ -224,15 +224,50 @@ public class ModelSkddXxController {
     }
 
     /**
+     * 水库调度-汛限Pcp模型
+     * @param planId
+     * @return
+     */
+    @RequestMapping(value = "/modelPcpCall/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage modelPcpCall(@PathVariable String planId) {
+        //TODO 这个地方优化从库里取
+        YwkPlaninfo planinfo = modelSkddXxService.getPlanInfoByPlanId(planId);
+        if (planinfo == null){
+            return  SystemSecurityMessage.getFailMsg( "方案不存在！，模型调用失败", null);
+        }
+        modelSkddXxService.modelPcpCall(planinfo);
+        System.out.println("水库调度-汛限Pcp模型正在运行中...请稍等！"+Thread.currentThread().getName());
+        return SystemSecurityMessage.getSuccessMsg("水库调度-汛限Pcp模型正在运行中...请稍等！");
+
+    }
+
+    /**
+     * 水库调度-汛限水文模型
+     * @param planId
+     * @return
+     */
+    @RequestMapping(value = "/modelHydrologyCall/{planId}", method = RequestMethod.GET)
+    public SystemSecurityMessage modelHydrologyCall(@PathVariable String planId) {
+        YwkPlaninfo planinfo = modelSkddXxService.getPlanInfoByPlanId(planId);
+        if (planinfo == null){
+            return  SystemSecurityMessage.getFailMsg( "方案不存在，模型调用失败", null);
+        }
+        modelSkddXxService.modelHydrologyCall(planinfo);
+        System.out.println("水库调度-汛限水文模型正在运行中...请稍等！" + Thread.currentThread().getName());
+        return SystemSecurityMessage.getSuccessMsg("水库调度-汛限水文模型正在运行中...请稍等！");
+
+    }
+
+
+    /**
      * 水库调度汛限模型计算
      * @return
      */
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage modelCall(@PathVariable String planId) {
-        //TODO 这个地方优化从库里取
         YwkPlaninfo planinfo = modelSkddXxService.getPlanInfoByPlanId(planId);
         if (planinfo == null){
-            return  SystemSecurityMessage.getFailMsg( "方案不存在！，模型调用失败", null);
+            return SystemSecurityMessage.getFailMsg( "方案不存在！，模型调用失败", null);
         }
         modelSkddXxService.modelCall(planinfo);
         System.out.println("防洪与报警水文调度模型正在运行中。。。请稍等！"+Thread.currentThread().getName());

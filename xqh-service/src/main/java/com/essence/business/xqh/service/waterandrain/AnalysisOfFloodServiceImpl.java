@@ -1,6 +1,7 @@
 package com.essence.business.xqh.service.waterandrain;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
 import com.essence.business.xqh.api.rainfall.vo.RainPartitionDataDto;
 import com.essence.business.xqh.api.rainfall.vo.RainPartitionDto;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -1411,8 +1413,35 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                 TRvfcchB tRvfcchStandard = collectWarningHD.get(stcd);
                 if(tRvfcchStandard != null && tRvfcchStandard.getWrz() != null){
                     dataDto.setWarningWaterLevel(Double.parseDouble(tRvfcchStandard.getWrz()));
+
+                    //警戒水位
+                    double wrz = Double.parseDouble(tRvfcchStandard.getWrz()==null?"0":tRvfcchStandard.getWrz());
+                    //保证水位
+                    double grz = Double.parseDouble(tRvfcchStandard.getGrz()==null?"0":tRvfcchStandard.getGrz());
+                    //历史最高水位
+                    double obhtz = Double.parseDouble(tRvfcchStandard.getObhtz()==null?"0":tRvfcchStandard.getObhtz());
+
+                    for (Map<String, Object> riverRLastDatum : riverRLastData) {
+                        if(riverRLastDatum.get("stcd") == tRvfcchStandard.getStcd()){
+
+                            if(wrz < Double.parseDouble((String) riverRLastDatum.get("z"))){
+                                dataDto.setIsThanWaterLevelWarning(1);
+                            }
+
+                            if(grz < Double.parseDouble((String) riverRLastDatum.get("z"))){
+                                dataDto.setIsThanWaterLevelGuarantee(1);
+                            }
+
+                            if(obhtz < Double.parseDouble((String) riverRLastDatum.get("z"))){
+                                dataDto.setIsThanWaterLevelHistory(1);
+                            }
+
+                            break;
+                        }
+                    }
+
                 }
-                Map result = JSON.parseObject(JSON.toJSONString(dataDto), Map.class);
+                Map result = JSON.parseObject(JSON.toJSONString(dataDto, SerializerFeature.WriteMapNullValue), Map.class);
                 result.putAll(avgMap);
                 results.add(result);
             } catch (BeansException e) {
@@ -1531,8 +1560,21 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                 TRsvrfsrB tRsvrfsrB = collectWarningSK.get(stcd);
                 if(tRsvrfsrB != null && tRsvrfsrB.getFsltdz() != null){
                     dataDto.setWaterLevelLine(Double.parseDouble(tRsvrfsrB.getFsltdz()));
+
+                    //汛险水位
+                    double fsltdz = Double.parseDouble(tRsvrfsrB.getFsltdz()==null?"0":tRsvrfsrB.getFsltdz());
+
+                    for (Map<String, Object> rsvrLastDatum : rsvrLastData) {
+                        if(rsvrLastDatum.get("stcd") == tRsvrfsrB.getStcd()) {
+                            if (fsltdz < Double.parseDouble((String) rsvrLastDatum.get("RZ"))) {
+                                dataDto.setIsThanWaterLevelLine(1);
+                            }
+                            break;
+                        }
+                    }
+
                 }
-                Map result = JSON.parseObject(JSON.toJSONString(dataDto), Map.class);
+                Map result = JSON.parseObject(JSON.toJSONString(dataDto, SerializerFeature.WriteMapNullValue), Map.class);
                 result.putAll(newMap);
                 results.add(result);
             } catch (BeansException e) {
