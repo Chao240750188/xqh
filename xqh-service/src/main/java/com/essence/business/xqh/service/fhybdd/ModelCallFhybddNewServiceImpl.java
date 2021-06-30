@@ -2228,8 +2228,8 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
             String otherFunction = "";
             for (String rvcd : riverIds){
                 bw.write("" + "," + rvcd);
-                otherHru = otherHru +","+4;
-                otherReach = otherReach + "," + 1;
+                otherHru = otherHru +","+catchNum;
+                otherReach = otherReach + "," + reachNum;
                 otherFunction = otherFunction +","+ 0 ;
             }
             bw.newLine();
