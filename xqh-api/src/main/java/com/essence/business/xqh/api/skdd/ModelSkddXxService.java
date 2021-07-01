@@ -73,6 +73,19 @@ public interface ModelSkddXxService {
     Boolean savePlanInputZ(ModelSkddXxInputVo vo);
 
     /**
+     * 水库调度-汛限Pcp模型
+     * @param planinfo
+     * @return
+     */
+    void modelPcpCall(YwkPlaninfo planinfo);
+
+    /**
+     * 水库调度-汛限水文模型
+     * @param planinfo
+     */
+    void modelHydrologyCall(YwkPlaninfo planinfo);
+
+    /**
      * 水库调度汛限模型计算
      * @return
      */
@@ -89,6 +102,7 @@ public interface ModelSkddXxService {
      * @return
      */
     Object getModelResultQ(YwkPlaninfo planInfo);
+
 
 
 }

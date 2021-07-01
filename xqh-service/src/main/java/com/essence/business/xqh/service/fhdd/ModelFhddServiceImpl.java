@@ -16,6 +16,7 @@ import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -46,6 +47,12 @@ public class ModelFhddServiceImpl implements ModelFhddService {
 
     @Autowired
     YwkModelDao ywkModelDao;
+
+    @Autowired
+    StRsvrfsrBDao stRsvrfsrBDao;  //汛限水位
+
+    @Autowired
+    StRsvrfcchBDao stRsvrfcchBDao; //防洪指标
 
     @Autowired
     YwkPlaninRainfallDao ywkPlaninRainfallDao; //方案雨量
@@ -118,8 +125,6 @@ public class ModelFhddServiceImpl implements ModelFhddService {
         } else {
             ywkPlaninfo.setnOutputtm(step * 60L);//设置间隔分钟
         }
-        ywkPlaninfo.setnModelid(vo.getCatchmentAreaModelId());
-        ywkPlaninfo.setnSWModelid(vo.getReachId());
         ywkPlaninfo.setdRainstarttime(startTime);
         ywkPlaninfo.setdRainendtime(endTIme);
         ywkPlaninfo.setdOpensourcestarttime(startTime);
@@ -163,41 +168,39 @@ public class ModelFhddServiceImpl implements ModelFhddService {
 
         String startTimeStr = format1.format(startTime);
         String endTimeStr = format1.format(endTime);
-        //Long step = planInfo.getnOutputtm() / 60;//步长
+
         Long step = planInfo.getnOutputtm();//分钟
-        //switch (step)
-        Long count = ywkPlaninRainfallDao.countByPlanId(planInfo.getnPlanid());
+        Long count = ywkPlaninRainfallDao.countByPlanIdWithTime(planInfo.getnPlanid(),startTime,endTime);
         List<Map<String, Object>> stPptnRWithSTCD = new ArrayList<>();
-        if (count != 0) {//原来是小时  实时数据是小时  都先按照整点来
-            stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr, endTimeStr, planInfo.getnPlanid());
-        } else {
+        if (count != 0){//原来是小时  实时数据是小时  都先按照整点来
+            stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planInfo.getnPlanid());
+        }
+        else {
             stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
         }
-
-        Map<String, List<Map<String, Object>>> handleMap = new HashMap<>();
-        List<Map<String, Object>> nullList = new ArrayList<>();
-        for (Map<String, Object> datas : stPptnRWithSTCD) {// A.STCD,B.TM,B.DRP
+        Map<String,List<Map<String,Object>>> handleMap = new HashMap<>();
+        List<Map<String,Object>> nullList = new ArrayList<>();
+        for (Map<String,Object> datas : stPptnRWithSTCD){// A.STCD,B.TM,B.DRP
             Object tm = datas.get("TM");
-            if (tm == null) {
+            if (tm == null){
                 nullList.add(datas);
                 continue;
             }
-            List<Map<String, Object>> handles = handleMap.get(datas.get("STCD") + "");
+            List<Map<String, Object>> handles = handleMap.get(datas.get("STCD")+"");
             if (CollectionUtils.isEmpty(handles)) {
                 handles = new ArrayList<>();
             }
             handles.add(datas);
-            handleMap.put(datas.get("STCD") + "", handles);//存在有时间但是drp为null的 后面被优化了
+            handleMap.put(datas.get("STCD")+"", handles);//存在有时间但是drp为null的 后面被优化了
         }
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        List<Map<String, Object>> results = new ArrayList<>();
+        List<Map<String,Object>> results = new ArrayList<>();
         List<String> timeResults = new ArrayList();
-        while (startTime.before(DateUtil.getNextMillis(endTime, 1))) {
+        while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
             String hourStart = format.format(startTime);
             timeResults.add(hourStart);
             startTime = DateUtil.getNextMinute(startTime, step.intValue());//h获取分钟
         }
-
         Set<Map.Entry<String, List<Map<String, Object>>>> entries = handleMap.entrySet();
 
         for (Map.Entry<String, List<Map<String, Object>>> entry : entries) {
@@ -206,91 +209,235 @@ public class ModelFhddServiceImpl implements ModelFhddService {
            /* if (CollectionUtils.isEmpty(list)){
                 continue;
             }*/
-            Map<String, Object> resultMap = new HashMap<>();
-            resultMap.put("STCD", entry.getKey());//TODO 现在存在库里每个小时多个数据点
-            String stnm = list.get(0).get("STNM") + "";
-            String lgtd = list.get(0).get("LGTD") + "";
-            String lttd = list.get(0).get("LTTD") + "";
-            resultMap.put("STNM", stnm);
-            resultMap.put("LGTD", lgtd);
-            resultMap.put("LTTD", lttd);
+            Map<String,Object> resultMap = new HashMap<>();
+            resultMap.put("STCD",entry.getKey());//TODO 现在存在库里每个小时多个数据点
+            String stnm = list.get(0).get("STNM")+"";
+            String lgtd = list.get(0).get("LGTD")+"";
+            String lttd = list.get(0).get("LTTD")+"";
+            resultMap.put("STNM",stnm);
+            resultMap.put("LGTD",lgtd);
+            resultMap.put("LTTD",lttd);
 
-            while (iterator.hasNext()) {
+            while (iterator.hasNext()){
                 Map<String, Object> next = iterator.next();//为啥要remove呢。
-                String tm = next.get("TM") + "";
-                if (!timeResults.contains(tm)) {
+                String tm = next.get("TM")+"";
+                if (!timeResults.contains(tm)){
                     iterator.remove();
                 }
             }
 
-            Map<String, Map<String, Object>> dataM = new HashMap();
-            for (Map<String, Object> m : list) {
-                String tm = m.get("TM") + "";
-                dataM.put(tm, m);
+            Map<String,Map<String,Object>> dataM = new HashMap();
+            for(Map<String, Object> m : list){
+                String tm = m.get("TM")+"";
+                dataM.put(tm,m);
             }
             boolean flag = false;
-            List<Map<String, Object>> ll = new ArrayList<>();
-            for (String time : timeResults) {
+            List<Map<String,Object>> ll = new ArrayList<>();
+            for (String time : timeResults){
                 String newTime = "";
-                if (dataM.get(time) == null && step.intValue() < 60) {//9点 是8点到9点的降雨量  都是整点的 9：00 9:30   10:00 算5 10 30步长
-                    newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))), 60));//TODO 一个小时的整点 算5 15 30
-                } else {
+                if (dataM.get(time) == null && step.intValue() < 60){//9点 是8点到9点的降雨量  都是整点的 9：00 9:30   10:00 算5 10 30步长
+                    //if (dataM.get(newTime) != null && step.intValue() < 30){ //实时数据30分钟一个点整点的时候，算5   10步长
+                    //if (dataM.get(newTime) != null && step.intValue() < 10){ //实时数据10分钟一个点整点的时候，算步长
+                    newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),60));//TODO 一个小时的整点 算5 15 30
+                    //newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),30));//TODO 30分钟的整点数据，算5 15
+                    //newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),10));//TODO 10分钟的整点数据 算5
+                }else{
                     newTime = time;
                 }
 
                 Map<String, Object> stringObjectMap = dataM.get(newTime);
-                if (stringObjectMap == null) {
+                if (stringObjectMap == null){
                     stringObjectMap = new HashMap<>();
-                    stringObjectMap.put("STCD", entry.getKey());
-                    stringObjectMap.put("STNM", stnm);
-                    stringObjectMap.put("LGTD", lgtd);
-                    stringObjectMap.put("LTTD", lttd);
-                    stringObjectMap.put("TM", time);
+                    stringObjectMap.put("STCD",entry.getKey());
+                    stringObjectMap.put("STNM",stnm);
+                    stringObjectMap.put("LGTD",lgtd);
+                    stringObjectMap.put("LTTD",lttd);
+                    stringObjectMap.put("TM",time);
 
-                    stringObjectMap.put("DRP", null);
+                    stringObjectMap.put("DRP",null);
 
-                } else {
-                    if (dataM.get(time) == null && step.intValue() < 60) { //todo if (step.intValue()<30){ 更上面的一样
-                        Long divise = 60L / step;
+                }else {
+                    if (dataM.get(time) == null && step.intValue()<60){ //todo if (step.intValue()<30){ 更上面的一样
+                        Long divise = 60L/step;
                         //Long divise = 30L/step; TODO
                         //Long divise = 10L/step;
                         Map mm = new HashMap(stringObjectMap);
-                        mm.put("TM", time);
-                        if (mm.get("DRP") != null) {
-                            mm.put("DRP", new BigDecimal(mm.get("DRP") + "").divide(new BigDecimal(divise), 2, BigDecimal.ROUND_HALF_UP));
+                        mm.put("TM",time);
+                        if (mm.get("DRP")!= null){
+                            mm.put("DRP",new BigDecimal(mm.get("DRP")+"").divide(new BigDecimal(divise),2,BigDecimal.ROUND_HALF_UP));
                         }
                         stringObjectMap = mm;
                     }
                 }
-                if (stringObjectMap.get("DRP") != null) {
+                if(stringObjectMap.get("DRP") != null){
                     flag = true;
                 }
                 ll.add(stringObjectMap);
             }
-            if (flag) {
-                for (Map map : ll) {
-                    if (map.get("DRP") == null) {
-                        map.put("DRP", 0);
+            if (flag){
+                for (Map map : ll){
+                    if(map.get("DRP") == null ){
+                        map.put("DRP",0.5);
                     }
 
                 }
             }
 
-            resultMap.put("LIST", ll);
+            resultMap.put("LIST",ll);
             results.add(resultMap);
 
         }
-        for (Map<String, Object> nullMap : nullList) {
-            Map<String, Object> resultMap = new HashMap<>();
-            resultMap.put("STCD", nullMap.get("STCD"));
-            resultMap.put("STNM", nullMap.get("STNM"));
-            resultMap.put("LGTD", nullMap.get("LGTD"));
-            resultMap.put("LTTD", nullMap.get("LTTD"));
-            resultMap.put("LIST", new ArrayList<>());
+        for (Map<String,Object> nullMap : nullList){
+            Map<String,Object> resultMap = new HashMap<>();
+            resultMap.put("STCD",nullMap.get("STCD"));
+            resultMap.put("STNM",nullMap.get("STNM"));
+            resultMap.put("LGTD",nullMap.get("LGTD"));
+            resultMap.put("LTTD",nullMap.get("LTTD"));
+            resultMap.put("LIST",new ArrayList<>());
             results.add(resultMap);
         }
         //TODO 修改雨量值并不修改基础表的数据，只修改缓存的的数据
-        CacheUtil.saveOrUpdate("rainfall", planInfo.getnPlanid() + "new", results);
+        CacheUtil.saveOrUpdate("rainfall", planInfo.getnPlanid()+"new", results);
+        return results;
+    }
+
+    public List<Map<String, Object>> getRainfalls(YwkPlaninfo planInfo) throws ParseException {
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat formatHour = new SimpleDateFormat("yyyy-MM-dd HH:");
+        Date startTime = planInfo.getdCaculatestarttm();
+        Date endTime = planInfo.getdCaculateendtm();
+
+        String startTimeStr = format1.format(startTime);
+        String endTimeStr = format1.format(endTime);
+
+        Long step = planInfo.getnOutputtm();//分钟
+        Long count = ywkPlaninRainfallDao.countByPlanIdWithTime(planInfo.getnPlanid(),startTime,endTime);
+        List<Map<String, Object>> stPptnRWithSTCD = new ArrayList<>();
+        if (count != 0){//原来是小时  实时数据是小时  都先按照整点来
+            stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planInfo.getnPlanid());
+        }
+        else {
+            stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
+        }
+        Map<String,List<Map<String,Object>>> handleMap = new HashMap<>();
+        List<Map<String,Object>> nullList = new ArrayList<>();
+        for (Map<String,Object> datas : stPptnRWithSTCD){// A.STCD,B.TM,B.DRP
+            Object tm = datas.get("TM");
+            if (tm == null){
+                nullList.add(datas);
+                continue;
+            }
+            List<Map<String, Object>> handles = handleMap.get(datas.get("STCD")+"");
+            if (CollectionUtils.isEmpty(handles)) {
+                handles = new ArrayList<>();
+            }
+            handles.add(datas);
+            handleMap.put(datas.get("STCD")+"", handles);//存在有时间但是drp为null的 后面被优化了
+        }
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        List<Map<String,Object>> results = new ArrayList<>();
+        List<String> timeResults = new ArrayList();
+        while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
+            String hourStart = format.format(startTime);
+            timeResults.add(hourStart);
+            startTime = DateUtil.getNextMinute(startTime, step.intValue());//h获取分钟
+        }
+        Set<Map.Entry<String, List<Map<String, Object>>>> entries = handleMap.entrySet();
+
+        for (Map.Entry<String, List<Map<String, Object>>> entry : entries) {
+            List<Map<String, Object>> list = entry.getValue();
+            Iterator<Map<String, Object>> iterator = list.iterator();
+           /* if (CollectionUtils.isEmpty(list)){
+                continue;
+            }*/
+            Map<String,Object> resultMap = new HashMap<>();
+            resultMap.put("STCD",entry.getKey());//TODO 现在存在库里每个小时多个数据点
+            String stnm = list.get(0).get("STNM")+"";
+            String lgtd = list.get(0).get("LGTD")+"";
+            String lttd = list.get(0).get("LTTD")+"";
+            resultMap.put("STNM",stnm);
+            resultMap.put("LGTD",lgtd);
+            resultMap.put("LTTD",lttd);
+
+            while (iterator.hasNext()){
+                Map<String, Object> next = iterator.next();//为啥要remove呢。
+                String tm = next.get("TM")+"";
+                if (!timeResults.contains(tm)){
+                    iterator.remove();
+                }
+            }
+
+            Map<String,Map<String,Object>> dataM = new HashMap();
+            for(Map<String, Object> m : list){
+                String tm = m.get("TM")+"";
+                dataM.put(tm,m);
+            }
+            boolean flag = false;
+            List<Map<String,Object>> ll = new ArrayList<>();
+            for (String time : timeResults){
+                String newTime = "";
+                if (dataM.get(time) == null && step.intValue() < 60){//9点 是8点到9点的降雨量  都是整点的 9：00 9:30   10:00 算5 10 30步长
+                    //if (dataM.get(newTime) != null && step.intValue() < 30){ //实时数据30分钟一个点整点的时候，算5   10步长
+                    //if (dataM.get(newTime) != null && step.intValue() < 10){ //实时数据10分钟一个点整点的时候，算步长
+                    newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),60));//TODO 一个小时的整点 算5 15 30
+                    //newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),30));//TODO 30分钟的整点数据，算5 15
+                    //newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),10));//TODO 10分钟的整点数据 算5
+                }else{
+                    newTime = time;
+                }
+
+                Map<String, Object> stringObjectMap = dataM.get(newTime);
+                if (stringObjectMap == null){
+                    stringObjectMap = new HashMap<>();
+                    stringObjectMap.put("STCD",entry.getKey());
+                    stringObjectMap.put("STNM",stnm);
+                    stringObjectMap.put("LGTD",lgtd);
+                    stringObjectMap.put("LTTD",lttd);
+                    stringObjectMap.put("TM",time);
+
+                    stringObjectMap.put("DRP",null);
+
+                }else {
+                    if (dataM.get(time) == null && step.intValue()<60){ //todo if (step.intValue()<30){ 更上面的一样
+                        Long divise = 60L/step;
+                        //Long divise = 30L/step; TODO
+                        //Long divise = 10L/step;
+                        Map mm = new HashMap(stringObjectMap);
+                        mm.put("TM",time);
+                        if (mm.get("DRP")!= null){
+                            mm.put("DRP",new BigDecimal(mm.get("DRP")+"").divide(new BigDecimal(divise),2,BigDecimal.ROUND_HALF_UP));
+                        }
+                        stringObjectMap = mm;
+                    }
+                }
+                if(stringObjectMap.get("DRP") != null){
+                    flag = true;
+                }
+                ll.add(stringObjectMap);
+            }
+            if (flag){
+                for (Map map : ll){
+                    if(map.get("DRP") == null ){
+                        map.put("DRP",0.5);
+                    }
+
+                }
+            }
+
+            resultMap.put("LIST",ll);
+            results.add(resultMap);
+
+        }
+        for (Map<String,Object> nullMap : nullList){
+            Map<String,Object> resultMap = new HashMap<>();
+            resultMap.put("STCD",nullMap.get("STCD"));
+            resultMap.put("STNM",nullMap.get("STNM"));
+            resultMap.put("LGTD",nullMap.get("LGTD"));
+            resultMap.put("LTTD",nullMap.get("LTTD"));
+            resultMap.put("LIST",new ArrayList<>());
+            results.add(resultMap);
+        }
+
         return results;
     }
 
@@ -603,9 +750,21 @@ public class ModelFhddServiceImpl implements ModelFhddService {
     }
 
     @Override
+    public void modelPcpCall(YwkPlaninfo planinfo) {
+
+    }
+
+    @Override
+    public Boolean modelHydrologyCall(YwkPlaninfo planinfo) {
+        return null;
+    }
+
+    @Override
+    @Async
     public void modelCall(YwkPlaninfo planInfo) {
         System.out.println("模型运算线程！" + Thread.currentThread().getName());
 
+        Date originalStartTm = planInfo.getdCaculatestarttm();
         try{
             //雨量信息表
             long startTime = System.currentTimeMillis(); //获取开始时间
@@ -616,8 +775,9 @@ public class ModelFhddServiceImpl implements ModelFhddService {
                 throw new RuntimeException("方案雨量表没有保存数据");
             }
 
-            List<Map<String, Object>> results = getRainfallsInfo(planInfo);
-            if (CollectionUtils.isEmpty(results)) {
+            planInfo.setdCaculatestarttm(DateUtil.getNextHour(planInfo.getdCaculatestarttm(),-72));
+            List<Map<String, Object>> before72results = getRainfalls(planInfo);
+            if (CollectionUtils.isEmpty(before72results)) {
                 System.out.println("雨量信息为空，无法计算");
                 throw new RuntimeException("雨量信息为空，无法计算");
             }
@@ -673,7 +833,7 @@ public class ModelFhddServiceImpl implements ModelFhddService {
             }
 
             //2,写入pcp_station.csv
-            int result1 = writeDataToInputPcpStationCsv(PCP_HANDLE_MODEL_TEMPLATE_INPUT, results, planInfo);
+            int result1 = writeDataToInputPcpStationCsv(PCP_HANDLE_MODEL_TEMPLATE_INPUT, before72results, planInfo);
             if (result1 == 0) {
                 System.out.println("防洪调度模型之PCP模型:写入pcp_station失败");
                 throw new RuntimeException("防洪调度模型之PCP模型:写入pcp_station失败");
@@ -735,14 +895,6 @@ public class ModelFhddServiceImpl implements ModelFhddService {
 
             }
 
-            //8 写入model_selection.csv 输入文件
-            int result6 = writeDataToInputShuiWenModelSelectionCsv(FHDD_MODEL_TEMPLATE_INPUT, planInfo);
-            if (result6 == 0) {
-                System.out.println("防洪调度模型之防洪调度模型:写入model_selection.csv 输入文件失败");
-                throw new RuntimeException("防洪调度模型之防洪调度模型:写入model_selection.csv 输入文件失败");
-
-            }
-
             //9 读出外部chushishuishuju.csv文件并修改后写入内部input
             int result7 = updateChuShiShuiShuJu(FHDD_MODEL_TEMPLATE, FHDD_MODEL_TEMPLATE_INPUT, planInfo);
             if (result7 == 0) {
@@ -789,6 +941,7 @@ public class ModelFhddServiceImpl implements ModelFhddService {
             //判断是否执行成功，是否有error文件
             String errorStr = FHDD_MODEL_TEMPLATE_OUTPUT + File.separator + "error_log.txt";
             File errorFile = new File(errorStr);
+            planInfo.setdCaculatestarttm(originalStartTm);
             if (errorFile.exists()) {//存在表示执行失败
                 System.out.println("防洪调度模型之防洪调度模型:模型计算失败。。存在error_log文件");
                 planInfo.setnPlanstatus(-1L);
@@ -856,6 +1009,9 @@ public class ModelFhddServiceImpl implements ModelFhddService {
             Date endTime = planInfo.getdCaculateendtm();
             valObj.put("RCS_ID", wrpRcsBsin.getRvcrcrsccd()); //河道断面编码
             valObj.put("RCS_NAME", wrpName); //河道断面名称
+            String stcd = PropertiesUtil.read("/filePath.properties").getProperty("skddxx.RSCD_RSR." + planInfo.getRscd());
+            valObj.put("fsltdz",stRsvrfsrBDao.findByStcd(stcd).getFsltdz()); //方案对应汛限水位
+            valObj.put("damel",stRsvrfcchBDao.findByStcd(stcd).getDamel()); //方案对应水库坝顶高程
             JSONArray ZList = new JSONArray();
             valObj.put("zValues", ZList); // 水位
             JSONArray rainList = new JSONArray();
@@ -877,6 +1033,18 @@ public class ModelFhddServiceImpl implements ModelFhddService {
                             dataObj.put("time", DateUtil.dateToStringNormal3(time));
                             dataObj.put("i", df.format(Double.parseDouble(resultString.get(rIndex) + "")));
                             iValList.add(dataObj);
+                            rIndex++;
+                        } catch (Exception e) {
+                            break;
+                        }
+                    }
+
+                    for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime, 1)); time = DateUtil.getNextMinute(time, step.intValue())) {
+                        try {
+                            JSONObject dataObjRain = new JSONObject();
+                            dataObjRain.put("time", DateUtil.dateToStringNormal3(time));
+                            dataObjRain.put("rain", df.format(Double.parseDouble(needResult.get(rIndex) + "")));
+                            rainList.add(dataObjRain);
                             rIndex++;
                         } catch (Exception e) {
                             break;
@@ -909,23 +1077,23 @@ public class ModelFhddServiceImpl implements ModelFhddService {
                         break;
                     }
                 }
-                valObj.put("hfQ", df.format(Double.parseDouble(needResult.get(index) + "")));
-                index++;
-                valObj.put("hfTime", DateUtil.getNextMinute(startTime, step.intValue() * Integer.parseInt(needResult.get(index) + "")));
-                index++;
-                valObj.put("hfTotal", df.format(Double.parseDouble(needResult.get(index) + "")));
-                index++;
-                for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime, 1)); time = DateUtil.getNextMinute(time, step.intValue())) {
-                    try {
-                        JSONObject dataObjRain = new JSONObject();
-                        dataObjRain.put("time", DateUtil.dateToStringNormal3(time));
-                        dataObjRain.put("rain", df.format(Double.parseDouble(needResult.get(index) + "")));
-                        rainList.add(dataObjRain);
-                        index++;
-                    } catch (Exception e) {
-                        break;
-                    }
-                }
+//                valObj.put("hfQ", df.format(Double.parseDouble(needResult.get(index) + "")));
+//                index++;
+//                valObj.put("hfTime", DateUtil.getNextMinute(startTime, step.intValue() * Integer.parseInt(needResult.get(index) + "")));
+//                index++;
+//                valObj.put("hfTotal", df.format(Double.parseDouble(needResult.get(index) + "")));
+//                index++;
+//                for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime, 1)); time = DateUtil.getNextMinute(time, step.intValue())) {
+//                    try {
+//                        JSONObject dataObjRain = new JSONObject();
+//                        dataObjRain.put("time", DateUtil.dateToStringNormal3(time));
+//                        dataObjRain.put("rain", df.format(Double.parseDouble(needResult.get(index) + "")));
+//                        rainList.add(dataObjRain);
+//                        index++;
+//                    } catch (Exception e) {
+//                        break;
+//                    }
+//                }
             }
 
         }
@@ -1056,22 +1224,25 @@ public class ModelFhddServiceImpl implements ModelFhddService {
         String pcpHRUInputUrl = pcp_handle_model_template_input + File.separator + "pcp_station.csv";
 
         try {
+//            OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(pcpHRUInputUrl), "GBK" );
+//            BufferedWriter bw = new BufferedWriter(out); // 附加
             BufferedWriter bw = new BufferedWriter(new FileWriter(pcpHRUInputUrl, false)); // 附加
             // 添加新的数据行
             bw.write("" + ",STNM,LGTD,LTTD"); //编写表头
             Date startTime = planInfo.getdCaculatestarttm();
+            System.out.println(startTime);
             Date endTime = planInfo.getdCaculateendtm();
+            System.out.println(endTime);
             int size = 0;
-            //Long step = planInfo.getnOutputtm() / 60;//步长
             Long step = planInfo.getnOutputtm();//步长
             DecimalFormat format = new DecimalFormat("0.00");
-            Double hour = Double.parseDouble(format.format(step * 1.0 / 60));
-            while (startTime.before(DateUtil.getNextMillis(endTime, 1))) {
+            Double hour = Double.parseDouble(format.format(step* 1.0 / 60 ));
+            while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
                 size++;
                 startTime = DateUtil.getNextMinute(startTime, step.intValue());
             }
-            for (int i = 0; i < size; i++) {
-                bw.write("," + i * hour);
+            for (int i = 0 ;i < size;i++){
+                bw.write("," + i*hour);
             }
             bw.newLine();
             for (Map<String, Object> map : results) {
@@ -1080,7 +1251,7 @@ public class ModelFhddServiceImpl implements ModelFhddService {
                 String lgtd = map.get("LGTD") == null ? "" : map.get("LGTD") + "";
                 Object lttd = map.get("LTTD") == null ? "" : map.get("LTTD") + "";
                 List<Map<String, Object>> list = (List<Map<String, Object>>) map.get("LIST");
-                bw.write(stcd + "," + stnm + "," + lgtd + "," + lttd);
+                bw.write(stcd+","+stnm+","+lgtd+","+lttd);
                 for (Map<String, Object> m : list) {
                     String value = m.get("DRP") == null ? "" : m.get("DRP") + "";
                     bw.write("," + value);
@@ -1136,6 +1307,7 @@ public class ModelFhddServiceImpl implements ModelFhddService {
         String pcp_HRUUrl = "pcp_HRU&&" + pcp_handle_model_template_input + File.separator + "pcp_HRU.csv";
         String pcp_stationUrl = "pcp_station&&" + pcp_handle_model_template_input + File.separator + "pcp_station.csv";
         String hru_p_resultUrl = "hru_p_result&&" + pcp_handle_model_template_output + File.separator + "hru_p_result.csv";
+        String jinduUrl = "jindu&&" + pcp_handle_model_template_output + File.separator + "jindu.txt";
 
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, false)); // 附加
@@ -1145,6 +1317,8 @@ public class ModelFhddServiceImpl implements ModelFhddService {
             bw.write(pcp_stationUrl);
             bw.newLine();
             bw.write(hru_p_resultUrl);
+            bw.newLine();
+            bw.write(jinduUrl);
             bw.newLine();
             bw.close();
             System.out.println("水文模型之PCP模型:写入水文模型config成功");
@@ -1399,6 +1573,10 @@ public class ModelFhddServiceImpl implements ModelFhddService {
         Double nQ = inputByPlanid.getNQ();
         String plan_rscd_name = PropertiesUtil.read("/filePath.properties").getProperty("skdd.ID_NAME." + planinfo.getRscd()); //取水文站编码映射
 
+        Long step = planinfo.getnOutputtm();
+        DecimalFormat format = new DecimalFormat("0.00");
+        Double hour = Double.parseDouble(format.format(step* 1.0 / 60 ));
+
         try {
             FileReader fileReader = new FileReader(shuikuChushiShujuReadCsv);
             if(fileReader!=null){
@@ -1418,6 +1596,7 @@ public class ModelFhddServiceImpl implements ModelFhddService {
                 }
 
                 if(index != 0){
+                    datas.get(1).set(index, hour.toString());
                     datas.get(2).set(index, nZ.toString());
                     datas.get(3).set(index, nQ.toString());
                 }
@@ -1459,17 +1638,35 @@ public class ModelFhddServiceImpl implements ModelFhddService {
      */
     private int copyOtherShuiWenLvDingCsv(String shuiwen_model_template, String shuiwen_model_template_input) {
 
-        String reachRead = shuiwen_model_template + File.separator + "Reach.csv";
-        String reachInput = shuiwen_model_template_input + File.separator + "Reach.csv";
+        String bbppRead = shuiwen_model_template + File.separator + "bbpp";
+        String bbppInput = shuiwen_model_template_input + File.separator + "bbpp";
 
-//        String shuikuChushiShujuRead = shuiwen_model_template + File.separator + "shuiku_chushishuju.csv";
-//        String shuikuChushiShujuInput = shuiwen_model_template_input + File.separator + "shuiku_chushishuju.csv";
+        String bbpp01Read = shuiwen_model_template + File.separator + "bbpp_01.npy";
+        String bbpp01Input = shuiwen_model_template_input + File.separator + "bbpp_01.npy";
+        String bbpp02Read = shuiwen_model_template + File.separator + "bbpp_02.npy";
+        String bbpp02Input = shuiwen_model_template_input + File.separator + "bbpp_02.npy";
+        String bbpp03Read = shuiwen_model_template + File.separator + "bbpp_03.npy";
+        String bbpp03Input = shuiwen_model_template_input + File.separator + "bbpp_03.npy";
+        String bbpp04Read = shuiwen_model_template + File.separator + "bbpp_04.npy";
+        String bbpp04Input = shuiwen_model_template_input + File.separator + "bbpp_04.npy";
+        String bbpp05Read = shuiwen_model_template + File.separator + "bbpp_05.npy";
+        String bbpp05Input = shuiwen_model_template_input + File.separator + "bbpp_05.npy";
 
-        String shuikuShuiweiKuRongRead = shuiwen_model_template + File.separator + "shuiku_shuiwei_kurong.csv";
-        String shuikuShuiweiKuRongInput = shuiwen_model_template_input + File.separator + "shuiku_shuiwei_kurong.csv";
 
-        String shuikuJishuiquRead = shuiwen_model_template + File.separator + "shuiku_jishuiqu.csv";
-        String shuikuJishuiquInput = shuiwen_model_template_input + File.separator + "shuiku_jishuiqu.csv";
+        String bbpp1Read = shuiwen_model_template + File.separator + "bbpp1";
+        String bbpp1Input = shuiwen_model_template_input + File.separator + "bbpp1";
+
+        String bpH5Read = shuiwen_model_template + File.separator + "bp.h5";
+        String bpH5Input = shuiwen_model_template_input + File.separator + "bp.h5";
+
+        String bprain_qH5Read = shuiwen_model_template + File.separator + "bprain_q.h5";
+        String bprain_qH5Input = shuiwen_model_template_input + File.separator + "bprain_q.h5";
+
+        String bpscalerModelRead = shuiwen_model_template + File.separator + "bpscaler.model";
+        String bpscalerModelInput = shuiwen_model_template_input + File.separator + "bpscaler.model";
+
+        String difangyujingRead = shuiwen_model_template + File.separator + "difangyujing.csv";
+        String difangyujingInput = shuiwen_model_template_input + File.separator + "difangyujing.csv";
 
         String duanmianShuiweiLiuLiangRead = shuiwen_model_template + File.separator + "duanmian_shuiweiliuliang.csv";
         String duanmianShuiweiLiuLiangInput = shuiwen_model_template_input + File.separator + "duanmian_shuiweiliuliang.csv";
@@ -1477,37 +1674,60 @@ public class ModelFhddServiceImpl implements ModelFhddService {
         String jishuiquTongjiRead = shuiwen_model_template + File.separator + "jishuiqu_tongji.csv";
         String jishuiquTongjiInput = shuiwen_model_template_input + File.separator + "jishuiqu_tongji.csv";
 
+        String m2H5Read = shuiwen_model_template + File.separator + "m2.h5";
+        String m2H5Input = shuiwen_model_template_input + File.separator + "m2.h5";
+
+        String m3H5Read = shuiwen_model_template + File.separator + "m3.h5";
+        String m3H5Input = shuiwen_model_template_input + File.separator + "m3.h5";
+
+        String shuiwenModelSelectionRead = shuiwen_model_template + File.separator + "model_selection.csv";
+        String shuiwenModelSelectionInput = shuiwen_model_template_input + File.separator + "model_selection.csv";
+
+        String reachRead = shuiwen_model_template + File.separator + "Reach.csv";
+        String reachInput = shuiwen_model_template_input + File.separator + "Reach.csv";
+
+        String rugan_kRead = shuiwen_model_template + File.separator + "rugan_k.csv";
+        String rugan_kInput = shuiwen_model_template_input + File.separator + "rugan_k.csv";
+
+        String scalerbpRead = shuiwen_model_template + File.separator + "scalerbp";
+        String scalerbpInput = shuiwen_model_template_input + File.separator + "scalerbp";
+
+        String shuiku_jishuiquRead = shuiwen_model_template + File.separator + "shuiku_jishuiqu.csv";
+        String shuiku_jishuiquInput = shuiwen_model_template_input + File.separator + "shuiku_jishuiqu.csv";
+
+        String shuikuShuiweiKuRongRead = shuiwen_model_template + File.separator + "shuiku_shuiwei_kurong.csv";
+        String shuikuShuiweiKuRongInput = shuiwen_model_template_input + File.separator + "shuiku_shuiwei_kurong.csv";
+
         String unitRead = shuiwen_model_template + File.separator + "unit.csv";
         String unitInput = shuiwen_model_template_input + File.separator + "unit.csv";
 
         String watershedRead = shuiwen_model_template + File.separator + "Watershed.csv";
         String watershedInput = shuiwen_model_template_input + File.separator + "Watershed.csv";
 
-        String bpscalerModelRead = shuiwen_model_template + File.separator + "bpscaler.model";
-        String bpscalerModelInput = shuiwen_model_template_input + File.separator + "bpscaler.model";
-
-        String bpH5Read = shuiwen_model_template + File.separator + "bp.h5";
-        String bpH5Input = shuiwen_model_template_input + File.separator + "bp.h5";
-
-        String bbpp1Read = shuiwen_model_template + File.separator + "bbpp1";
-        String bbpp1Input = shuiwen_model_template_input + File.separator + "bbpp1";
-
-        String m3H5Read = shuiwen_model_template + File.separator + "m3.h5";
-        String m3H5Input = shuiwen_model_template_input + File.separator + "m3.h5";
-
         try {
-            FileUtil.copyFile(reachRead, reachInput, true);
+            FileUtil.copyFile(bbppRead, bbppInput, true);
+            FileUtil.copyFile(bbpp01Read, bbpp01Input, true);
+            FileUtil.copyFile(bbpp02Read, bbpp02Input, true);
+            FileUtil.copyFile(bbpp03Read, bbpp03Input, true);
+            FileUtil.copyFile(bbpp04Read, bbpp04Input, true);
+            FileUtil.copyFile(bbpp05Read, bbpp05Input, true);
+            FileUtil.copyFile(bbpp1Read, bbpp1Input, true);
+            FileUtil.copyFile(bpH5Read, bpH5Input, true);
+            FileUtil.copyFile(bprain_qH5Read, bprain_qH5Input, true);
+            FileUtil.copyFile(bpscalerModelRead, bpscalerModelInput, true);
+            FileUtil.copyFile(difangyujingRead, difangyujingInput, true);
             FileUtil.copyFile(duanmianShuiweiLiuLiangRead, duanmianShuiweiLiuLiangInput, true);
             FileUtil.copyFile(jishuiquTongjiRead, jishuiquTongjiInput, true);
+            FileUtil.copyFile(m2H5Read, m2H5Input, true);
+            FileUtil.copyFile(m3H5Read, m3H5Input, true);
+            FileUtil.copyFile(shuiwenModelSelectionRead, shuiwenModelSelectionInput, true);
+            FileUtil.copyFile(reachRead, reachInput, true);
+            FileUtil.copyFile(rugan_kRead, rugan_kInput, true);
+            FileUtil.copyFile(scalerbpRead, scalerbpInput, true);
+            FileUtil.copyFile(shuiku_jishuiquRead, shuiku_jishuiquInput, true);
             FileUtil.copyFile(shuikuShuiweiKuRongRead, shuikuShuiweiKuRongInput, true);
-            FileUtil.copyFile(shuikuJishuiquRead, shuikuJishuiquInput, true);
             FileUtil.copyFile(unitRead, unitInput, true);
             FileUtil.copyFile(watershedRead, watershedInput, true);
-
-            FileUtil.copyFile(bpscalerModelRead, bpscalerModelInput, true);
-            FileUtil.copyFile(bpH5Read, bpH5Input, true);
-            FileUtil.copyFile(bbpp1Read, bbpp1Input, true);
-            FileUtil.copyFile(m3H5Read, m3H5Input, true);
             System.err.println("水文模型之水文模型：copy剩下的率定csv输入文件成功");
             return 1;
         } catch (Exception e) {
@@ -1565,10 +1785,7 @@ public class ModelFhddServiceImpl implements ModelFhddService {
         String duanmian_shuiweiUrl = "duanmian_shuiwei&&" + shuiwen_model_template_input + File.separator + "duanmian_shuiweiliuliang.csv";
         String jishuiqu_tongjiUrl = "jishuiqu_tongji&&" + shuiwen_model_template_input + File.separator + "jishuiqu_tongji.csv";
 
-        String shuiku_jishuiquUrl = "shuiku_jishuiqu&&" + shuiwen_model_template_input + File.separator + "shuiku_jishuiqu.csv";
-
         String hru_pUrl = "hru_p&&" + shuiwen_model_template_input + File.separator + "hru_p_result.csv";
-        //String model_functionUrl = "model_function&&" + shuiwen_model_template_input + File.separator + "model_function.csv";
         String hru_scaler_modelUrl = "hru_scaler_model&&" + shuiwen_model_template_input + File.separator + "bpscaler.model";
         String hru_BP_modelUrl = "hru_BP_model&&" + shuiwen_model_template_input + File.separator + "bp.h5";
         String reach_scaler_modelUrl = "reach_scaler_model&&" + shuiwen_model_template_input + File.separator + "bbpp1";
@@ -1576,6 +1793,12 @@ public class ModelFhddServiceImpl implements ModelFhddService {
         String resultUrl = "result&&" + shuiwen_model_template_output + File.separator + "result.txt";
         String shuiku_resultUrl = "shuiku_result&&" + shuiwen_model_template_output + File.separator + "shuiku_result.txt";
         String errorUrl = "error&&" + shuiwen_model_template_output + File.separator + "error_log.txt";
+
+        String jinduUrl = "jindu&&" + shuiwen_model_template_output + File.separator + "jindu.txt";
+        String rugan_resultUrl = "rugan_result&&" + shuiwen_model_template_output + File.separator + "zhiliurugan.txt";
+        String difangyujingUrl = "difangyujing&&" + shuiwen_model_template_input + File.separator + "difangyujing.csv";
+        String rugan_kUrl = "rugan_k&&" + shuiwen_model_template_input + File.separator + "rugan_k.csv";
+        String shuiku_jishuiquUrl = "shuiku_jishuiqu&&" + shuiwen_model_template_input + File.separator + "shuiku_jishuiqu.csv";
 
         if (tag == 1) {
             String catchMentAreaModelId = planinfo.getnModelid(); //集水区模型id   // 1是SCS  2是单位线
@@ -1647,6 +1870,10 @@ public class ModelFhddServiceImpl implements ModelFhddService {
         list.add(errorUrl);
         list.add(duanmian_shuiweiUrl);
         list.add(jishuiqu_tongjiUrl);
+        list.add(jinduUrl);
+        list.add(rugan_resultUrl);
+        list.add(difangyujingUrl);
+        list.add(rugan_kUrl);
         list.add(shuiku_jishuiquUrl);
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(configUrl, false)); // 附加

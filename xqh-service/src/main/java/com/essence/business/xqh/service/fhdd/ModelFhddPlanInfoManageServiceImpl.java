@@ -3,6 +3,7 @@ package com.essence.business.xqh.service.fhdd;
 import com.essence.business.xqh.api.fhdd.ModelFhddPlanInfoManageService;
 import com.essence.business.xqh.api.skdd.vo.ModelSkddXxInputVo;
 import com.essence.business.xqh.common.util.CacheUtil;
+import com.essence.business.xqh.common.util.FileUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.*;
 import com.essence.business.xqh.dao.entity.fhybdd.WrpRsrBsin;
@@ -16,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import javax.persistence.EntityManager;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,8 +26,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class ModelFhddPlanInfoManageServiceImpl implements ModelFhddPlanInfoManageService {
-    @Autowired
-    private EntityManager entityManager;
 
     @Autowired
     YwkPlaninfoDao ywkPlaninfoDao;
@@ -123,7 +122,6 @@ public class ModelFhddPlanInfoManageServiceImpl implements ModelFhddPlanInfoMana
         return planinfo;
     }
 
-
     @Override
     public ModelSkddXxInputVo getPlanInputInfo(String planId) {
         YwkPlanInputZ byNPlanid = ywkPlanInputZDao.findByNPlanid(planId);
@@ -176,5 +174,49 @@ public class ModelFhddPlanInfoManageServiceImpl implements ModelFhddPlanInfoMana
         ywkPlanOutputQDao.deleteByNPlanid(planInfo.getnPlanid());
 
         ywkPlanInputZDao.deleteByNPlanid(planInfo.getnPlanid());
+
+        //删除对应模型文件
+        try {
+            //创建入参、出参
+            String FHDD_PCP_HANDLE_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("FHDD_PCP_HANDLE_MODEL_PATH");
+            String FHDD_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("FHDD_MODEL_PATH");
+            String template = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
+            String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
+            String run = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
+
+
+
+            String PCP_HANDLE_MODEL_TEMPLATE = FHDD_PCP_HANDLE_MODEL_PATH + File.separator + template;
+
+            String PCP_HANDLE_MODEL_TEMPLATE_INPUT = PCP_HANDLE_MODEL_TEMPLATE
+                    + File.separator + "INPUT" + File.separator + planInfo.getnPlanid(); //输入的地址
+            String PCP_HANDLE_MODEL_TEMPLATE_OUTPUT = FHDD_PCP_HANDLE_MODEL_PATH + File.separator + out
+                    + File.separator + planInfo.getnPlanid();//输出的地址
+
+            String PCP_HANDLE_MODEL_RUN = FHDD_PCP_HANDLE_MODEL_PATH + File.separator + run;
+
+            String PCP_HANDLE_MODEL_RUN_PLAN = PCP_HANDLE_MODEL_RUN + File.separator + planInfo.getnPlanid();
+
+            //另一个模型
+            String FHDD_MODEL_TEMPLATE = FHDD_MODEL_PATH + File.separator + template;
+            //输入的地址
+            String FHDD_MODEL_TEMPLATE_INPUT = FHDD_MODEL_TEMPLATE
+                    + File.separator + "INPUT" + File.separator + planInfo.getnPlanid();
+            //输出的地址
+            String FHDD_MODEL_TEMPLATE_OUTPUT = FHDD_MODEL_PATH + File.separator + out
+                    + File.separator + planInfo.getnPlanid();
+            //模型运行的config
+            String FHDD_MODEL_RUN = FHDD_MODEL_PATH + File.separator + run;
+            String FHDD_XX_MODEL_RUN_PLAN = FHDD_MODEL_RUN + File.separator + planInfo.getnPlanid();
+
+            FileUtil.deleteFile(new File(PCP_HANDLE_MODEL_TEMPLATE_INPUT));
+            FileUtil.deleteFile(new File(PCP_HANDLE_MODEL_TEMPLATE_OUTPUT));
+            FileUtil.deleteFile(new File(PCP_HANDLE_MODEL_RUN_PLAN));
+            FileUtil.deleteFile(new File(FHDD_MODEL_TEMPLATE_INPUT));
+            FileUtil.deleteFile(new File(FHDD_MODEL_TEMPLATE_OUTPUT));
+            FileUtil.deleteFile(new File(FHDD_XX_MODEL_RUN_PLAN));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

@@ -27,16 +27,6 @@ public class ModelSkddXxPlanVo {
     private Date endTime;
 
     /**
-     * 集水区模型
-     */
-    private String catchmentAreaModelId;
-
-    /**
-     * 河段模型
-     */
-    private String reachId;
-
-    /**
      * 步长
      */
     private int step;
@@ -78,22 +68,6 @@ public class ModelSkddXxPlanVo {
 
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
-    }
-
-    public String getCatchmentAreaModelId() {
-        return catchmentAreaModelId;
-    }
-
-    public void setCatchmentAreaModelId(String catchmentAreaModelId) {
-        this.catchmentAreaModelId = catchmentAreaModelId;
-    }
-
-    public String getReachId() {
-        return reachId;
-    }
-
-    public void setReachId(String reachId) {
-        this.reachId = reachId;
     }
 
     public int getStep() {
