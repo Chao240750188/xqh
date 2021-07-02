@@ -815,8 +815,8 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
             }
 
             //创建入参、出参
-            String SWYB_PCP_HANDLE_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_NEW_PCP_HANDLE_MODEL_PATH");
-            String SWYB_SHUIWEN_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_NEW_SHUIWEN_MODEL_PATH");
+            String SWYB_PCP_HANDLE_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("DFMY_PCP_HANDLE_MODEL_PATH");
+            String SWYB_SHUIWEN_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("DFMY_MODEL_PATH");
             String template = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
             String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
             String run = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
@@ -2243,7 +2243,7 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         DecimalFormat df = new DecimalFormat("0.000");
         Long step = planInfo.getnOutputtm();//步长(小时)
         //读取水文模型输出路径
-        String SWYB_SHUIWEN_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SWYB_BASE_NEW_SHUIWEN_MODEL_PATH");
+        String SWYB_SHUIWEN_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("DFMY_MODEL_PATH");
         String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
 
         String SHUIWEN_MODEL_TEMPLATE_OUTPUT = SWYB_SHUIWEN_MODEL_PATH + File.separator + out
