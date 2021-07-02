@@ -193,7 +193,7 @@ public class FbcPlanInfoManageServiceImpl implements FbcPlanInfoManageService {
         //删除模型相关文件
         try {
             //写入模型输入文件路径
-            String fbc_path = PropertiesUtil.read("/filePath.properties").getProperty("FBC_MODEL");
+            String fbc_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
             String fbc_model_template_output = fbc_path +
                     File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
                     + File.separator + planId; //输出的地址
