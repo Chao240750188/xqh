@@ -110,7 +110,7 @@ public interface ProjectJointDispatchService {
      * @param modelParamVo
      * @return
      */
-    List<Object> getSwModelBoundaryBasicData(ModelParamVo modelParamVo);
+    Object getSwModelBoundaryBasicData(ModelParamVo modelParamVo);
 
     /**
      * 保存水文模型边界数据

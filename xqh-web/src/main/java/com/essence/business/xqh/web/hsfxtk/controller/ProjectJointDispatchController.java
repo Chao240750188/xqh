@@ -265,8 +265,8 @@ public class ProjectJointDispatchController {
     @RequestMapping(value = "getSwModelBoundaryBasicData", method = RequestMethod.POST)
     public SystemSecurityMessage getSwModelBoundaryBasicData(@RequestBody ModelParamVo modelParamVo) {
         try {
-            List<Object> swBoundaryList =  projectJointDispatchService.getSwModelBoundaryBasicData(modelParamVo);
-            return SystemSecurityMessage.getSuccessMsg("查询水文预报边界条件列表成功",swBoundaryList);
+            Object result =  projectJointDispatchService.getSwModelBoundaryBasicData(modelParamVo);
+            return SystemSecurityMessage.getSuccessMsg("查询水文预报边界条件列表成功",result);
         }catch (Exception e){
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("查询水文预报边界条件列表失败！",null);

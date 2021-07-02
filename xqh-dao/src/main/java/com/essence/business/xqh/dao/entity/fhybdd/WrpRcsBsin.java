@@ -25,9 +25,9 @@ public class WrpRcsBsin {
     @Column(name = "CTCD")
     private String ctcd;
     @Column(name = "LGTD")
-    private Long lgtd;
+    private Double lgtd;
     @Column(name = "LTTD")
-    private Long lttd;
+    private Double lttd;
     @Column(name = "CRSCWD")
     private Long crscwd;
     @Column(name = "RVCHWD")
@@ -98,19 +98,19 @@ public class WrpRcsBsin {
         this.ctcd = ctcd;
     }
 
-    public Long getLgtd() {
+    public Double getLgtd() {
         return lgtd;
     }
 
-    public void setLgtd(Long lgtd) {
+    public void setLgtd(Double lgtd) {
         this.lgtd = lgtd;
     }
 
-    public Long getLttd() {
+    public Double getLttd() {
         return lttd;
     }
 
-    public void setLttd(Long lttd) {
+    public void setLttd(Double lttd) {
         this.lttd = lttd;
     }
 
@@ -162,5 +162,24 @@ public class WrpRcsBsin {
         this.dtupdt = dtupdt;
     }
 
-
+    @Override
+    public String toString() {
+        return "WrpRcsBsin{" +
+                "rvcrcrsccd='" + rvcrcrsccd + '\'' +
+                ", rvcrcrscnm='" + rvcrcrscnm + '\'' +
+                ", mnun='" + mnun + '\'' +
+                ", cmun='" + cmun + '\'' +
+                ", addvcd='" + addvcd + '\'' +
+                ", vltw='" + vltw + '\'' +
+                ", ctcd='" + ctcd + '\'' +
+                ", lgtd=" + lgtd +
+                ", lttd=" + lttd +
+                ", crscwd=" + crscwd +
+                ", rvchwd=" + rvchwd +
+                ", rvmnchel=" + rvmnchel +
+                ", dtpl='" + dtpl + '\'' +
+                ", rvcrcrscov='" + rvcrcrscov + '\'' +
+                ", dtupdt=" + dtupdt +
+                '}';
+    }
 }
