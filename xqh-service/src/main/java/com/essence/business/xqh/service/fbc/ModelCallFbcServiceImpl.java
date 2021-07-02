@@ -60,6 +60,10 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
     private FbcWindPressureDao fbcWindPressureDao;
     @Autowired
     private FbcWindSpeedDao fbcWindSpeedDao;
+    @Autowired
+    private FbcPerfaceTideLevelDao fbcPerfaceTideLevelDao;
+    @Autowired
+    private FbcShortestDistanceDao  fbcShortestDistanceDao;
 
     /**
      * 根据方案名称校验方案是否存在
@@ -128,7 +132,7 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         Date endTime = planInfo.getdCaculateendtm();
 
         //封装边界流量数据
-        for (int i = 1; i < 8; i++) {
+        for (int i = 1; i < 10; i++) {
             JSONObject jsonObject = new JSONObject();
             YwkBoundaryBasicDto YwkBoundaryBasicDto = new YwkBoundaryBasicDto();
             jsonObject.put("boundary", "boundary" + i);
@@ -208,6 +212,15 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         cell7.setCellStyle(style);
         cell7.setCellValue("台风中心最大风速（m/s）");
 
+        sheet.setColumnWidth(8, 4000);
+        XSSFCell cell8 = row.createCell(8);
+        cell8.setCellStyle(style);
+        cell8.setCellValue("前序潮位（m）");
+
+        sheet.setColumnWidth(9, 4000);
+        XSSFCell cell9 = row.createCell(9);
+        cell9.setCellStyle(style);
+        cell9.setCellValue("台风中心距羊角沟站最短距离（km）");
         //封装时间列
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
@@ -252,7 +265,7 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         //封装时间列
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < 9; i++) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("boundary", "boundary" + (i + 1));
             //封装时间数据
@@ -403,6 +416,40 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
                 if (fbcWindMaximumSpeedList.size() > 0)
                     fbcWindMaximumSpeedDao.saveAll(fbcWindMaximumSpeedList);
             }
+
+            //如果是前序潮位
+            if ("boundary8".equals(boundary)) {
+                List<FbcPerfaceTideLevel> fbcPerfaceTideLevelList = new ArrayList<>();
+                for (int i = 0; i < dataList.size(); i++) {
+                    YwkFbcBoundaryDataDto data = dataList.get(i);
+                    FbcPerfaceTideLevel fbcPerfaceTideLevel = new FbcPerfaceTideLevel();
+                    fbcPerfaceTideLevel.setcId(StrUtil.getUUID());
+                    fbcPerfaceTideLevel.setnPlanid(planId);
+                    fbcPerfaceTideLevel.setAbsoluteTime(data.getTime());
+                    fbcPerfaceTideLevel.setRelativeTime(i + 1l);
+                    fbcPerfaceTideLevel.setTideLevel(data.getBoundaryData());
+                    fbcPerfaceTideLevelList.add(fbcPerfaceTideLevel);
+                }
+                if (fbcPerfaceTideLevelList.size() > 0)
+                    fbcPerfaceTideLevelDao.saveAll(fbcPerfaceTideLevelList);
+            }
+
+            //如果是最短距离
+            if ("boundary9".equals(boundary)) {
+                List<FbcShortestDistance> fbcShortestDistanceList = new ArrayList<>();
+                for (int i = 0; i < dataList.size(); i++) {
+                    YwkFbcBoundaryDataDto data = dataList.get(i);
+                    FbcShortestDistance fbcShortestDistance = new FbcShortestDistance();
+                    fbcShortestDistance.setcId(StrUtil.getUUID());
+                    fbcShortestDistance.setnPlanid(planId);
+                    fbcShortestDistance.setAbsoluteTime(data.getTime());
+                    fbcShortestDistance.setRelativeTime(i + 1l);
+                    fbcShortestDistance.setShortestDistance(data.getBoundaryData());
+                    fbcShortestDistanceList.add(fbcShortestDistance);
+                }
+                if (fbcShortestDistanceList.size() > 0)
+                    fbcShortestDistanceDao.saveAll(fbcShortestDistanceList);
+            }
         }
         //存入缓存
         CacheUtil.saveOrUpdate("modelFbcBoundaryZq", planId, ywkPlanInfoBoundaryDtoList);
@@ -465,8 +512,13 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         List<FbcWindMinimumPressure> minimumPressureList = fbcWindMinimumPressureDao.findByNPlanidOrderByAbsoluteTime(planId);
         //最大风速
         List<FbcWindMaximumSpeed> maximumSpeedList = fbcWindMaximumSpeedDao.findByNPlanidOrderByAbsoluteTime(planId);
+
+        //前序潮位
+        List<FbcPerfaceTideLevel> fbcPerfaceTideLevelList = fbcPerfaceTideLevelDao.findByNPlanidOrderByAbsoluteTime(planId);
+        //最短距离
+        List<FbcShortestDistance> fbcShortestDistanceList = fbcShortestDistanceDao.findByNPlanidOrderByAbsoluteTime(planId);
         //写入边界条件
-        int resultBoundary = writeDataToInputFbcCsv(planInfo,fbc_model_template_input,zList,qList,directionList,speedList,pressureList,minimumPressureList,maximumSpeedList);
+        int resultBoundary = writeDataToInputFbcCsv(planInfo,fbc_model_template_input,zList,qList,directionList,speedList,pressureList,minimumPressureList,maximumSpeedList,fbcPerfaceTideLevelList,fbcShortestDistanceList);
         if (resultBoundary == 0) {
             System.out.println("风暴潮模型计算:边界fbc.csv输入文件写入失败。。。");
             return dzwList;
@@ -586,14 +638,16 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         }
     }
 
-    private int writeDataToInputFbcCsv(YwkPlaninfo planInfo,String fbc_model_template_input, List<FbcBoundaryZ> zList, List<FbcBoundaryQ> qList, List<FbcWindDirection> directionList, List<FbcWindSpeed> speedList, List<FbcWindPressure> pressureList, List<FbcWindMinimumPressure> minimumPressureList, List<FbcWindMaximumSpeed> maximumSpeedList) {
+    private int writeDataToInputFbcCsv(YwkPlaninfo planInfo,String fbc_model_template_input, List<FbcBoundaryZ> zList, List<FbcBoundaryQ> qList, List<FbcWindDirection> directionList, List<FbcWindSpeed> speedList, List<FbcWindPressure> pressureList,
+                                       List<FbcWindMinimumPressure> minimumPressureList, List<FbcWindMaximumSpeed> maximumSpeedList,List<FbcPerfaceTideLevel> fbcPerfaceTideLevelList,List<FbcShortestDistance> fbcShortestDistanceList) {
         String boundaryInputUrl = fbc_model_template_input + File.separator + "fbc.csv";
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
         try {
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(boundaryInputUrl, false), "UTF-8"));
             // 添加新的数据行
-            String head = "date,chaowei,dew,temp,press,wnd_dir,wnd_spd,snow,rain";
+            //String head = "date,chaowei,dew,temp,press,wnd_dir,wnd_spd,snow,rain";
+            String head = "data,chaowei,qianxuchaowei,shangyoushuiwei,q,qiya,fengxiang,fengsu,tfzxzuidiqia,tfzxzuidafsu,juli";
             bw.write(head);
             bw.newLine();
             int beginLine = 1;
@@ -609,7 +663,9 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
                 Double pressure = pressureList.get(count)==null?0.0:pressureList.get(count).getPressure();
                 Double minimumPressure = minimumPressureList.get(count)==null?0.0:minimumPressureList.get(count).getPressure();
                 Double maximumSpeed = maximumSpeedList.get(count)==null?0.0:maximumSpeedList.get(count).getSpeed();
-                data +=","+"3.125"+","+z+","+q+","+pressure+","+speed+","+direction+","+minimumPressure+","+maximumSpeed;
+                Double fbcPerfaceTideLevel = fbcPerfaceTideLevelList.get(count)==null?0.0:fbcPerfaceTideLevelList.get(count).getTideLevel();
+                Double fbcshortestdistance = fbcShortestDistanceList.get(count)==null?0.0:fbcShortestDistanceList.get(count).getShortestDistance();
+                data +=","+"3.125"+","+fbcPerfaceTideLevel+","+z+","+q+","+pressure+","+direction+","+speed+","+minimumPressure+","+maximumSpeed+","+fbcshortestdistance;
                 dataList.add(data);
                 count++;
             }
@@ -735,6 +791,8 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         List<FbcWindPressure> fbcWindPressure = fbcWindPressureDao.findByNPlanidOrderByAbsoluteTime(planId);
         List<FbcWindMinimumPressure> fbcWindMinimumPressure = fbcWindMinimumPressureDao.findByNPlanidOrderByAbsoluteTime(planId);
         List<FbcWindMaximumSpeed> fbcWindMaximumSpeed = fbcWindMaximumSpeedDao.findByNPlanidOrderByAbsoluteTime(planId);
+        List<FbcPerfaceTideLevel> fbcPerfaceTideLevelList = fbcPerfaceTideLevelDao.findByNPlanidOrderByAbsoluteTime(planId);
+        List<FbcShortestDistance> fbcShortestDistanceList = fbcShortestDistanceDao.findByNPlanidOrderByAbsoluteTime(planId);
 
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         List<JSONObject> results = new ArrayList<>();
@@ -828,6 +886,33 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
             datas7.add(map7);
         }
         obj7.put("dataList",datas7);
+
+        JSONObject obj8 = new JSONObject();
+        obj8.put("boundaryData","boundaryData8");
+        List<Map<String,Object>> datas8 = new ArrayList();
+        for (FbcPerfaceTideLevel f : fbcPerfaceTideLevelList){
+            Map map = new HashMap();
+            Double tideLevel = f.getTideLevel();
+            Date absoluteTime = f.getAbsoluteTime();
+            map.put("boundaryData",tideLevel);
+            map.put("time",format.format(absoluteTime));
+            datas8.add(map);
+        }
+        obj8.put("dataList",datas8);
+
+        JSONObject obj9 = new JSONObject();
+        obj9.put("boundaryData","boundaryData9");
+        List<Map<String,Object>> datas9 = new ArrayList();
+        for (FbcShortestDistance f : fbcShortestDistanceList){
+            Map map = new HashMap();
+            Double shortestDistance = f.getShortestDistance();
+            Date absoluteTime = f.getAbsoluteTime();
+            map.put("boundaryData",shortestDistance);
+            map.put("time",format.format(absoluteTime));
+            datas9.add(map);
+        }
+        obj9.put("dataList",datas9);
+
         results.add(obj1);
         results.add(obj2);
         results.add(obj3);
@@ -835,6 +920,8 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         results.add(obj5);
         results.add(obj6);
         results.add(obj7);
+        results.add(obj8);
+        results.add(obj9);
         return results;
     }
 
@@ -849,6 +936,8 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         fbcWindMinimumPressureDao.deleteByNPlanid(planId);
         fbcWindMaximumSpeedDao.deleteByNPlanid(planId);
         fbcHdpHhtdzWDao.deleteByNPlanid(planId);
+        fbcPerfaceTideLevelDao.deleteByNPlanid(planId);
+        fbcShortestDistanceDao.deleteByNPlanid(planId);
         ywkPlaninfoDao.deleteById(planId);
     }
 }
