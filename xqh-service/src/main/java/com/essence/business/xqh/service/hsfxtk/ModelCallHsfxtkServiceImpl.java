@@ -1636,4 +1636,28 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
         return  result;
     }
+
+    @Override
+    public void previewFloodPic(HttpServletRequest request, HttpServletResponse response, String planId, String picId) {
+        YwkPlaninfo planinfo = ywkPlaninfoDao.findOneById(planId);
+        //图片路径
+        String outputAbsolutePath = GisPathConfigurationUtil.getOutputPictureAbsolutePath() + "/" + planinfo.getnModelid() + "/" + planId;
+        //图片路径
+        String processOutputAbsolutePath = outputAbsolutePath + "/floodpic/";
+        String filePath = null;
+        filePath = processOutputAbsolutePath + picId + ".png";
+        try {
+            File file = new File(filePath);
+            if (file != null && file.exists()) {
+                int length = Integer.MAX_VALUE;
+                if (file.length() < length) {
+                    length = (int) file.length();
+                }
+                response.setContentLength(length);
+                String fileName = file.getName();
+                FileUtil.openFilebBreakpoint(request, response, file, fileName);
+            }
+        } catch (Exception e) {
+        }
+    }
 }

@@ -322,7 +322,19 @@ public class ModelHsfxtkController {
         modelCallHsfxtkService.previewPicFile(request,response,planId,picId);
     }
 
-
+    /**
+     * 预览内涝过程
+     * @param planId
+     * @param picId
+     * @param request
+     * @param response
+     * @throws Exception
+     */
+    @RequestMapping(value = "/previewFloodPic/{planId}/{picId}", method = RequestMethod.GET)
+    public @ResponseBody
+    void previewFloodPic(@PathVariable(value="planId") String planId,@PathVariable(value="picId") String picId, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        modelCallHsfxtkService.previewFloodPic(request,response,planId,picId);
+    }
 
     @RequestMapping(value = "/test/{modelId}/{planId}/{dataType}", method = RequestMethod.GET)
     public SystemSecurityMessage savePlanToDb(@PathVariable String modelId,@PathVariable String planId,@PathVariable String dataType) {

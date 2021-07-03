@@ -132,6 +132,15 @@ public interface ModelCallHsfxtkService {
      */
     void previewPicFile(HttpServletRequest request, HttpServletResponse response, String planId, String picId);
 
+    /**
+     * 内涝过程
+     * @param request
+     * @param response
+     * @param planId
+     * @param picId
+     */
+    void previewFloodPic(HttpServletRequest request, HttpServletResponse response, String planId, String picId);
+
     void testMakePic(String planId, String modelId);
 
     /**
