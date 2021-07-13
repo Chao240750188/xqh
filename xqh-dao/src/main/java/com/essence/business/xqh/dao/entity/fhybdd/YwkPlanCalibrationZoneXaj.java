@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.Objects;
 
 @Entity
-@Table(name = "YWK_PLAN_CALIBRATION_ZONE_XAJ", schema = "XQH", catalog = "")
+@Table(name = "YWK_PLAN_CALIBRATION_ZONE_XAJ")
 public class YwkPlanCalibrationZoneXaj {
     @Id
     @Column(name = "C_ID")

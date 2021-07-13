@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  * @version 1.0 2020/03/30
  */
 @Entity
-@Table(name = "SKDD_SCHEDULING_PLAN_DOCUMENT",schema = "XQH")
+@Table(name = "SKDD_SCHEDULING_PLAN_DOCUMENT")
 public class SkddSchedulingPlanDocument implements Serializable {
 
     /**

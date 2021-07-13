@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
  * 2020年04月27日 15:03:16
  */
 @Entity
-@Table(name = "SQYB_MODEL_LOOP_RUN",schema = "XQH")
+@Table(name = "SQYB_MODEL_LOOP_RUN")
 public class SqybModelLoopRun implements Serializable {
 
     /**

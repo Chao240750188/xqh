@@ -20,7 +20,7 @@ import java.util.Date;
 @Getter
 @ToString
 @Entity
-@Table ( name ="ST_TIDE_R", schema = "XQH", catalog = "" )
+@Table ( name ="ST_TIDE_R" )
 public class TTideR  implements Serializable {
 
 	private static final long serialVersionUID =  8515103603190854459L;

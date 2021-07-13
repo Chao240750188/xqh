@@ -7,7 +7,7 @@ import javax.persistence.Table;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "WRP_RCS_BSIN", schema = "XQH", catalog = "")
+@Table(name = "WRP_RCS_BSIN")
 public class WrpRcsBsin {
     @Id
     @Column(name = "RVCRCRSCCD")

@@ -19,7 +19,7 @@ import java.util.Date;
  * @return
  **/
 @Entity
-@Table(name = "HBM_ADDVCD_D",schema = "XQH")
+@Table(name = "HBM_ADDVCD_D")
 public class HbmAddvcdD implements Serializable {
 
     @Id

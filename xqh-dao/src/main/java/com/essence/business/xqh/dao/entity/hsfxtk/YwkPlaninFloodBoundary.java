@@ -7,7 +7,7 @@ import javax.persistence.Table;
 import java.util.Date;
 
 @Entity
-@Table(name = "YWK_PLANIN_FLOOD_BOUNDARY", schema = "XQH", catalog = "")
+@Table(name = "YWK_PLANIN_FLOOD_BOUNDARY")
 public class YwkPlaninFloodBoundary {
     @Id
     @Column(name = "C_ID")

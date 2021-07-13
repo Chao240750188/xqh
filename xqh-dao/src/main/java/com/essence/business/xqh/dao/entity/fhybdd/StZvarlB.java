@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity
-@Table(name = "ST_ZVARL_B", schema = "XQH", catalog = "")
+@Table(name = "ST_ZVARL_B")
 @IdClass(StZvarlBPK.class)
 public class StZvarlB {
     @Id

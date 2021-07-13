@@ -9,7 +9,7 @@ import javax.persistence.Table;
  * 测站分区关联表
  */
 @Entity
-@Table(name = "ST_STBPRP_PART_RELATE", schema = "XQH", catalog = "")
+@Table(name = "ST_STBPRP_PART_RELATE")
 public class StStbprpPartRelate {
     //测站编码
     @Id

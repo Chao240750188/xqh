@@ -10,7 +10,7 @@ import javax.persistence.Table;
 import java.util.Date;
 
 @Entity
-@Table(name = "YWK_WATER_REPORT_DATA", schema = "XQH", catalog = "")
+@Table(name = "YWK_WATER_REPORT_DATA")
 public class YwkWaterReportData {
     //简报或公报雨情数据
     @Id

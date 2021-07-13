@@ -13,7 +13,7 @@ import java.util.Date;
  * 水文(水库)特征值等信息。
  */
 @Entity
-@Table(name = "ST_RSVRFSR_B", schema = "XQH", catalog = "")
+@Table(name = "ST_RSVRFSR_B")
 public class StRsvrfsrB {
     //测站编码
     @Id

@@ -15,7 +15,7 @@ import java.io.Serializable;
  * 2020年3月3日 下午2:07:07
  */
 @Entity
-@Table(name = "SQYB_T_RAIN_PATTERN",schema = "XQH")
+@Table(name = "SQYB_T_RAIN_PATTERN")
 public class SqybRainPattern implements Serializable, Comparable<SqybRainPattern> {
 
     /**

@@ -17,7 +17,7 @@ import java.util.Date;
  * @version 1.0 2019/10/25
  */
 @Entity
-@Table(name = "SQYB_ST_STBPRP_B",schema = "XQH")
+@Table(name = "SQYB_ST_STBPRP_B")
 public class SqybStStbprpB implements Serializable{
 	private static final long serialVersionUID = 42;
 	

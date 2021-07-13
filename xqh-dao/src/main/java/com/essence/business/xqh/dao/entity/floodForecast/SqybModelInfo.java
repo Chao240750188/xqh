@@ -18,7 +18,7 @@ import java.util.Date;
  * 2019年10月24日 下午5:52:16
  */
 @Entity
-@Table(name = "SQYB_MODEL_MODELINFO",schema = "XQH")
+@Table(name = "SQYB_MODEL_MODELINFO")
 public class SqybModelInfo implements Serializable {
 
     /**

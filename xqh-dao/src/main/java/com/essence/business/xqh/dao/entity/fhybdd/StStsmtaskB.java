@@ -7,7 +7,7 @@ import javax.persistence.Table;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "ST_STSMTASK_B", schema = "XQH", catalog = "")
+@Table(name = "ST_STSMTASK_B")
 public class StStsmtaskB {
     //测站编码
     @Id

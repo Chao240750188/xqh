@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.Objects;
 
 @Entity
-@Table(name = "YWK_PLAN_CALIBRATION_DWX", schema = "XQH", catalog = "")
+@Table(name = "YWK_PLAN_CALIBRATION_DWX")
 public class YwkPlanCalibrationDwx {
     @Id
     @Column(name = "C_ID")

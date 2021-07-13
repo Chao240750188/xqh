@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
  * 知识库类型
  */
 @Entity
-@Table(name = "SYS_ATTACH", schema = "XQH", catalog = "")
+@Table(name = "SYS_ATTACH")
 public class SysAttach implements Serializable{
 	private static final long serialVersionUID = -7326394760810350134L;
 

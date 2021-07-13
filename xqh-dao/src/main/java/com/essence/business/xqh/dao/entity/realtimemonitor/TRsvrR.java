@@ -17,7 +17,7 @@ import java.util.Date;
 @Getter
 @ToString
 @Entity
-@Table(name = "ST_RSVR_R", schema = "XQH", catalog = "")
+@Table(name = "ST_RSVR_R")
 @IdClass(TRsvrRPK.class)
 public class TRsvrR  implements Serializable {
 

@@ -15,7 +15,7 @@ import java.util.Date;
  * 2019年10月24日 下午5:52:16
  */
 @Entity
-@Table(name = "SQYB_MODEL_INPUT_RAINFALL",schema = "XQH")
+@Table(name = "SQYB_MODEL_INPUT_RAINFALL")
 public class SqybModelInPutRainfall implements Serializable, Comparable<SqybModelInPutRainfall> {
 
     /**

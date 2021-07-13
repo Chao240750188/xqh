@@ -7,7 +7,7 @@ import javax.persistence.Table;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "YWK_FLOOD_CHANNEL_FLOW", schema = "XQH", catalog = "")
+@Table(name = "YWK_FLOOD_CHANNEL_FLOW")
 public class YwkFloodChannelFlow {
     @Id
     @Column(name = "C_ID")

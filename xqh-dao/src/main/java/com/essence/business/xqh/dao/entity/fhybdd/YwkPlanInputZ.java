@@ -15,7 +15,7 @@ import java.util.Date;
 @AllArgsConstructor
 @ToString
 @Entity
-@Table( name ="YWK_PLAN_INPUT_Z", schema = "XQH", catalog = "" )
+@Table( name ="YWK_PLAN_INPUT_Z" )
 public class YwkPlanInputZ{
 
     /**

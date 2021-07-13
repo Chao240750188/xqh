@@ -20,7 +20,7 @@ import java.util.Date;
 @Getter
 @ToString
 @Entity
-@Table ( name ="HBM_ADDVCD_D",schema = "XQH" )
+@Table ( name ="HBM_ADDVCD_D" )
 public class HbmAddvcd  implements Serializable {
 
 	private static final long serialVersionUID =  478276161844375133L;

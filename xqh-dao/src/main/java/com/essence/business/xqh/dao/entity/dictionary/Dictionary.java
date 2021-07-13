@@ -18,7 +18,7 @@ import javax.persistence.Table;
  * 数据字典实体类
  */
 @Entity
-@Table(name = "SYS_DICTIONARY", schema = "XQH", catalog = "")
+@Table(name = "SYS_DICTIONARY")
 public class Dictionary implements Serializable {
 	private static final long serialVersionUID = 550;
 	

@@ -5,7 +5,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @Entity
-@Table(name = "YWK_MODEL_ROUGHNESS_PARAM", schema = "XQH", catalog = "")
+@Table(name = "YWK_MODEL_ROUGHNESS_PARAM")
 public class YwkModelRoughnessParam {
     @Id
     @Column(name = "ROUGHNESS_PARAMID")

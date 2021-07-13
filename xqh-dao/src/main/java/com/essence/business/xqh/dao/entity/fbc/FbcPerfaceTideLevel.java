@@ -12,7 +12,7 @@ import java.util.Objects;
  * 风暴潮-前序潮位
  */
 @Entity
-@Table(name = "FBC_PERFACE_TIDE_LEVEL", schema = "XQH", catalog = "")
+@Table(name = "FBC_PERFACE_TIDE_LEVEL")
 public class FbcPerfaceTideLevel {
     @Id
     @Column(name = "C_ID")

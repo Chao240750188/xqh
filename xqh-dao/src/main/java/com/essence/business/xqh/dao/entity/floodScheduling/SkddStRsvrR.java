@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @IdClass(SkddStRsvrRKey.class)
-@Table(name = "SKDD_ST_RSVR_R",schema = "XQH")
+@Table(name = "SKDD_ST_RSVR_R")
 public class SkddStRsvrR implements Serializable {
 
     /**

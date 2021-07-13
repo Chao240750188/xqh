@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 
 @Entity
-@Table(name = "YWK_PLAN_OUTPUT_Q", schema = "XQH", catalog = "")
+@Table(name = "YWK_PLAN_OUTPUT_Q")
 public class YwkPlanOutputQ {
     @Id
     @Column(name = "IDC_ID")

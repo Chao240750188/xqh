@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity
-@Table(name = "SQYB_MODEL_PLANINFO",schema = "XQH")
+@Table(name = "SQYB_MODEL_PLANINFO")
 public class SqybModelPlanInfo implements Serializable {
 
     /**

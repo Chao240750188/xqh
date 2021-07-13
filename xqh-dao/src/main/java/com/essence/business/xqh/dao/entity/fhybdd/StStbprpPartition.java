@@ -9,7 +9,7 @@ import javax.persistence.Table;
  * 分区表
  */
 @Entity
-@Table(name = "ST_STBPRP_PARTITION", schema = "XQH", catalog = "")
+@Table(name = "ST_STBPRP_PARTITION")
 public class StStbprpPartition {
     //分区编码
     @Id

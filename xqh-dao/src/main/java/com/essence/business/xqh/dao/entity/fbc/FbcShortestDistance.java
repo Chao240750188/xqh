@@ -12,7 +12,7 @@ import java.util.Objects;
  * 风暴潮-最短距离
  */
 @Entity
-@Table(name = "FBC_SHORTEST_DISTANCE", schema = "XQH", catalog = "")
+@Table(name = "FBC_SHORTEST_DISTANCE")
 public class FbcShortestDistance {
     @Id
     @Column(name = "C_ID")

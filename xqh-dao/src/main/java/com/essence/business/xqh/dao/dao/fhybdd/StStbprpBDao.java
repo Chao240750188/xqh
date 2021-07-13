@@ -174,4 +174,19 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
             "on a.C_STCD = b.STCD where C_PART in ?1\n" +
             "and b.STTP in ?2  ",nativeQuery = true)
     List<StStbprpB> findByAreaIdAndSttp(List<String> areaId, List<String> sttps);//('RFQ_002')  //in ('ZQ','ZZ')
+
+    @Query(value = "SELECT\n" +
+            "\t\t\tB.STCD,\n" +
+            "\t\t\tB.STNM,\n" +
+            "\t\t\tR.DRP,\n" +
+            "\t\t\tR.TM \n" +
+            "\t\tFROM\n" +
+            "\t\t\tST_STBPRP_B B\n" +
+            "\t\t\tINNER JOIN ( SELECT STCD FROM ST_STSMTASK_B WHERE PFL = 1 ) M ON B.STCD = M.STCD\n" +
+            "\t\t\tLEFT JOIN ( SELECT STCD, DRP,TM FROM ST_PPTN_R WHERE TM >= ?1 AND TM <= ?2 ) R ON R.STCD = B.STCD ",nativeQuery = true)
+    List<Map<String, Object>> getRainWarnThird(Date preHourTime12, Date time);
+
+
+    @Query(value = "SELECT T.* FROM ST_STBPRP_B T LEFT JOIN ST_STSMTASK_B M ON T.STCD=M.STCD WHERE T.USFL='1' AND M.ZFL=1 ", nativeQuery = true)
+    public List<StStbprpB> findUseWaterLevelStbprpBStation();
 }

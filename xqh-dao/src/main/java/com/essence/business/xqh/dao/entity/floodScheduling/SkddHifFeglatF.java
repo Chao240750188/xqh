@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
  * @version 1.0 2020/04/01
  */
 @Entity
-@Table(name = "SKDD_HIF_REGLAT_F",schema = "XQH")
+@Table(name = "SKDD_HIF_REGLAT_F")
 public class SkddHifFeglatF implements Serializable {
 
     /**

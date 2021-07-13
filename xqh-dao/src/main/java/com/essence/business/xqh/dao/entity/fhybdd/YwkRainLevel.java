@@ -8,7 +8,7 @@ import javax.persistence.Table;
 
 @Entity
 @Data
-@Table(name = "YWK_RAIN_LEVEL", schema = "XQH", catalog = "")
+@Table(name = "YWK_RAIN_LEVEL")
 public class YwkRainLevel {
     @Id
     @Column(name = "C_ID")

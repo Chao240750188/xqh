@@ -21,7 +21,7 @@ import java.util.Date;
 @Getter
 @ToString
 @Entity
-@Table ( name ="ST_STSMTASK_B_OLD" ,schema = "XQH")
+@Table ( name ="ST_STSMTASK_B_OLD" )
 public class TStsmtaskBOld implements Serializable {
 
 	private static final long serialVersionUID =  1964514384285761055L;

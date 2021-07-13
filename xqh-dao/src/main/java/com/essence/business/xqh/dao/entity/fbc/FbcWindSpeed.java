@@ -10,7 +10,7 @@ import javax.persistence.Table;
 import java.util.Date;
 
 @Entity
-@Table(name = "FBC_WIND_SPEED", schema = "XQH", catalog = "")
+@Table(name = "FBC_WIND_SPEED")
 public class FbcWindSpeed {
     @Id
     @Column(name = "C_ID")

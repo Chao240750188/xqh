@@ -6,7 +6,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "WRP_RSR_ST_STBPRP", schema = "XQH", catalog = "")
+@Table(name = "WRP_RSR_ST_STBPRP")
 public class WrpRsrStStbprp {
     @Id
     @Column(name = "C_ID")

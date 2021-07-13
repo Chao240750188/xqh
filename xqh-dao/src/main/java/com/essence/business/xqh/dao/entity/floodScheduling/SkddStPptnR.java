@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @IdClass(SkddStPptnRKey.class)
-@Table(name = "SKDD_ST_PPTN_R",schema = "XQH")
+@Table(name = "SKDD_ST_PPTN_R")
 public class SkddStPptnR implements Serializable {
 
     /**

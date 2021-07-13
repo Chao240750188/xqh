@@ -15,7 +15,7 @@ import java.util.Date;
  * 2021/2/4 20:05
  */
 @Entity
-@Table(name = "ST_PDMMYSQ_S", schema = "XQH", catalog = "")
+@Table(name = "ST_PDMMYSQ_S")
 public class StPdmmysqS {
     @Id
     @Column(name = "STCD")

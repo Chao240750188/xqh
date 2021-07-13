@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
-@Table(name = "WRP_WARNING_WATER_LEVEL", schema = "XQH", catalog = "")
+@Table(name = "WRP_WARNING_WATER_LEVEL")
 public class WrpWarningWaterLevel {
 
     @Id

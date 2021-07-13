@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
  * 2020年03月12日 下午4:37:16
  */
 @Entity
-@Table(name = "SQYB_MODEL_INPUT_EVAPORATION",schema = "XQH")
+@Table(name = "SQYB_MODEL_INPUT_EVAPORATION")
 public class SqybModelInputEvaporation implements Serializable {
 
     /**

@@ -8,7 +8,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 
 @Entity
-@Table(name = "WRP_RVR_BSIN", schema = "XQH", catalog = "")
+@Table(name = "WRP_RVR_BSIN")
 public class WrpRvrBsin {
     @Id
     @Column(name = "RVCD")

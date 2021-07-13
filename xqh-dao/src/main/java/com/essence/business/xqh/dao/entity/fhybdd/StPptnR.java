@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 
 @Entity
-@Table(name = "ST_PPTN_R", schema = "XQH", catalog = "")
+@Table(name = "ST_PPTN_R")
 //@Table(name = "ST_PPTN_R")
 public class StPptnR {
     @Id

@@ -19,7 +19,7 @@ import java.util.Date;
 @Getter
 @ToString
 @Entity
-@Table ( name ="ST_STBPRP_B_OLD",schema = "XQH" )
+@Table ( name ="ST_STBPRP_B_OLD" )
 public class TStbprpBOld implements Serializable {
 
 	private static final long serialVersionUID =  478276161844375133L;

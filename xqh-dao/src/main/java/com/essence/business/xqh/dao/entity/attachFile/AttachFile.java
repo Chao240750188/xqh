@@ -18,7 +18,7 @@ import java.util.Date;
  * @version 1.0 2018/01/08
  */
 @Entity
-@Table(name = "SYS_ATTACHFILE", schema = "XQH", catalog = "")
+@Table(name = "SYS_ATTACHFILE")
 public class AttachFile implements Serializable{
 	private static final long serialVersionUID = 79;
 	

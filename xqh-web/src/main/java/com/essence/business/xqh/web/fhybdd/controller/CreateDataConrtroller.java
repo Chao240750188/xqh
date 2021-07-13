@@ -52,8 +52,8 @@ public class CreateDataConrtroller {
             List<StStbprpB> list = stStbprpBDao.findAll();
             List<StStbprpB> newLIst = list.stream().filter(StStbprpB->"1".equals(StStbprpB.getAddvcd())).collect(Collectors.toList());
             List<StPptnR> stPptnRList = new ArrayList<>();
-            Date time = DateUtil.getDateByStringNormal("2021/06/03 17:00:00");
-            for (int i = 0; i < 500; i++) {
+            Date time = DateUtil.getDateByStringNormal("2021/07/11 23:00:00");
+            for (int i = 0; i < 1; i++) {
                 Date times = DateUtil.getNextHour(time,i);
                 for (StStbprpB stStbprpB:newLIst) {
                     StPptnR stPptnR = new StPptnR();

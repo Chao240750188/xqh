@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "YWK_TYPICAL_RAIN_TIME", schema = "XQH", catalog = "")
+@Table(name = "YWK_TYPICAL_RAIN_TIME")
 public class YwkTypicalRainTime{
 
     @Id

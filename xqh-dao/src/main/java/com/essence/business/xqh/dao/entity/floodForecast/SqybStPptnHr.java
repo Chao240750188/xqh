@@ -15,7 +15,7 @@ import java.util.Date;
  */
 @Entity
 @IdClass(SqybStPptnHrKey.class)
-@Table(name = "SQYB_ST_PPTN_HR",schema = "XQH")
+@Table(name = "SQYB_ST_PPTN_HR")
 public class SqybStPptnHr implements Serializable{
 	private static final long serialVersionUID = 39;
 	

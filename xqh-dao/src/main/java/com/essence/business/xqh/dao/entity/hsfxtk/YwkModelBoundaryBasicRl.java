@@ -5,7 +5,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @Entity
-@Table(name = "YWK_MODEL_BOUNDARY_BASIC_RL", schema = "XQH", catalog = "")
+@Table(name = "YWK_MODEL_BOUNDARY_BASIC_RL")
 public class YwkModelBoundaryBasicRl {
     @Id
     @Column(name = "RLID")

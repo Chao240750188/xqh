@@ -14,7 +14,7 @@ import java.math.BigDecimal;
  * @version 1.0 2020/04/09
  */
 @Entity
-@Table(name = "SKDD_SCHEDULING_OUT_RULES",schema = "XQH")
+@Table(name = "SKDD_SCHEDULING_OUT_RULES")
 public class SkddSchedulingOutRules implements Serializable {
 
     private static final long serialVersionUID = 1L;

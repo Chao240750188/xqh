@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
-@Table(name = "WRP_RCS_SWYB", schema = "XQH", catalog = "")
+@Table(name = "WRP_RCS_SWYB")
 public class WrpRcsSwyb {
     /**
      * 断面id

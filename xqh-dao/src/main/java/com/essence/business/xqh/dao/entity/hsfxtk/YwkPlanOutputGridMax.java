@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "YWK_PLAN_OUTPUT_GRID_MAX", schema = "XQH", catalog = "")
+@Table(name = "YWK_PLAN_OUTPUT_GRID_MAX")
 public class YwkPlanOutputGridMax {
     @EmbeddedId
     private YwkPlanOutputGridMaxPK idCLass;

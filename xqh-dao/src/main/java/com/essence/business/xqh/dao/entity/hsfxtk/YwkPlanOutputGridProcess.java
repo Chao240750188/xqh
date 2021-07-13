@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "YWK_PLAN_OUTPUT_GRID_PROCESS", schema = "XQH", catalog = "")
+@Table(name = "YWK_PLAN_OUTPUT_GRID_PROCESS")
 public class YwkPlanOutputGridProcess {
     @EmbeddedId
     YwkPlanOutputGridProcessPK pk;

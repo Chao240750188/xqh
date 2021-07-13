@@ -18,7 +18,7 @@ import java.util.Date;
 @Getter
 @ToString
 @Entity
-@Table ( name ="ST_B_RIVER" ,schema = "XQH")
+@Table ( name ="ST_B_RIVER" )
 public class StBRiver implements Serializable {
 
 	private static final long serialVersionUID =  6900323962816353629L;

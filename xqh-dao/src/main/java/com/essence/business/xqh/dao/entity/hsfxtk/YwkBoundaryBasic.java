@@ -6,7 +6,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "YWK_BOUNDARY_BASIC", schema = "XQH", catalog = "")
+@Table(name = "YWK_BOUNDARY_BASIC")
 public class YwkBoundaryBasic {
     @Id
     @Column(name = "STCD")

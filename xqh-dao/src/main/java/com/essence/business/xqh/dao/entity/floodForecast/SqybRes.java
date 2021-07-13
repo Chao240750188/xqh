@@ -19,7 +19,7 @@ import java.util.Date;
  * 2019年10月24日 下午5:52:16
  */
 @Entity
-@Table(name = "SQYB_OBJ_RES",schema = "XQH")
+@Table(name = "SQYB_OBJ_RES")
 public class SqybRes implements Serializable {
 
     /**

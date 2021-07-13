@@ -10,7 +10,7 @@ import javax.persistence.Table;
 import java.util.Date;
 
 @Entity
-@Table(name = "YWK_PLAN_TRIGGER_RCS_FLOW", schema = "XQH", catalog = "")
+@Table(name = "YWK_PLAN_TRIGGER_RCS_FLOW")
 public class YwkPlanTriggerRcsFlow {
 
         @Id

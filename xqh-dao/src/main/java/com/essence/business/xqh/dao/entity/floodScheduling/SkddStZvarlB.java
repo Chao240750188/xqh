@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @IdClass(SkddHifZvarlBKey.class)
-@Table(name = "SKDD_ST_ZVARL_B",schema = "XQH")
+@Table(name = "SKDD_ST_ZVARL_B")
 public class SkddStZvarlB {
 
     /**

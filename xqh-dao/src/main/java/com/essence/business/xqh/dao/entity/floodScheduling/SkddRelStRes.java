@@ -13,7 +13,7 @@ import java.io.Serializable;
  * @version 1.0 2020/06/29
  */
 @Entity
-@Table(name = "SKDD_REL_ST_RES",schema = "XQH")
+@Table(name = "SKDD_REL_ST_RES")
 public class SkddRelStRes implements Serializable {
 
     /**

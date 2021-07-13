@@ -12,7 +12,7 @@ import java.util.List;
  * 资料库记录
  */
 @Entity
-@Table(name = "SYS_DOCUMENT", schema = "XQH", catalog = "")
+@Table(name = "SYS_DOCUMENT")
 public class SysDocument implements Serializable {
     private static final long serialVersionUID = -7326394760810350134L;
 
