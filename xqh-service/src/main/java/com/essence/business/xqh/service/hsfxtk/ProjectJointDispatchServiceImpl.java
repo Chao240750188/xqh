@@ -2780,10 +2780,11 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         //获取模型边界基本信息表对所有数据
         List<Map<String, Object>> BndDatas = new ArrayList<>();//表头13个的里程
         List<String> BndList = new ArrayList<>();//点位数据
-        List<Map<String, Object>> breakList = new ArrayList<>();//洪道开始结束俩个点的里程
-        Map<String, List<Map<String, Object>>> channels = new HashMap<>();//点位数据
-        getBndCsvChanelDatas(breakList, channels, planId);//获取分洪道数据
-        getBndCsvBoundaryDatas(BndDatas, BndList, planInfo, breakList, channels);//获取边界数据
+//        List<Map<String, Object>> breakList = new ArrayList<>();//洪道开始结束俩个点的里程
+//        Map<String, List<Map<String, Object>>> channels = new HashMap<>();//点位数据
+//        getBndCsvChanelDatas(breakList, channels, planId);//获取分洪道数据
+//        getBndCsvBoundaryDatas(BndDatas, BndList, planInfo, breakList, channels);//获取边界数据
+        getBndCsvBoundaryDatas(BndDatas, BndList, planInfo);//获取边界数据
 
         //写入边界条件成功
         int result0 = writeDataToInputBNDCsv(hsfx_model_template_input, BndDatas, BndList);
@@ -2919,8 +2920,6 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
     }
 
     private int writeDataToConfig(String hsfx_model_template_run_plan, String hsfx_model_template_input, String hsfx_model_template_output) {
-
-
         List<String> finals = new ArrayList<>();
 
         //String configUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"config.txt";
@@ -2939,10 +2938,16 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         String yiweiInputBNDUrl = "BND&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "BND.csv";
         String yiweiInputINIUrl = "INI&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "INI.csv";
         String yiweiInputSECUrl = "SEC&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC.csv";
+        String yiweiInputSEC0Url = "SEC0&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC0.csv";
+        String yiweiInputSTRUrl = "STR&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "STR.csv";
+        String yiweiInputFHDUrl = "FHD&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "FHD.csv";
         String yiweiInputCTRUrl = "CTR&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "CTR.csv";
         String yiweiInputDischargeUrl = "Discharge&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Discharge.csv";//输出
+        String yiweiInputDischarge0Url = "Discharge0&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Discharge0.csv";//输出
         String yiweiInputWaterlevelUrl = "Waterlevel&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterlevel.csv";//输出
+        String yiweiInputWaterlevel0Url = "Waterlevel0&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterlevel0.csv";//输出
         String yiweiInputWaterdepthUrl = "Waterdepth&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterdepth.csv";//输出
+        String yiweiInputWaterdepth0Url = "Waterdepth0&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterdepth0.csv";//输出
         String JinduUrl = "jindu&&" + hsfx_model_template_output + File.separator + "jindu.txt";//输出
         String errorUrl = "error&&" + hsfx_model_template_output + File.separator + "error.txt";//输出
 
@@ -2958,10 +2963,16 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         finals.add(yiweiInputBNDUrl);
         finals.add(yiweiInputINIUrl);
         finals.add(yiweiInputSECUrl);
+        finals.add(yiweiInputSEC0Url);
+        finals.add(yiweiInputSTRUrl);
+        finals.add(yiweiInputFHDUrl);
         finals.add(yiweiInputCTRUrl);
         finals.add(yiweiInputDischargeUrl);
+        finals.add(yiweiInputDischarge0Url);
         finals.add(yiweiInputWaterlevelUrl);
+        finals.add(yiweiInputWaterlevel0Url);
         finals.add(yiweiInputWaterdepthUrl);
+        finals.add(yiweiInputWaterdepth0Url);
         finals.add(JinduUrl);
         finals.add(errorUrl);
         try {
@@ -3000,6 +3011,15 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         String SecUrl = hsfx_model_template + File.separator + "yiwei" + File.separator + "SEC.csv";
         String SecInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC.csv";
 
+        String Sec0Url = hsfx_model_template + File.separator + "yiwei" + File.separator + "SEC0.csv";
+        String Sec0InputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC0.csv";
+
+        String StrUrl = hsfx_model_template + File.separator + "yiwei" + File.separator + "STR.csv";
+        String StrInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "STR.csv";
+
+        String FhdUrl = hsfx_model_template + File.separator + "yiwei" + File.separator + "FHD.csv";
+        String FhdInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "FHD.csv";
+
         String shujuUrl = hsfx_model_template + File.separator + "erwei" + File.separator + "数据.xls";
         String shujuInputUrl = hsfx_model_template_input + File.separator + "erwei" + File.separator + "数据.xls";
 
@@ -3015,6 +3035,9 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         try {
             FileUtil.copyFile(INIUrl, INIInputUrl, true); //一维的
             FileUtil.copyFile(SecUrl, SecInputUrl, true); //一维的
+            FileUtil.copyFile(Sec0Url, Sec0InputUrl, true); //一维的
+            FileUtil.copyFile(StrUrl, StrInputUrl, true); //一维的
+            FileUtil.copyFile(FhdUrl, FhdInputUrl, true); //一维的
             FileUtil.copyFile(shujuUrl, shujuInputUrl, true); //二维的
             FileUtil.copyFile(InUrl, InInputUrl, true); //二维的
             FileUtil.copyFile(JDUrl, JDInputUrl, true); //二维的
@@ -3350,7 +3373,8 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         return target;
     }
 
-    private void getBndCsvBoundaryDatas(List<Map<String, Object>> bndDatas, List<String> bndList, YwkPlaninfo planInfo, List<Map<String, Object>> breakIds, Map<String, List<Map<String, Object>>> channels) {
+    //, List<Map<String, Object>> breakIds, Map<String, List<Map<String, Object>>> channels
+    private void getBndCsvBoundaryDatas(List<Map<String, Object>> bndDatas, List<String> bndList, YwkPlaninfo planInfo) {
 
         List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(planInfo.getnModelid());//基本信息中间表
         List<String> collectStcd = modelBoundaryList.stream().map(YwkModelBoundaryBasicRl::getStcd).collect(Collectors.toList());//中间表的stcd集合
@@ -3368,8 +3392,6 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         List<YwkBoundaryBasic> newBoundaryBasicList = new ArrayList(boundaryBasicList.subList(2, boundaryBasicList.size()));
         List<Map<String, Object>> newBoundaryBasics = poToListMap(newBoundaryBasicList);
 
-        //在这个地方把溃口堆进来
-        newBoundaryBasics.addAll(breakIds);
         //按照历程排序从小到大
         Collections.sort(newBoundaryBasics, new Comparator<Map<String, Object>>() {
             @Override
@@ -3400,7 +3422,6 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
             List<Map<String, Object>> list = poToListMap(value);
             planinFloodBoundaryMap.put(key, list);
         }
-        planinFloodBoundaryMap.putAll(channels);
         for (int i = 0; i < bndDatas.size(); i++) {
             Map<String, Object> map = bndDatas.get(i);
             String stcd = map.get("stcd") + "";//下游水文，其他流量
@@ -3466,13 +3487,14 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
             for (int i = 2; i < datas.size(); i++) {
                 Map map = datas.get(i);
                 String stcd = map.get("stcd") + "";
-                if ("entrance".equals(stcd)) {
-                    head = head + "," + "\"分洪道入流\"" + "," + "\"\"";
-                } else if ("export".equals(stcd)) {
-                    head = head + "," + "\"分洪道出流\"" + "," + "\"\"";
-                } else {
-                    head = head + "," + "\"侧向集中入流条件\"" + "," + "\"\"";
-                }
+//                if ("entrance".equals(stcd)) {
+//                    head = head + "," + "\"分洪道入流\"" + "," + "\"\"";
+//                } else if ("export".equals(stcd)) {
+//                    head = head + "," + "\"分洪道出流\"" + "," + "\"\"";
+//                } else {
+//                    head = head + "," + "\"侧向集中入流条件\"" + "," + "\"\"";
+//                }
+                head = head + "," + "\"侧向集中入流条件\"" + "," + "\"\"";
                 flood_boundary = flood_boundary + "," + size + "," + datas.get(i).get("mileage");
             }
             bw.write(head);

@@ -1,6 +1,7 @@
 package com.essence.business.xqh.service.hsfxtk;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
 import com.essence.business.xqh.api.hsfxtk.dto.*;
@@ -13,7 +14,6 @@ import com.essence.business.xqh.dao.entity.fhybdd.YwkModel;
 import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
 import com.essence.business.xqh.dao.entity.hsfxtk.*;
 import com.essence.framework.util.StrUtil;
-import com.google.gson.internal.$Gson$Preconditions;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
@@ -26,12 +26,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.io.*;
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -80,6 +78,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     @Autowired
     YwkMileageInfoDao ywkMileageInfoDao; //方案里程信息
+
+    @Autowired
+    YwkMileageEmphasisDao ywkMileageEmphasisDao;
 
     /**
      * 根据方案名称校验方案是否存在
@@ -688,10 +689,11 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         //获取模型边界基本信息表对所有数据
         List<Map<String, Object>> BndDatas = new ArrayList<>();//表头13个的里程
         List<String> BndList = new ArrayList<>();//点位数据
-        List<Map<String, Object>> breakList = new ArrayList<>();//洪道开始结束俩个点的里程
-        Map<String, List<Map<String, Object>>> channels = new HashMap<>();//点位数据
-        getBndCsvChanelDatas(breakList, channels, planId);//获取分洪道数据
-        getBndCsvBoundaryDatas(BndDatas, BndList, planInfo, breakList, channels);//获取边界数据
+//        List<Map<String, Object>> breakList = new ArrayList<>();//洪道开始结束俩个点的里程
+//        Map<String, List<Map<String, Object>>> channels = new HashMap<>();//点位数据
+//        getBndCsvChanelDatas(breakList, channels, planId);//获取分洪道数据
+//        getBndCsvBoundaryDatas(BndDatas, BndList, planInfo, breakList, channels);//获取边界数据
+        getBndCsvBoundaryDatas(BndDatas, BndList, planInfo);//获取边界数据
 
         //写入边界条件成功
         int result0 = writeDataToInputBNDCsv(hsfx_model_template_input, BndDatas, BndList);
@@ -707,15 +709,14 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             System.out.println("水动力模型计算:溃口CTR.csv输入文件写入失败。。。");
             return;
         }
-        int result2 = writeDataToInputBDCsv(hsfx_model_template, hsfx_model_template_input, planInfo, BndList.size());
 
+        int result2 = writeDataToInputBDCsv(hsfx_model_template, hsfx_model_template_input, planInfo, BndList.size());
         if (result2 == 0) {
             System.out.println("水动力模型计算:溃口通道BD.csv输入文件写入失败。。。");
             return;
         }
 
         int result3 = writeDataToInputWGCsv(hsfx_model_template, hsfx_model_template_input, planInfo);
-
         if (result3 == 0) {
             System.out.println("水动力模型计算:糙率WG.csv输入文件写入失败。。。");
             return;
@@ -828,7 +829,6 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     private int writeDataToConfig(String hsfx_model_template_run_plan, String hsfx_model_template_input, String hsfx_model_template_output) {
 
-
         List<String> finals = new ArrayList<>();
 
         //String configUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"config.txt";
@@ -847,10 +847,16 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         String yiweiInputBNDUrl = "BND&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "BND.csv";
         String yiweiInputINIUrl = "INI&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "INI.csv";
         String yiweiInputSECUrl = "SEC&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC.csv";
+        String yiweiInputSEC0Url = "SEC0&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC0.csv";
+        String yiweiInputSTRUrl = "STR&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "STR.csv";
+        String yiweiInputFHDUrl = "FHD&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "FHD.csv";
         String yiweiInputCTRUrl = "CTR&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "CTR.csv";
         String yiweiInputDischargeUrl = "Discharge&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Discharge.csv";//输出
+        String yiweiInputDischarge0Url = "Discharge0&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Discharge0.csv";//输出
         String yiweiInputWaterlevelUrl = "Waterlevel&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterlevel.csv";//输出
+        String yiweiInputWaterlevel0Url = "Waterlevel0&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterlevel0.csv";//输出
         String yiweiInputWaterdepthUrl = "Waterdepth&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterdepth.csv";//输出
+        String yiweiInputWaterdepth0Url = "Waterdepth0&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterdepth0.csv";//输出
         String JinduUrl = "jindu&&" + hsfx_model_template_output + File.separator + "jindu.txt";//输出
         String errorUrl = "error&&" + hsfx_model_template_output + File.separator + "error.txt";//输出
 
@@ -866,10 +872,16 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         finals.add(yiweiInputBNDUrl);
         finals.add(yiweiInputINIUrl);
         finals.add(yiweiInputSECUrl);
+        finals.add(yiweiInputSEC0Url);
+        finals.add(yiweiInputSTRUrl);
+        finals.add(yiweiInputFHDUrl);
         finals.add(yiweiInputCTRUrl);
         finals.add(yiweiInputDischargeUrl);
+        finals.add(yiweiInputDischarge0Url);
         finals.add(yiweiInputWaterlevelUrl);
+        finals.add(yiweiInputWaterlevel0Url);
         finals.add(yiweiInputWaterdepthUrl);
+        finals.add(yiweiInputWaterdepth0Url);
         finals.add(JinduUrl);
         finals.add(errorUrl);
         try {
@@ -908,6 +920,15 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         String SecUrl = hsfx_model_template + File.separator + "yiwei" + File.separator + "SEC.csv";
         String SecInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC.csv";
 
+        String Sec0Url = hsfx_model_template + File.separator + "yiwei" + File.separator + "SEC0.csv";
+        String Sec0InputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC0.csv";
+
+        String StrUrl = hsfx_model_template + File.separator + "yiwei" + File.separator + "STR.csv";
+        String StrInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "STR.csv";
+
+        String FhdUrl = hsfx_model_template + File.separator + "yiwei" + File.separator + "FHD.csv";
+        String FhdInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "FHD.csv";
+
         String shujuUrl = hsfx_model_template + File.separator + "erwei" + File.separator + "数据.xls";
         String shujuInputUrl = hsfx_model_template_input + File.separator + "erwei" + File.separator + "数据.xls";
 
@@ -923,6 +944,9 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         try {
             FileUtil.copyFile(INIUrl, INIInputUrl, true); //一维的
             FileUtil.copyFile(SecUrl, SecInputUrl, true); //一维的
+            FileUtil.copyFile(Sec0Url, Sec0InputUrl, true); //一维的
+            FileUtil.copyFile(StrUrl, StrInputUrl, true); //一维的
+            FileUtil.copyFile(FhdUrl, FhdInputUrl, true); //一维的
             FileUtil.copyFile(shujuUrl, shujuInputUrl, true); //二维的
             FileUtil.copyFile(InUrl, InInputUrl, true); //二维的
             FileUtil.copyFile(JDUrl, JDInputUrl, true); //二维的
@@ -1258,7 +1282,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         return target;
     }
 
-    private void getBndCsvBoundaryDatas(List<Map<String, Object>> bndDatas, List<String> bndList, YwkPlaninfo planInfo, List<Map<String, Object>> breakIds, Map<String, List<Map<String, Object>>> channels) {
+    private void getBndCsvBoundaryDatas(List<Map<String, Object>> bndDatas, List<String> bndList, YwkPlaninfo planInfo) { //, List<Map<String, Object>> breakIds, Map<String, List<Map<String, Object>>> channels
 
         List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(planInfo.getnModelid());//基本信息中间表
         List<String> collectStcd = modelBoundaryList.stream().map(YwkModelBoundaryBasicRl::getStcd).collect(Collectors.toList());//中间表的stcd集合
@@ -1277,7 +1301,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         List<Map<String, Object>> newBoundaryBasics = poToListMap(newBoundaryBasicList);
 
         //在这个地方把溃口堆进来
-        newBoundaryBasics.addAll(breakIds);
+//        newBoundaryBasics.addAll(breakIds);
         //按照历程排序从小到大
         Collections.sort(newBoundaryBasics, new Comparator<Map<String, Object>>() {
             @Override
@@ -1308,7 +1332,7 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             List<Map<String, Object>> list = poToListMap(value);
             planinFloodBoundaryMap.put(key, list);
         }
-        planinFloodBoundaryMap.putAll(channels);
+//        planinFloodBoundaryMap.putAll(channels);
         for (int i = 0; i < bndDatas.size(); i++) {
             Map<String, Object> map = bndDatas.get(i);
             String stcd = map.get("stcd") + "";//下游水文，其他流量
@@ -1374,13 +1398,14 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
             for (int i = 2; i < datas.size(); i++) {
                 Map map = datas.get(i);
                 String stcd = map.get("stcd") + "";
-                if ("entrance".equals(stcd)) {
-                    head = head + "," + "\"分洪道入流\"" + "," + "\"\"";
-                } else if ("export".equals(stcd)) {
-                    head = head + "," + "\"分洪道出流\"" + "," + "\"\"";
-                } else {
-                    head = head + "," + "\"侧向集中入流条件\"" + "," + "\"\"";
-                }
+//                if ("entrance".equals(stcd)) {
+//                    head = head + "," + "\"分洪道入流\"" + "," + "\"\"";
+//                } else if ("export".equals(stcd)) {
+//                    head = head + "," + "\"分洪道出流\"" + "," + "\"\"";
+//                } else {
+//                    head = head + "," + "\"侧向集中入流条件\"" + "," + "\"\"";
+//                }
+                head = head + "," + "\"侧向集中入流条件\"" + "," + "\"\"";
                 flood_boundary = flood_boundary + "," + size + "," + datas.get(i).get("mileage");
             }
             bw.write(head);
@@ -1552,6 +1577,30 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     }
 
+    @Override
+    public void previewFloodPic(HttpServletRequest request, HttpServletResponse response, String planId, String picId) {
+        YwkPlaninfo planinfo = ywkPlaninfoDao.findOneById(planId);
+        //图片路径
+        String outputAbsolutePath = GisPathConfigurationUtil.getOutputPictureAbsolutePath() + "/" + planinfo.getnModelid() + "/" + planId;
+        //图片路径
+        String processOutputAbsolutePath = outputAbsolutePath + "/floodpic/";
+        String filePath = null;
+        filePath = processOutputAbsolutePath + picId + ".png";
+        try {
+            File file = new File(filePath);
+            if (file != null && file.exists()) {
+                int length = Integer.MAX_VALUE;
+                if (file.length() < length) {
+                    length = (int) file.length();
+                }
+                response.setContentLength(length);
+                String fileName = file.getName();
+                FileUtil.openFilebBreakpoint(request, response, file, fileName);
+            }
+        } catch (Exception e) {
+        }
+    }
+
     /**
      * 获取所有里程信息
      * @return
@@ -1585,79 +1634,141 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
         Date endTime = planInfo.getdCaculateendtm();
         Integer aLong = Math.toIntExact(planInfo.getnOutputtm());
 
-        //Waterlevel.csv文件路径
-            String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
-            String hsfx_model_template_output = hsfx_path +
-                    File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
-                    + File.separator + ywkMileageInfoVo.getnPlanid(); //输出的地址
-            String yiweiInputWaterlevelUrl = hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterlevel.csv";
+        //Waterdepth.csv文件路径
+        String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
+        String hsfx_model_template_output = hsfx_path +
+                File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                + File.separator + ywkMileageInfoVo.getnPlanid(); //输出的地址
+        String yiweiInputWaterdepthUrl = hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterdepth.csv";
 
-            try {
-                FileReader fileReader = new FileReader(yiweiInputWaterlevelUrl);
-                if(fileReader != null){
-                    BufferedReader reader = new BufferedReader(new FileReader(yiweiInputWaterlevelUrl));
-                    String line = null;
-                    List<List<String>> datas = new ArrayList<>();
-                    while ((line = reader.readLine()) != null) {
-                        String item[] = line.split(",");//CSV格式文件为逗号分隔符文件，这里根据逗号切分
-                        datas.add(Arrays.asList(item));
-                    }
-
-                    Map<Object, Object> map = new TreeMap<>();
-                    List<Map<Object, String>> zlist = new ArrayList<>();
-                    for (YwkMileageInfo ywkMileageInfo : all) {
-                        map = new TreeMap<>();
-                        zlist = new ArrayList<>();
-                        map.put("mileage", ywkMileageInfo.getMileage());
-                        map.put("lgtd", ywkMileageInfo.getLgtd());
-                        map.put("lttd", ywkMileageInfo.getLttd());
-                        map.put("leftBankElevation", ywkMileageInfo.getLeftBankElevation());
-                        map.put("rightBankElevation", ywkMileageInfo.getRightBankElevation());
-                        map.put("riverBottomElevation", ywkMileageInfo.getRiverBottomElevation());
-
-                        for (int i = 0; i < datas.get(0).size(); i++) {
-                            if(datas.get(0).get(i).equals("L" + ywkMileageInfo.getMileage())){
-                                Map<Object, String> zListMap = new HashMap<>();
-                                for(int j = 1; j < datas.size(); j++){
-                                    zListMap = new HashMap<>();
-                                    zListMap.put(format.format(DateUtils.addMinutes(startTime, aLong * (j-1))), df.format(Double.valueOf(datas.get(j).get(i))));
-                                    zlist.add(zListMap);
-                                }
-                                map.put("z", zlist);
-                            }
-                        }
-                        result.add(map);
-                    }
-
+        try {
+            FileReader fileReader = new FileReader(yiweiInputWaterdepthUrl);
+            if(fileReader != null){
+                BufferedReader reader = new BufferedReader(fileReader);
+                String line = null;
+                List<List<String>> datas = new ArrayList<>();
+                while ((line = reader.readLine()) != null) {
+                    String item[] = line.split(",");//CSV格式文件为逗号分隔符文件，这里根据逗号切分
+                    datas.add(Arrays.asList(item));
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+
+                Map<Object, Object> map = new HashMap<>();
+                List<Map<Object, String>> zlist = new ArrayList<>();
+                for (YwkMileageInfo ywkMileageInfo : all) {
+                    map = new HashMap<>();
+                    zlist = new ArrayList<>();
+                    map.put("mileage", Double.valueOf(ywkMileageInfo.getMileage()));
+                    map.put("lgtd", ywkMileageInfo.getLgtd());
+                    map.put("lttd", ywkMileageInfo.getLttd());
+                    map.put("leftBankElevation", ywkMileageInfo.getLeftBankElevation());
+                    map.put("rightBankElevation", ywkMileageInfo.getRightBankElevation());
+                    map.put("riverBottomElevation", ywkMileageInfo.getRiverBottomElevation());
+
+                    for (int i = 0; i < datas.get(0).size(); i++) {
+                        if(datas.get(0).get(i).equals("L" + ywkMileageInfo.getMileage())){
+                            Map<Object, String> zListMap = new HashMap<>();
+                            for(int j = 1; j < datas.size(); j++){
+                                zListMap = new HashMap<>();
+                                zListMap.put(format.format(DateUtils.addMinutes(startTime, aLong * (j-1))), df.format(Double.valueOf(datas.get(j).get(i))));
+                                zlist.add(zListMap);
+                            }
+                            map.put("z", zlist);
+                        }
+                    }
+
+                    result.add(map);
+                }
+
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return  result;
     }
 
     @Override
-    public void previewFloodPic(HttpServletRequest request, HttpServletResponse response, String planId, String picId) {
-        YwkPlaninfo planinfo = ywkPlaninfoDao.findOneById(planId);
-        //图片路径
-        String outputAbsolutePath = GisPathConfigurationUtil.getOutputPictureAbsolutePath() + "/" + planinfo.getnModelid() + "/" + planId;
-        //图片路径
-        String processOutputAbsolutePath = outputAbsolutePath + "/floodpic/";
-        String filePath = null;
-        filePath = processOutputAbsolutePath + picId + ".png";
+    public List<YwkMileageEmphasis> getEmphasisMileage() {
+        return ywkMileageEmphasisDao.findAll();
+    }
+
+    @Override
+    public Object verticalSectionLineChart(YwkNodeInfoVo ywkNodeInfoVo) {
+        Optional<YwkMileageEmphasis> byId = ywkMileageEmphasisDao.findById(ywkNodeInfoVo.getMileage());
+        YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(ywkNodeInfoVo.getnPlanid());
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        DecimalFormat df = new DecimalFormat("0.00");
+        Date startTime = planInfo.getdCaculatestarttm();
+        Date endTime = planInfo.getdCaculateendtm();
+        Integer aLong = Math.toIntExact(planInfo.getnOutputtm());
+        JSONObject result = new JSONObject();
+
+        //Waterlevel.csv 和 Discharge.csv文件路径
+        String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
+        String hsfx_model_template_output = hsfx_path +
+                File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                + File.separator + ywkNodeInfoVo.getnPlanid(); //输出的地址
+        String yiweiInputWaterlevelUrl = hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterlevel.csv";
+        String yiweiInputDischargeUrl = hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Discharge.csv";
+
         try {
-            File file = new File(filePath);
-            if (file != null && file.exists()) {
-                int length = Integer.MAX_VALUE;
-                if (file.length() < length) {
-                    length = (int) file.length();
+            FileReader fileReader = new FileReader(yiweiInputWaterlevelUrl);
+            if(fileReader != null){
+                BufferedReader reader = new BufferedReader(fileReader);
+                String line = null;
+                List<List<String>> datas = new ArrayList<>();
+                while ((line = reader.readLine()) != null) {
+                    String item[] = line.split(",");//CSV格式文件为逗号分隔符文件，这里根据逗号切分
+                    datas.add(Arrays.asList(item));
                 }
-                response.setContentLength(length);
-                String fileName = file.getName();
-                FileUtil.openFilebBreakpoint(request, response, file, fileName);
+
+                JSONArray waterlevelInJsonArray = new JSONArray();
+                JSONObject levelJson = new JSONObject();
+                for (int i = 0; i < datas.get(0).size(); i++) {
+                    if(datas.get(0).get(i).equals("L" + ywkNodeInfoVo.getMileage())){
+                        levelJson = new JSONObject();
+                        for(int j = 1; j < datas.size(); j++){
+                            levelJson = new JSONObject();
+                            levelJson.put("time", format.format(DateUtils.addMinutes(startTime, aLong * (j-1))));
+                            levelJson.put("waterlevel", df.format(Double.valueOf(datas.get(j).get(i))));
+                            waterlevelInJsonArray.add(levelJson);
+                        }
+                    }
+                }
+                result.put("Waterlevel", waterlevelInJsonArray);
+            }
+
+            FileReader fileReader1 = new FileReader(yiweiInputDischargeUrl);
+            if(fileReader1 != null){
+                BufferedReader reader1 = new BufferedReader(fileReader1);
+                String line = null;
+                List<List<String>> datas1 = new ArrayList<>();
+                while ((line = reader1.readLine()) != null) {
+                    String item[] = line.split(",");//CSV格式文件为逗号分隔符文件，这里根据逗号切分
+                    if(item.length>1){
+                        datas1.add(Arrays.asList(item));
+                    }
+                }
+
+                JSONArray dischargeInJsonArray = new JSONArray();
+                JSONObject dischargeJson = new JSONObject();
+                for (int i = 0; i < datas1.get(0).size(); i++) {
+                    if(datas1.get(0).get(i).equals("L" + ywkNodeInfoVo.getMileage())){
+                        dischargeJson = new JSONObject();
+                        for(int j = 1; j < datas1.size(); j++){
+                            dischargeJson = new JSONObject();
+                            dischargeJson.put("time", format.format(DateUtils.addMinutes(startTime, aLong * (j-1))));
+                            dischargeJson.put("discharge", df.format(Double.valueOf(datas1.get(j).get(i))));
+                            dischargeInJsonArray.add(dischargeJson);
+                        }
+                    }
+                }
+                result.put("Discharge", dischargeInJsonArray);
             }
         } catch (Exception e) {
+            e.printStackTrace();
         }
+        return result;
     }
+
 }

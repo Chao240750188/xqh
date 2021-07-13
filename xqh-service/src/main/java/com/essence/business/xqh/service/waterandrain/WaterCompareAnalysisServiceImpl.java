@@ -81,14 +81,12 @@ public class WaterCompareAnalysisServiceImpl implements WaterCompareAnalysisServ
     public Map<String, Object> getWaterLevelTendency(QueryParamDto dto, String flag) {
         Date startTime = dto.getStartTime();
         Date endTime = dto.getEndTime();
-        String stcds = dto.getStcd();
-        String[] split = stcds.split(",");
+        List<String> stcdList = dto.getStcds();
         BigDecimal min = new BigDecimal(0);
         BigDecimal max = new BigDecimal(0);
         List<Map<String, Object>> list = new ArrayList<>();
 
-        for (int i = 0; i < split.length; i++) {
-            String stcd = split[i];
+        for (String stcd : stcdList) {
             StStbprpB stbprpB = stStbprpBDao.findByStcd(stcd);
             String sttp = stbprpB.getSttp();
             String stnm = stbprpB.getStnm();

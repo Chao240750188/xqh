@@ -1008,12 +1008,12 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         String hsfx_model_template = hsfx_path +
                 File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");//默认文件对位置
 
-        if ("MODEL_FBC_GCD_01".equals(modelid)) {
+        if ("MODEL_HSFX_01".equals(modelid)) {
             hsfx_model_template = hsfx_model_template + File.separator + "FHBHQ1";
-        } else if ("MODEL_FBC_GCD_02".equals(modelid)) {
+        } else if ("MODEL_HSFX_02".equals(modelid)) {
             hsfx_model_template = hsfx_model_template + File.separator + "FHBHQ2";
         } else {
-            System.out.println("风暴潮感潮段模型的模型id值不对");
+            System.out.println("水动力模型的模型id值不对");
             return;
         }
 
@@ -1025,6 +1025,7 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_RUN");
 
         String hsfx_model_template_run_plan = hsfx_model_template_run + File.separator + planId;
+        //List<YwkPlanOutputGridProcess> results = analysisOfGridProcessCSV(hsfx_model_template_output,planinfo);
 
         File inputyiweiPath = new File(hsfx_model_template_input + File.separator + "yiwei");
         File inputerweiPath = new File(hsfx_model_template_input + File.separator + "erwei");
@@ -1048,10 +1049,11 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         //获取模型边界基本信息表对所有数据
         List<Map<String, Object>> BndDatas = new ArrayList<>();//表头13个的里程
         List<String> BndList = new ArrayList<>();//点位数据
-        List<Map<String, Object>> breakList = new ArrayList<>();//洪道开始结束俩个点的里程
-        Map<String, List<Map<String, Object>>> channels = new HashMap<>();//点位数据
-        getBndCsvChanelDatas(breakList, channels, planId);//获取分洪道数据
-        getBndCsvBoundaryDatas(BndDatas, BndList, planInfo, breakList, channels);//获取边界数据
+//        List<Map<String, Object>> breakList = new ArrayList<>();//洪道开始结束俩个点的里程
+//        Map<String, List<Map<String, Object>>> channels = new HashMap<>();//点位数据
+//        getBndCsvChanelDatas(breakList, channels, planId);//获取分洪道数据
+//        getBndCsvBoundaryDatas(BndDatas, BndList, planInfo, breakList, channels);//获取边界数据
+        getBndCsvBoundaryDatas(BndDatas, BndList, planInfo);//获取边界数据
 
         //写入边界条件成功
         int result0 = writeDataToInputBNDCsv(hsfx_model_template_input, BndDatas, BndList);
@@ -1191,8 +1193,6 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
     }
 
     private int writeDataToConfig(String hsfx_model_template_run_plan, String hsfx_model_template_input, String hsfx_model_template_output) {
-
-
         List<String> finals = new ArrayList<>();
 
         //String configUrl = "/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本"+File.separator+"config.txt";
@@ -1211,10 +1211,16 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         String yiweiInputBNDUrl = "BND&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "BND.csv";
         String yiweiInputINIUrl = "INI&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "INI.csv";
         String yiweiInputSECUrl = "SEC&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC.csv";
+        String yiweiInputSEC0Url = "SEC0&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC0.csv";
+        String yiweiInputSTRUrl = "STR&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "STR.csv";
+        String yiweiInputFHDUrl = "FHD&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "FHD.csv";
         String yiweiInputCTRUrl = "CTR&&" + hsfx_model_template_input + File.separator + "yiwei" + File.separator + "CTR.csv";
         String yiweiInputDischargeUrl = "Discharge&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Discharge.csv";//输出
+        String yiweiInputDischarge0Url = "Discharge0&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Discharge0.csv";//输出
         String yiweiInputWaterlevelUrl = "Waterlevel&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterlevel.csv";//输出
+        String yiweiInputWaterlevel0Url = "Waterlevel0&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterlevel0.csv";//输出
         String yiweiInputWaterdepthUrl = "Waterdepth&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterdepth.csv";//输出
+        String yiweiInputWaterdepth0Url = "Waterdepth0&&" + hsfx_model_template_output + File.separator + "yiwei" + File.separator + "Waterdepth0.csv";//输出
         String JinduUrl = "jindu&&" + hsfx_model_template_output + File.separator + "jindu.txt";//输出
         String errorUrl = "error&&" + hsfx_model_template_output + File.separator + "error.txt";//输出
 
@@ -1230,10 +1236,16 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         finals.add(yiweiInputBNDUrl);
         finals.add(yiweiInputINIUrl);
         finals.add(yiweiInputSECUrl);
+        finals.add(yiweiInputSEC0Url);
+        finals.add(yiweiInputSTRUrl);
+        finals.add(yiweiInputFHDUrl);
         finals.add(yiweiInputCTRUrl);
         finals.add(yiweiInputDischargeUrl);
+        finals.add(yiweiInputDischarge0Url);
         finals.add(yiweiInputWaterlevelUrl);
+        finals.add(yiweiInputWaterlevel0Url);
         finals.add(yiweiInputWaterdepthUrl);
+        finals.add(yiweiInputWaterdepth0Url);
         finals.add(JinduUrl);
         finals.add(errorUrl);
         try {
@@ -1249,16 +1261,16 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 }
             }
             bw.close();
-            System.out.println("写入风暴潮感潮段模型config成功");
+            System.out.println("写入水动力模型config成功");
             return 1;
         } catch (FileNotFoundException e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("写入风暴潮感潮段模型config失败");
+            System.out.println("写入水动力模型config失败");
             e.printStackTrace();
             return 0;
         } catch (IOException e) {
             // BufferedWriter在关闭对象捕捉异常
-            System.out.println("写入风暴潮感潮段模型config失败");
+            System.out.println("写入水动力模型config失败");
             e.printStackTrace();
             return 0;
         }
@@ -1271,6 +1283,15 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
 
         String SecUrl = hsfx_model_template + File.separator + "yiwei" + File.separator + "SEC.csv";
         String SecInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC.csv";
+
+        String Sec0Url = hsfx_model_template + File.separator + "yiwei" + File.separator + "SEC0.csv";
+        String Sec0InputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "SEC0.csv";
+
+        String StrUrl = hsfx_model_template + File.separator + "yiwei" + File.separator + "STR.csv";
+        String StrInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "STR.csv";
+
+        String FhdUrl = hsfx_model_template + File.separator + "yiwei" + File.separator + "FHD.csv";
+        String FhdInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "FHD.csv";
 
         String shujuUrl = hsfx_model_template + File.separator + "erwei" + File.separator + "数据.xls";
         String shujuInputUrl = hsfx_model_template_input + File.separator + "erwei" + File.separator + "数据.xls";
@@ -1287,14 +1308,17 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         try {
             FileUtil.copyFile(INIUrl, INIInputUrl, true); //一维的
             FileUtil.copyFile(SecUrl, SecInputUrl, true); //一维的
+            FileUtil.copyFile(Sec0Url, Sec0InputUrl, true); //一维的
+            FileUtil.copyFile(StrUrl, StrInputUrl, true); //一维的
+            FileUtil.copyFile(FhdUrl, FhdInputUrl, true); //一维的
             FileUtil.copyFile(shujuUrl, shujuInputUrl, true); //二维的
             FileUtil.copyFile(InUrl, InInputUrl, true); //二维的
             FileUtil.copyFile(JDUrl, JDInputUrl, true); //二维的
             FileUtil.copyFile(TDUrl, TDInputUrl, true); //二维的
-            System.err.println("风暴潮感潮段模型计算：copy输入文件成功");
+            System.err.println("水动力模型计算：copy输入文件成功");
             return 1;
         } catch (Exception e) {
-            System.err.println("风暴潮感潮段模型计算：copy输入文件错误" + e.getMessage());
+            System.err.println("水动力模型计算：copy输入文件错误" + e.getMessage());
             return 0;
         }
 
@@ -1616,7 +1640,8 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         return target;
     }
 
-    private void getBndCsvBoundaryDatas(List<Map<String, Object>> bndDatas, List<String> bndList, YwkPlaninfo planInfo, List<Map<String, Object>> breakIds, Map<String, List<Map<String, Object>>> channels) {
+    //, List<Map<String, Object>> breakIds, Map<String, List<Map<String, Object>>> channels
+    private void getBndCsvBoundaryDatas(List<Map<String, Object>> bndDatas, List<String> bndList, YwkPlaninfo planInfo) {
 
         List<YwkModelBoundaryBasicRl> modelBoundaryList = ywkModelBoundaryBasicRlDao.findByIdmodelId(planInfo.getnModelid());//基本信息中间表
         List<String> collectStcd = modelBoundaryList.stream().map(YwkModelBoundaryBasicRl::getStcd).collect(Collectors.toList());//中间表的stcd集合
@@ -1626,16 +1651,14 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         upperMap.put("stcd", boundaryBasicList.get(0).getStcd());
         upperMap.put("mileage", 1);
         Map downMap = new HashMap();//下游
-        downMap.put("stcd", boundaryBasicList.get(boundaryBasicList.size()-1).getStcd());
+        downMap.put("stcd", boundaryBasicList.get(1).getStcd());
         downMap.put("mileage", 0);
         bndDatas.add(upperMap);
         bndDatas.add(downMap);
         //截取非上下游的其他数据
-        List<YwkBoundaryBasic> newBoundaryBasicList = new ArrayList(boundaryBasicList.subList(1, boundaryBasicList.size()-1));
+        List<YwkBoundaryBasic> newBoundaryBasicList = new ArrayList(boundaryBasicList.subList(2, boundaryBasicList.size()));
         List<Map<String, Object>> newBoundaryBasics = poToListMap(newBoundaryBasicList);
 
-        //在这个地方把溃口堆进来
-        newBoundaryBasics.addAll(breakIds);
         //按照历程排序从小到大
         Collections.sort(newBoundaryBasics, new Comparator<Map<String, Object>>() {
             @Override
@@ -1666,7 +1689,6 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
             List<Map<String, Object>> list = poToListMap(value);
             planinFloodBoundaryMap.put(key, list);
         }
-        planinFloodBoundaryMap.putAll(channels);
         for (int i = 0; i < bndDatas.size(); i++) {
             Map<String, Object> map = bndDatas.get(i);
             String stcd = map.get("stcd") + "";//下游水文，其他流量
@@ -1716,7 +1738,12 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         String BndInputUrl = hsfx_model_template_input + File.separator + "yiwei" + File.separator + "BND.csv";
 
         try {
+            //BufferedWriter bw = new BufferedWriter(new FileWriter(BndInputUrl, false)); // 附加
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(BndInputUrl, false), "UTF-8"));
+
+            //BufferedWriter bw = new BufferedWriter(new FileWriter("/Users/xiongchao/小清河/洪水风险调控/yierwei0128提交版/database/Xqh1_Guojia_50的副本/yiwei/BND.csv", false)); // 附加
+            // 添加新的数据行
+
             String head = "\"上边界条件\"" + "," + "\"\"" + ",";
             head = head + "\"下边界条件\"" + "," + "\"\"";
 
@@ -1727,13 +1754,14 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
             for (int i = 2; i < datas.size(); i++) {
                 Map map = datas.get(i);
                 String stcd = map.get("stcd") + "";
-                if ("entrance".equals(stcd)) {
-                    head = head + "," + "\"分洪道入流\"" + "," + "\"\"";
-                } else if ("export".equals(stcd)) {
-                    head = head + "," + "\"分洪道出流\"" + "," + "\"\"";
-                } else {
-                    head = head + "," + "\"侧向集中入流条件\"" + "," + "\"\"";
-                }
+//                if ("entrance".equals(stcd)) {
+//                    head = head + "," + "\"分洪道入流\"" + "," + "\"\"";
+//                } else if ("export".equals(stcd)) {
+//                    head = head + "," + "\"分洪道出流\"" + "," + "\"\"";
+//                } else {
+//                    head = head + "," + "\"侧向集中入流条件\"" + "," + "\"\"";
+//                }
+                head = head + "," + "\"侧向集中入流条件\"" + "," + "\"\"";
                 flood_boundary = flood_boundary + "," + size + "," + datas.get(i).get("mileage");
             }
             bw.write(head);
@@ -1746,16 +1774,16 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
                 bw.newLine();
             }
             bw.close();
-            System.out.println("风暴潮感潮段模型边界条件输入文件写入成功");
+            System.out.println("水动力模型边界条件输入文件写入成功");
             return 1;
         } catch (FileNotFoundException e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("风暴潮感潮段模型边界条件输入文件写入失败");
+            System.out.println("水动力模型边界条件输入文件写入失败");
             e.printStackTrace();
             return 0;
         } catch (IOException e) {
             // BufferedWriter在关闭对象捕捉异常
-            System.out.println("风暴潮感潮段模型边界条件输入文件写入失败");
+            System.out.println("水动力模型边界条件输入文件写入失败");
             e.printStackTrace();
             return 0;
         }

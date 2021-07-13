@@ -9,6 +9,6 @@ import java.util.List;
 
 public interface YwkMileageInfoDao extends EssenceJpaRepository<YwkMileageInfo, String> {
 
-    @Query(value = "select * from YWK_MILEAGE_INFO where MILEAGE >= ?1 and MILEAGE <= ?2", nativeQuery = true)
+    @Query(value = "select * from YWK_MILEAGE_INFO where MILEAGE >= ?1 and MILEAGE <= ?2 order by MILEAGE asc", nativeQuery = true)
     List<YwkMileageInfo> findByMileageBetween(Double startMileage, Double endMileage);
 }

@@ -4,21 +4,19 @@ import com.essence.business.xqh.api.hsfxtk.ModelCallHsfxtkService;
 import com.essence.business.xqh.api.hsfxtk.dto.*;
 import com.essence.business.xqh.api.modelResult.PlanProcessDataService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
-import com.essence.business.xqh.common.util.DateUtil;
 import com.essence.business.xqh.common.util.ExcelUtil;
 import com.essence.business.xqh.common.util.PropertiesUtil;
+import com.essence.business.xqh.dao.entity.hsfxtk.YwkMileageEmphasis;
 import com.essence.business.xqh.dao.entity.hsfxtk.YwkMileageInfo;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -29,9 +27,9 @@ import java.util.Map;
 @RequestMapping("/modelHsfxtk")
 public class ModelHsfxtkController {
 
-
     @Autowired
     ModelCallHsfxtkService modelCallHsfxtkService;
+
     @Autowired
     PlanProcessDataService planProcessDataService;
 
@@ -381,6 +379,38 @@ public class ModelHsfxtkController {
             return SystemSecurityMessage.getFailMsg("获取纵断面洪水过程信息失败！",null);
         }
     }
+
+    /**
+     * 获取重点断面列表
+     * @return
+     */
+    @GetMapping(value = "/getEmphasisMileage")
+    public SystemSecurityMessage getEmphasisMileage() {
+        try {
+            List<YwkMileageEmphasis> result = modelCallHsfxtkService.getEmphasisMileage();
+            return SystemSecurityMessage.getSuccessMsg("获取重点断面列表成功！", result);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("获取重点断面列表失败！",null);
+        }
+    }
+
+    /**
+     * 获取重点断面水位和流量信息
+     * @param ywkNodeInfoVo
+     * @return
+     */
+    @PostMapping(value = "/verticalSectionLineChart")
+    public SystemSecurityMessage verticalSectionLineChart(@RequestBody YwkNodeInfoVo ywkNodeInfoVo) {
+        try {
+            Object result = modelCallHsfxtkService.verticalSectionLineChart(ywkNodeInfoVo);
+            return SystemSecurityMessage.getSuccessMsg("获取重点断面水位和流量信息成功！", result);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("获取重点断面水位和流量信息失败！",null);
+        }
+    }
+
 
 }
 

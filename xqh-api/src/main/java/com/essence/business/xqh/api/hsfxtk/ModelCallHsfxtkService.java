@@ -1,6 +1,7 @@
 package com.essence.business.xqh.api.hsfxtk;
 
 import com.essence.business.xqh.api.hsfxtk.dto.*;
+import com.essence.business.xqh.dao.entity.hsfxtk.YwkMileageEmphasis;
 import com.essence.business.xqh.dao.entity.hsfxtk.YwkMileageInfo;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.web.multipart.MultipartFile;
@@ -156,5 +157,17 @@ public interface ModelCallHsfxtkService {
      */
     List<Map<Object, Object>> verticalSectionFloodProcess(YwkMileageInfoVo ywkMileageInfoVo);
 
+    /**
+     * 获取重点断面
+     * @return
+     */
+    List<YwkMileageEmphasis> getEmphasisMileage();
+
+    /**
+     * 获取重点断面水位和流量信息
+     * @param ywkNodeInfoVo
+     * @return
+     */
+    Object verticalSectionLineChart(YwkNodeInfoVo ywkNodeInfoVo);
 
 }

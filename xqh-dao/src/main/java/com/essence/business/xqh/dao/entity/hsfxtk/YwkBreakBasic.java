@@ -27,6 +27,9 @@ public class YwkBreakBasic {
     private Double lgtd;
     @Column(name = "LTTD")
     private Double lttd;
+    @Column(name = "BREAK_NAME")
+    private String BreakName;
+
 
     public String getIdModelId() {
         return idModelId;
@@ -98,5 +101,13 @@ public class YwkBreakBasic {
 
     public void setLttd(Double lttd) {
         this.lttd = lttd;
+    }
+
+    public String getBreakName() {
+        return BreakName;
+    }
+
+    public void setBreakName(String breakName) {
+        BreakName = breakName;
     }
 }

@@ -28,7 +28,12 @@ public class QueryParamDto implements Serializable {
     private String riverName;
 
     /**
-     * 站点id
+     * 多个站点查询
+     */
+    private List<String> stcds;
+
+    /**
+     * 单个站点id
      */
     private String stcd;
 
