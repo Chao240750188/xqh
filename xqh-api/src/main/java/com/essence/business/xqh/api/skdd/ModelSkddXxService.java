@@ -95,7 +95,7 @@ public interface ModelSkddXxService {
      * 获取模型运行状态
      * @return
      */
-    String getModelRunStatus(YwkPlaninfo planInfo);
+    Object getModelRunStatus(YwkPlaninfo planInfo);
 
     /**
      * 获取模型运行输出结果

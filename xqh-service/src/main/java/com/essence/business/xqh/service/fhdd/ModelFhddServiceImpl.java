@@ -965,14 +965,71 @@ public class ModelFhddServiceImpl implements ModelFhddService {
     }
 
     @Override
-    public String getModelRunStatus(YwkPlaninfo planInfo) {
+    public Object getModelRunStatus(YwkPlaninfo planInfo) {
         Long status = planInfo.getnPlanstatus();
+        JSONObject jsonObject = new JSONObject();
+        String SKDD_XX_SKDD_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("FHDD_MODEL_PATH");
+        String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
+        String SHUIWEN_MODEL_TEMPLATE_OUTPUT ="";
+        SHUIWEN_MODEL_TEMPLATE_OUTPUT = SKDD_XX_SKDD_MODEL_PATH + File.separator + out
+                + File.separator + planInfo.getnPlanid();//输出的地址
 
-        if (status == 2L || status == -1L) {  // 2L 执行成功  -1L 执行失败
-            return "1"; //1的话停止
+        String jinduPath = SHUIWEN_MODEL_TEMPLATE_OUTPUT + File.separator + "jindu.txt";
+        File path = new File(jinduPath);
+        if (!path.exists()) {
+            if (status == -1L){
+                //运行进度
+                jsonObject.put("process", 0.0);
+                //运行状态 1运行结束 0运行中
+                jsonObject.put("runStatus", 1);
+                //运行时间
+                jsonObject.put("describ", "模型运行出现异常！");
+                return jsonObject;
+            }
+            //运行进度
+            jsonObject.put("process", 0.0);
+            //运行状态 1运行结束 0运行中
+            jsonObject.put("runStatus", 0);
+            //运行时间
+            jsonObject.put("describ", "模型运行准备中！");
+            return jsonObject;
         } else {
-            return "0";
+            //运行状态 1运行结束 0运行中
+            BufferedReader br = null;
+            try {
+                br = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
+                String lineTxt2 = br.readLine();
+                //if (lineTxt2 != null) {
+                String[] split = lineTxt2.split("&&");
+                //运行进度
+                double process = Double.parseDouble(split[1] + "");
+                if (status == -1){
+                    jsonObject.put("runStatus", 1);
+                    jsonObject.put("describ", "模型运行出现异常！");
+                    jsonObject.put("process", process * 1.0);
+                    return jsonObject;
+                }
+                jsonObject.put("runStatus", 0);
+                jsonObject.put("describ", "模型运行中！");
+                jsonObject.put("process", process * 1.0);
+                if (process == 100.0 && status == 2L){
+                    jsonObject.put("runStatus", 1);
+                    jsonObject.put("describ", "模型运行成功！");
+                    jsonObject.put("process", process * 1.0);
+                    return jsonObject;
+                }
+                return jsonObject;
+            } catch (Exception e) {
+                System.err.println("进度读取错误！" + e.getMessage());
+            } finally {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
+        return jsonObject;
     }
 
     @Override

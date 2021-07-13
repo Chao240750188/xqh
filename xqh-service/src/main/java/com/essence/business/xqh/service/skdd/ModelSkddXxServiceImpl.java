@@ -30,7 +30,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.springframework.beans.BeanUtils;
 
 @Service
 @SuppressWarnings("all")
@@ -474,7 +473,6 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
         List<String> timeResults = new ArrayList();
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
-        //Long step = planInfo.getnOutputtm() / 60;//步长
         Long step = planInfo.getnOutputtm();//分钟
         while (startTime.before(DateUtil.getNextMillis(endTime, 1))) {
             String hourStart = format.format(startTime);
@@ -551,7 +549,6 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
         //封装时间列
         Date startTime = planinfo.getdCaculatestarttm();
         Date endTime = planinfo.getdCaculateendtm();
-        // Long step = planInfo.getnOutputtm() / 60;//步长
         Long step = planinfo.getnOutputtm();//步长
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         //封装边界模板数据
@@ -786,7 +783,7 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
     @Override
     public void modelPcpCall(YwkPlaninfo planInfo) {
 
-        System.out.println("水库调度-汛限Pcp模型运算线程！" + Thread.currentThread().getName());
+        System.out.println("洪水资源化调度Pcp模型运算线程！" + Thread.currentThread().getName());
         Date originalStartTm = planInfo.getdCaculatestarttm();
         try{
             //雨量信息表
@@ -830,62 +827,62 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
             //1，写入pcp_HRU.csv
             int result0 = writeDataToInputPcpHRUCsv(PCP_HANDLE_MODEL_TEMPLATE_INPUT, PCP_HANDLE_MODEL_TEMPLATE, planInfo);
             if (result0 == 0) {
-                System.out.println("水库调度-汛限Pcp模型:写入pcp_HRU失败");
-                throw new RuntimeException("水库调度-汛限Pcp模型:写入pcp_HRU失败");
+                System.out.println("洪水资源化调度Pcp模型:写入pcp_HRU失败");
+                throw new RuntimeException("洪水资源化调度Pcp模型:写入pcp_HRU失败");
             }
 
             //2,写入pcp_station.csv
             int result1 = writeDataToInputPcpStationCsv(PCP_HANDLE_MODEL_TEMPLATE_INPUT, before72results, planInfo);
             if (result1 == 0) {
-                System.out.println("水库调度-汛限Pcp模型:写入pcp_station失败");
-                throw new RuntimeException("水库调度-汛限Pcp模型:写入pcp_station失败");
+                System.out.println("洪水资源化调度Pcp模型:写入pcp_station失败");
+                throw new RuntimeException("洪水资源化调度Pcp模型:写入pcp_station失败");
             }
 
             //3.复制config以及可执行文件
             int result2 = copyPCPExeFile(PCP_HANDLE_MODEL_RUN, PCP_HANDLE_MODEL_RUN_PLAN);
             if (result2 == 0) {
-                System.out.println("水库调度-汛限Pcp模型:复制执行文件与config文件写入失败。。。");
-                throw new RuntimeException("水库调度-汛限Pcp模型:复制执行文件与config文件写入失败。。。");
+                System.out.println("洪水资源化调度Pcp模型:复制执行文件与config文件写入失败。。。");
+                throw new RuntimeException("洪水资源化调度Pcp模型:复制执行文件与config文件写入失败。。。");
 
             }
 
             //4,修改config文件
             int result3 = writeDataToPcpConfig(PCP_HANDLE_MODEL_RUN_PLAN, PCP_HANDLE_MODEL_TEMPLATE_INPUT, PCP_HANDLE_MODEL_TEMPLATE_OUTPUT);
             if (result3 == 0) {
-                System.out.println("水库调度-汛限Pcp模型:修改config文件失败");
-                throw new RuntimeException("水库调度-汛限Pcp模型:修改config文件失败");
+                System.out.println("洪水资源化调度Pcp模型:修改config文件失败");
+                throw new RuntimeException("洪水资源化调度Pcp模型:修改config文件失败");
 
             }
             long endTime = System.currentTimeMillis();   //获取开始时间
-            System.out.println("水库调度-汛限Pcp模型:组装pcp模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
+            System.out.println("洪水资源化调度Pcp模型:组装pcp模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
 
             //5.调用模型
             //调用模型计算
             startTime = System.currentTimeMillis();
-            System.out.println("水库调度-汛限Pcp模型:开始水库调度汛限模型PCP模型计算。。。");
-            System.out.println("水库调度-汛限Pcp模型:模型计算路径为。。。" + PCP_HANDLE_MODEL_RUN_PLAN + File.separator + "startUp.bat");
+            System.out.println("洪水资源化调度Pcp模型:开始水库调度汛限模型PCP模型计算。。。");
+            System.out.println("洪水资源化调度Pcp模型:模型计算路径为。。。" + PCP_HANDLE_MODEL_RUN_PLAN + File.separator + "startUp.bat");
             runModelExe(PCP_HANDLE_MODEL_RUN_PLAN + File.separator + "startUp.bat");
             endTime = System.currentTimeMillis();
-            System.out.println("水库调度-汛限Pcp模型:模型计算结束。。。所用时间为:" + (endTime - startTime) + "毫秒");
+            System.out.println("洪水资源化调度Pcp模型:模型计算结束。。。所用时间为:" + (endTime - startTime) + "毫秒");
             startTime = System.currentTimeMillis();
             //TODO 判断模型是否执行成功
             //判断是否执行成功，是否有error文件
             String pcp_result = PCP_HANDLE_MODEL_TEMPLATE_OUTPUT + File.separator + "hru_p_result.csv";
             File pcp_resultFile = new File(pcp_result);
             if (pcp_resultFile.exists()) {//存在表示执行成功
-                System.out.println("水库调度-汛限Pcp模型:pcp模型执行成功hru_p_result.csv文件存在");
+                System.out.println("洪水资源化调度Pcp模型:pcp模型执行成功hru_p_result.csv文件存在");
                 planInfo.setdCaculatestarttm(originalStartTm);
                 planInfo.setnPlanstatus(3L);
                 ywkPlaninfoDao.save(planInfo);
             } else {
-                System.out.println("水库调度-汛限Pcp模型:pcp模型执行失败hru_p_result.csv文件不存在");//todo 执行失败
-                throw new RuntimeException("水库调度-汛限Pcp模型:pcp模型执行失败hru_p_result.csv文件不存在");
+                System.out.println("洪水资源化调度Pcp模型:pcp模型执行失败hru_p_result.csv文件不存在");//todo 执行失败
+                throw new RuntimeException("洪水资源化调度Pcp模型:pcp模型执行失败hru_p_result.csv文件不存在");
             }
 
 
         }catch (Exception e){
             e.printStackTrace();
-            System.err.println("水库调度-汛限Pcp模型执行失败，请联系管理员" + e.getMessage());
+            System.err.println("洪水资源化调度Pcp模型执行失败，请联系管理员" + e.getMessage());
             planInfo.setdCaculatestarttm(originalStartTm);
             planInfo.setnPlanstatus(-1L);
             ywkPlaninfoDao.save(planInfo);
@@ -893,7 +890,7 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
     }
 
     /**
-     * 水库调度-汛限水文模型
+     * 洪水资源化调度水库模型
      * @param planinfo
      */
     @Async
@@ -910,7 +907,7 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
         File pcp_resultFile = new File(pcp_result);
         YwkPlaninfo oneById = ywkPlaninfoDao.findOneById(planInfo.getnPlanid());
         if (pcp_resultFile.exists() && (oneById.getnPlanstatus() == 3L || oneById.getnPlanstatus() == 2L)) {//存在表示且方案状态为3L表示PCP执行成功
-            System.out.println("水库调度-汛限水文模型运算线程！" + Thread.currentThread().getName());
+            System.out.println("洪水资源化调度水库模型运算线程！" + Thread.currentThread().getName());
             try{
                 long startTime = System.currentTimeMillis(); //获取开始时间
 
@@ -940,72 +937,72 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
                 //1、预报断面ChuFaDuanMian、ChuFaDuanMian_shuru.csv组装
                 int result1 = writeDataToInputShuiWenChuFaDuanMianCsv(SKDD_MODEL_TEMPLATE_INPUT, planInfo);
                 if (result1 == 0) {
-                    System.out.println("水库调度-汛限水文模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
-                    throw new RuntimeException("水库调度-汛限水文模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
+                    System.out.println("洪水资源化调度水库模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
+                    throw new RuntimeException("洪水资源化调度水库模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
 
                 }
 
                 //2、copy pcp模型的输出文件到水库调度汛限模型的输入文件里
                 int result2 = copeFirstOutPutHruP(PCP_HANDLE_MODEL_TEMPLATE_OUTPUT, SKDD_MODEL_TEMPLATE_INPUT);
                 if (result2 == 0) {
-                    System.out.println("水库调度-汛限水文模型:copy数据处理模型PCP输出文件hru_p_result失败");
-                    throw new RuntimeException("水库调度-汛限水文模型:copy数据处理模型PCP输出文件hru_p_result失败");
+                    System.out.println("洪水资源化调度水库模型:copy数据处理模型PCP输出文件hru_p_result失败");
+                    throw new RuntimeException("洪水资源化调度水库模型:copy数据处理模型PCP输出文件hru_p_result失败");
 
                 }
 
                 //3、读出外部chushishuishuju.csv文件并修改后写入内部input
                 int result3 = updateChuShiShuiShuJu(SKDD_MODEL_TEMPLATE, SKDD_MODEL_TEMPLATE_INPUT, planInfo);
                 if (result3 == 0) {
-                    System.out.println("水库调度-汛限水文模型: 修改chushishuishuju.csv文件失败");
-                    throw new RuntimeException("水库调度-汛限水文模型: 修改chushishuishuju.csv文件失败");
+                    System.out.println("洪水资源化调度水库模型: 修改chushishuishuju.csv文件失败");
+                    throw new RuntimeException("洪水资源化调度水库模型: 修改chushishuishuju.csv文件失败");
 
                 }
 
                 //4、copy剩下的csv输入文件
                 int result4 = copyOtherShuiWenLvDingCsv(SKDD_MODEL_TEMPLATE, SKDD_MODEL_TEMPLATE_INPUT);
                 if (result4 == 0) {
-                    System.out.println("水库调度-汛限水文模型: copy剩下的率定csv输入文件失败");
-                    throw new RuntimeException("水库调度-汛限水文模型: copy剩下的率定csv输入文件失败");
+                    System.out.println("洪水资源化调度水库模型: copy剩下的率定csv输入文件失败");
+                    throw new RuntimeException("洪水资源化调度水库模型: copy剩下的率定csv输入文件失败");
 
                 }
 
                 //5、复制Skdd config以及可执行文件
                 int result5 = copyShuiWenExeFile(SKDD_XX_MODEL_RUN, SKDD_XX_MODEL_RUN_PLAN);
                 if (result5 == 0) {
-                    System.out.println("水库调度-汛限水文模型:复制执行文件与config文件写入失败。。。");
-                    throw new RuntimeException("水库调度-汛限水文模型:复制执行文件与config文件写入失败。。。");
+                    System.out.println("洪水资源化调度水库模型:复制执行文件与config文件写入失败。。。");
+                    throw new RuntimeException("洪水资源化调度水库模型:复制执行文件与config文件写入失败。。。");
 
                 }
 
                 //6、修改Skdd config文件
                 int result6 = writeDataToShuiWenConfig(SKDD_XX_MODEL_RUN_PLAN, SKDD_MODEL_TEMPLATE_INPUT, SKDD_MODEL_TEMPLATE_OUTPUT, 0, planInfo);
                 if (result6 == 0) {
-                    System.out.println("水库调度-汛限水文模型:修改config文件失败");
-                    throw new RuntimeException("水库调度-汛限水文模型:修改config文件失败");
+                    System.out.println("洪水资源化调度水库模型:修改config文件失败");
+                    throw new RuntimeException("洪水资源化调度水库模型:修改config文件失败");
 
                 }
                 long endTime = System.currentTimeMillis();
-                System.out.println("水库调度-汛限水文模型:组装水文模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
+                System.out.println("洪水资源化调度水库模型:组装水文模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
 
                 //7、调用模型计算
                 startTime = System.currentTimeMillis();
-                System.out.println("水库调度-汛限水文模型:开始水库调度汛限水文模型计算。。。");
-                System.out.println("水库调度-汛限水文模型:模型计算路径为。。。" + SKDD_XX_MODEL_RUN_PLAN + File.separator + "startUp.bat");
+                System.out.println("洪水资源化调度水库模型:开始洪水资源化调度水库模型计算。。。");
+                System.out.println("洪水资源化调度水库模型:模型计算路径为。。。" + SKDD_XX_MODEL_RUN_PLAN + File.separator + "startUp.bat");
                 runModelExe(SKDD_XX_MODEL_RUN_PLAN + File.separator + "startUp.bat");
                 endTime = System.currentTimeMillis();
-                System.out.println("水库调度-汛限水文模型:模型计算结束。。。所用时间为:" + (endTime - startTime) + "毫秒");
+                System.out.println("洪水资源化调度水库模型:模型计算结束。。。所用时间为:" + (endTime - startTime) + "毫秒");
 
                 //判断是否执行成功，是否有error文件
                 String errorStr = SKDD_MODEL_TEMPLATE_OUTPUT + File.separator + "error_log.txt";
                 File errorFile = new File(errorStr);
                 if (errorFile.exists()) {//存在表示执行失败
-                    System.out.println("水库调度-汛限水文模型:模型计算失败。。存在error_log文件");
+                    System.out.println("洪水资源化调度水库模型:模型计算失败。。存在error_log文件");
                     planInfo.setnPlanstatus(-1L);
                     ywkPlaninfoDao.save(planInfo);
                     CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
                     return; //todo 执行失败
                 } else {
-                    System.out.println("水库调度-汛限水文模型:模型计算成功。。不存在error_log文件");
+                    System.out.println("洪水资源化调度水库模型:模型计算成功。。不存在error_log文件");
                     planInfo.setnPlanstatus(2L);
                     ywkPlaninfoDao.save(planInfo);
                     CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
@@ -1014,7 +1011,7 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
 
             }catch (Exception e){
                 e.printStackTrace();
-                System.out.println("水文模型执行失败了。。。。。。联系管理员" + e.getMessage());
+                System.out.println("洪水资源化调度水库模型执行失败了。。。。。。联系管理员" + e.getMessage());
                 planInfo.setnPlanstatus(-1L);
                 ywkPlaninfoDao.save(planInfo);
                 CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
@@ -1023,7 +1020,7 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
     }
 
     /**
-     * 水库调度汛限模型计算
+     * 洪水资源化调度模型计算
      * @param planInfo
      */
     @Async
@@ -1096,52 +1093,52 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
             //1，写入pcp_HRU.csv
             int result0 = writeDataToInputPcpHRUCsv(PCP_HANDLE_MODEL_TEMPLATE_INPUT, PCP_HANDLE_MODEL_TEMPLATE, planInfo);
             if (result0 == 0) {
-                System.out.println("水库调度汛限模型之PCP模型:写入pcp_HRU失败");
-                throw new RuntimeException("水库调度汛限模型之PCP模型:写入pcp_HRU失败");
+                System.out.println("洪水资源化调度之PCP模型:写入pcp_HRU失败");
+                throw new RuntimeException("洪水资源化调度之PCP模型:写入pcp_HRU失败");
             }
 
             //2,写入pcp_station.csv
             int result1 = writeDataToInputPcpStationCsv(PCP_HANDLE_MODEL_TEMPLATE_INPUT, before72results, planInfo);
             if (result1 == 0) {
-                System.out.println("水库调度汛限模型之PCP模型:写入pcp_station失败");
-                throw new RuntimeException("水库调度汛限模型之PCP模型:写入pcp_station失败");
+                System.out.println("洪水资源化调度之PCP模型:写入pcp_station失败");
+                throw new RuntimeException("洪水资源化调度之PCP模型:写入pcp_station失败");
             }
 
             //3.复制config以及可执行文件
             int result2 = copyPCPExeFile(PCP_HANDLE_MODEL_RUN, PCP_HANDLE_MODEL_RUN_PLAN);
             if (result2 == 0) {
-                System.out.println("水库调度汛限模型之PCP模型:复制执行文件与config文件写入失败。。。");
-                throw new RuntimeException("水库调度汛限模型之PCP模型:复制执行文件与config文件写入失败。。。");
+                System.out.println("洪水资源化调度之PCP模型:复制执行文件与config文件写入失败。。。");
+                throw new RuntimeException("洪水资源化调度之PCP模型:复制执行文件与config文件写入失败。。。");
 
             }
 
             //4,修改config文件
             int result3 = writeDataToPcpConfig(PCP_HANDLE_MODEL_RUN_PLAN, PCP_HANDLE_MODEL_TEMPLATE_INPUT, PCP_HANDLE_MODEL_TEMPLATE_OUTPUT);
             if (result3 == 0) {
-                System.out.println("水库调度汛限模型之PCP模型:修改config文件失败");
-                throw new RuntimeException("水库调度汛限模型之PCP模型:修改config文件失败");
+                System.out.println("洪水资源化调度之PCP模型:修改config文件失败");
+                throw new RuntimeException("洪水资源化调度之PCP模型:修改config文件失败");
             }
             long endTime = System.currentTimeMillis();   //获取开始时间
-            System.out.println("水库调度汛限模型之PCP模型:组装pcp模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
+            System.out.println("洪水资源化调度之PCP模型:组装pcp模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
 
             //5.调用模型
             //调用模型计算
             startTime = System.currentTimeMillis();
-            System.out.println("水库调度汛限模型之PCP模型:开始水库调度汛限模型PCP模型计算。。。");
-            System.out.println("水库调度汛限模型之PCP模型:模型计算路径为。。。" + PCP_HANDLE_MODEL_RUN_PLAN + File.separator + "startUp.bat");
+            System.out.println("洪水资源化调度之PCP模型:开始水库调度汛限模型PCP模型计算。。。");
+            System.out.println("洪水资源化调度之PCP模型:模型计算路径为。。。" + PCP_HANDLE_MODEL_RUN_PLAN + File.separator + "startUp.bat");
             runModelExe(PCP_HANDLE_MODEL_RUN_PLAN + File.separator + "startUp.bat");
             endTime = System.currentTimeMillis();
-            System.out.println("水库调度汛限模型之PCP模型:模型计算结束。。。，所用时间为:" + (endTime - startTime) + "毫秒");
+            System.out.println("洪水资源化调度之PCP模型:模型计算结束。。。，所用时间为:" + (endTime - startTime) + "毫秒");
             startTime = System.currentTimeMillis();
             //TODO 判断模型是否执行成功
             //判断是否执行成功，是否有error文件
             String pcp_result = PCP_HANDLE_MODEL_TEMPLATE_OUTPUT + File.separator + "hru_p_result.csv";
             File pcp_resultFile = new File(pcp_result);
             if (pcp_resultFile.exists()) {//存在表示执行成功
-                System.out.println("水库调度汛限模型之PCP模型:pcp模型执行成功hru_p_result.csv文件存在");
+                System.out.println("洪水资源化调度之PCP模型:pcp模型执行成功hru_p_result.csv文件存在");
             } else {
-                System.out.println("水库调度汛限模型之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");//todo 执行失败
-                throw new RuntimeException("水库调度汛限模型之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");
+                System.out.println("洪水资源化调度之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");//todo 执行失败
+                throw new RuntimeException("洪水资源化调度之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");
             }
 
             //TODO 上面的入参条件没存库
@@ -1149,73 +1146,73 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
             //6，预报断面ChuFaDuanMian、ChuFaDuanMian_shuru.csv组装
             int result4 = writeDataToInputShuiWenChuFaDuanMianCsv(SKDD_MODEL_TEMPLATE_INPUT, planInfo);
             if (result4 == 0) {
-                System.out.println("水库调度汛限模型之水库调度汛限模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
-                throw new RuntimeException("水库调度汛限模型之水库调度汛限模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
+                System.out.println("洪水资源化调度之水库模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
+                throw new RuntimeException("洪水资源化调度之水库模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
 
             }
 
             //7 copy pcp模型的输出文件到水库调度汛限模型的输入文件里
             int result5 = copeFirstOutPutHruP(PCP_HANDLE_MODEL_TEMPLATE_OUTPUT, SKDD_MODEL_TEMPLATE_INPUT);
             if (result5 == 0) {
-                System.out.println("水库调度汛限模型之水库调度汛限模型:copy数据处理模型PCP输出文件hru_p_result失败");
-                throw new RuntimeException("水库调度汛限模型之水库调度汛限模型:copy数据处理模型PCP输出文件hru_p_result失败");
+                System.out.println("洪水资源化调度之水库模型:copy数据处理模型PCP输出文件hru_p_result失败");
+                throw new RuntimeException("洪水资源化调度之水库模型:copy数据处理模型PCP输出文件hru_p_result失败");
 
             }
 
             //9 读出外部chushishuishuju.csv文件并修改后写入内部input
             int result7 = updateChuShiShuiShuJu(SKDD_MODEL_TEMPLATE, SKDD_MODEL_TEMPLATE_INPUT, planInfo);
             if (result7 == 0) {
-                System.out.println("水库调度汛限模型之水库调度汛限模型: 修改chushishuishuju.csv文件失败");
-                throw new RuntimeException("水库调度汛限模型之水库调度汛限模型: 修改chushishuishuju.csv文件失败");
+                System.out.println("洪水资源化调度之水库模型: 修改chushishuishuju.csv文件失败");
+                throw new RuntimeException("洪水资源化调度之水库模型: 修改chushishuishuju.csv文件失败");
 
             }
 
             //10 copy剩下的csv输入文件
             int result8 = copyOtherShuiWenLvDingCsv(SKDD_MODEL_TEMPLATE, SKDD_MODEL_TEMPLATE_INPUT);
             if (result8 == 0) {
-                System.out.println("水库调度汛限模型之水库调度汛限模型: copy剩下的率定csv输入文件失败");
-                throw new RuntimeException("水库调度汛限模型之水库调度汛限模型: copy剩下的率定csv输入文件失败");
+                System.out.println("洪水资源化调度之水库模型: copy剩下的率定csv输入文件失败");
+                throw new RuntimeException("洪水资源化调度之水库模型: copy剩下的率定csv输入文件失败");
 
             }
 
             //11 复制Skdd config以及可执行文件
             int result9 = copyShuiWenExeFile(SKDD_XX_MODEL_RUN, SKDD_XX_MODEL_RUN_PLAN);
             if (result9 == 0) {
-                System.out.println("水库调度汛限模型之水库调度汛限模型:复制执行文件与config文件写入失败。。。");
-                throw new RuntimeException("水库调度汛限模型之水库调度汛限模型:复制执行文件与config文件写入失败。。。");
+                System.out.println("洪水资源化调度之水库模型:复制执行文件与config文件写入失败。。。");
+                throw new RuntimeException("洪水资源化调度之水库模型:复制执行文件与config文件写入失败。。。");
 
             }
 
             // 修改Skdd config文件
             int result10 = writeDataToShuiWenConfig(SKDD_XX_MODEL_RUN_PLAN, SKDD_MODEL_TEMPLATE_INPUT, SKDD_MODEL_TEMPLATE_OUTPUT, 0, planInfo);
             if (result10 == 0) {
-                System.out.println("水库调度汛限模型之水库调度汛限模型:修改config文件失败");
-                throw new RuntimeException("水库调度汛限模型之水库调度汛限模型:修改config文件失败");
+                System.out.println("洪水资源化调度之水库模型:修改config文件失败");
+                throw new RuntimeException("洪水资源化调度之水库模型:修改config文件失败");
 
             }
             endTime = System.currentTimeMillis();
-            System.out.println("水库调度汛限模型之PCP模型:组装Skdd模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
+            System.out.println("洪水资源化调度之水库模型:组装Skdd模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
 
             //13、调用模型计算
             startTime = System.currentTimeMillis();
-            System.out.println("水库调度汛限模型之水库调度汛限模型:开始水库调度汛限模型Skdd模型计算。。。");
-            System.out.println("水库调度汛限模型之水库调度汛限模型:模型计算路径为。。。" + SKDD_XX_MODEL_RUN_PLAN + File.separator + "startUp.bat");
+            System.out.println("洪水资源化调度之水库模型:开始水库调度汛限模型Skdd模型计算。。。");
+            System.out.println("洪水资源化调度之水库模型:模型计算路径为。。。" + SKDD_XX_MODEL_RUN_PLAN + File.separator + "startUp.bat");
             runModelExe(SKDD_XX_MODEL_RUN_PLAN + File.separator + "startUp.bat");
             endTime = System.currentTimeMillis();
-            System.out.println("水库调度汛限模型之水库调度汛限模型:模型计算结束。。。所用时间为:" + (endTime - startTime) + "毫秒");
+            System.out.println("洪水资源化调度之水库模型:模型计算结束。。。所用时间为:" + (endTime - startTime) + "毫秒");
 
             //判断是否执行成功，是否有error文件
             String errorStr = SKDD_MODEL_TEMPLATE_OUTPUT + File.separator + "error_log.txt";
             File errorFile = new File(errorStr);
             planInfo.setdCaculatestarttm(originalStartTm);
             if (errorFile.exists()) {//存在表示执行失败
-                System.out.println("水库调度汛限模型之水库调度汛限模型:模型计算失败。。存在error_log文件");
+                System.out.println("洪水资源化调度之水库模型:模型计算失败。。存在error_log文件");
                 planInfo.setnPlanstatus(-1L);
                 ywkPlaninfoDao.save(planInfo);
                 CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
                 return;//todo 执行失败
             } else {
-                System.out.println("水库调度汛限模型之水库调度汛限模型:模型计算成功。。不存在error_log文件");
+                System.out.println("洪水资源化调度之水库模型:模型计算成功。。不存在error_log文件");
                 planInfo.setnPlanstatus(2L);
                 ywkPlaninfoDao.save(planInfo);
                 CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
@@ -1240,14 +1237,71 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
      * @return
      */
     @Override
-    public String getModelRunStatus(YwkPlaninfo planInfo) {
+    public Object getModelRunStatus(YwkPlaninfo planInfo) {
         Long status = planInfo.getnPlanstatus();
+        JSONObject jsonObject = new JSONObject();
+        String SKDD_XX_SKDD_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SKDD_XX_SKDD_MODEL_PATH");
+        String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
+        String SHUIWEN_MODEL_TEMPLATE_OUTPUT ="";
+        SHUIWEN_MODEL_TEMPLATE_OUTPUT = SKDD_XX_SKDD_MODEL_PATH + File.separator + out
+                + File.separator + planInfo.getnPlanid();//输出的地址
 
-        if (status == 2L || status == -1L) {  // 2L 执行成功  -1L 执行失败
-            return "1"; //1的话停止
+        String jinduPath = SHUIWEN_MODEL_TEMPLATE_OUTPUT + File.separator + "jindu.txt";
+        File path = new File(jinduPath);
+        if (!path.exists()) {
+            if (status == -1L){
+                //运行进度
+                jsonObject.put("process", 0.0);
+                //运行状态 1运行结束 0运行中
+                jsonObject.put("runStatus", 1);
+                //运行时间
+                jsonObject.put("describ", "模型运行出现异常！");
+                return jsonObject;
+            }
+            //运行进度
+            jsonObject.put("process", 0.0);
+            //运行状态 1运行结束 0运行中
+            jsonObject.put("runStatus", 0);
+            //运行时间
+            jsonObject.put("describ", "模型运行准备中！");
+            return jsonObject;
         } else {
-            return "0";
+            //运行状态 1运行结束 0运行中
+            BufferedReader br = null;
+            try {
+                br = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
+                String lineTxt2 = br.readLine();
+                //if (lineTxt2 != null) {
+                String[] split = lineTxt2.split("&&");
+                //运行进度
+                double process = Double.parseDouble(split[1] + "");
+                if (status == -1){
+                    jsonObject.put("runStatus", 1);
+                    jsonObject.put("describ", "模型运行出现异常！");
+                    jsonObject.put("process", process * 1.0);
+                    return jsonObject;
+                }
+                jsonObject.put("runStatus", 0);
+                jsonObject.put("describ", "模型运行中！");
+                jsonObject.put("process", process * 1.0);
+                if (process == 100.0 && status == 2L){
+                    jsonObject.put("runStatus", 1);
+                    jsonObject.put("describ", "模型运行成功！");
+                    jsonObject.put("process", process * 1.0);
+                    return jsonObject;
+                }
+                return jsonObject;
+            } catch (Exception e) {
+                System.err.println("进度读取错误！" + e.getMessage());
+            } finally {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
+        return jsonObject;
     }
 
     /**

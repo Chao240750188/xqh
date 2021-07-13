@@ -37,7 +37,6 @@ public class ModelFhddController {
         }catch (Exception e){
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("获取集水区模型跟河段模型列表失败！");
-
         }
     }
 
@@ -59,7 +58,6 @@ public class ModelFhddController {
         }catch (Exception e){
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("查询方案名称失败！",null);
-
         }
     }
 
@@ -286,7 +284,7 @@ public class ModelFhddController {
         if (planInfo == null){
             return  SystemSecurityMessage.getFailMsg( "方案不存在！", null);
         }
-        String status = modelFhddService.getModelRunStatus(planInfo);
+        Object status = modelFhddService.getModelRunStatus(planInfo);
         return SystemSecurityMessage.getSuccessMsg("获取模型运行状态成功",status);
 
     }

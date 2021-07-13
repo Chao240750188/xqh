@@ -236,8 +236,8 @@ public class ModelSkddXxController {
             return  SystemSecurityMessage.getFailMsg( "方案不存在！，模型调用失败", null);
         }
         modelSkddXxService.modelPcpCall(planinfo);
-        System.out.println("水库调度-汛限Pcp模型正在运行中...请稍等！"+Thread.currentThread().getName());
-        return SystemSecurityMessage.getSuccessMsg("水库调度-汛限Pcp模型正在运行中...请稍等！");
+        System.out.println("洪水资源化调度Pcp模型正在运行中...请稍等！"+Thread.currentThread().getName());
+        return SystemSecurityMessage.getSuccessMsg("洪水资源化调度Pcp模型正在运行中...请稍等！");
 
     }
 
@@ -253,14 +253,13 @@ public class ModelSkddXxController {
             return  SystemSecurityMessage.getFailMsg( "方案不存在，模型调用失败", null);
         }
         modelSkddXxService.modelHydrologyCall(planinfo);
-        System.out.println("水库调度-汛限水文模型正在运行中...请稍等！" + Thread.currentThread().getName());
-        return SystemSecurityMessage.getSuccessMsg("水库调度-汛限水文模型正在运行中...请稍等！");
-
+        System.out.println("洪水资源化调度模型正在运行中...请稍等！" + Thread.currentThread().getName());
+        return SystemSecurityMessage.getSuccessMsg("洪水资源化调度模型正在运行中...请稍等！");
     }
 
 
     /**
-     * 水库调度汛限模型计算
+     * 洪水资源化调度模型计算
      * @return
      */
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
@@ -270,9 +269,8 @@ public class ModelSkddXxController {
             return SystemSecurityMessage.getFailMsg( "方案不存在！，模型调用失败", null);
         }
         modelSkddXxService.modelCall(planinfo);
-        System.out.println("防洪与报警水文调度模型正在运行中。。。请稍等！"+Thread.currentThread().getName());
-        return SystemSecurityMessage.getSuccessMsg("防洪与报警水文调度模型正在运行中。。。请稍等！");
-
+        System.out.println("洪水资源化调度模型正在运行中。。。请稍等！"+Thread.currentThread().getName());
+        return SystemSecurityMessage.getSuccessMsg("洪水资源化调度模型正在运行中。。。请稍等！");
     }
 
     /**
@@ -286,8 +284,8 @@ public class ModelSkddXxController {
         if (planInfo == null){
             return  SystemSecurityMessage.getFailMsg( "方案不存在！", null);
         }
-        String status = modelSkddXxService.getModelRunStatus(planInfo);
-        return SystemSecurityMessage.getSuccessMsg("获取模型运行状态成功",status);
+        Object status = modelSkddXxService.getModelRunStatus(planInfo);
+        return SystemSecurityMessage.getSuccessMsg("获取洪水资源化调度模型运行状态成功",status);
 
     }
 
@@ -302,7 +300,7 @@ public class ModelSkddXxController {
             return  SystemSecurityMessage.getFailMsg( "方案不存在！", null);
         }
         Object results = modelSkddXxService.getModelResultQ(planInfo);
-        return SystemSecurityMessage.getSuccessMsg("获取模型列表信息成功",results);
+        return SystemSecurityMessage.getSuccessMsg("获取洪水资源化调度模型列表信息成功",results);
 
     }
 
