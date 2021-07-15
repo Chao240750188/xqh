@@ -291,18 +291,22 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
                         stringObjectMap = mm;
                     }
                 }
-                if(stringObjectMap.get("DRP") != null){
+                if(stringObjectMap.get("DRP") == null){//todo 改变pcp雨量模型的逻辑。如果站点有一个时间没数据，则把有数据的时间全部置为null
                     flag = true;
                 }
+
                 ll.add(stringObjectMap);
             }
-            if (flag){
-                for (Map map : ll){
-                    if(map.get("DRP") == null ){
-                        map.put("DRP",0.5);
+            if (flag){ //todo pcp判断Drp置为null
+               /* for (Map map : ll){
+                    Map newMap = new HashMap(map);
+                    if(newMap.get("DRP") != null ){
+                        newMap.put("DRP",null);
                     }
-
-                }
+                    map = newMap;
+                    System.out.println("map:"+map.get("DRP"));
+                }*/
+                ll.clear();
             }
 
             resultMap.put("LIST",ll);
@@ -433,18 +437,22 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
                         stringObjectMap = mm;
                     }
                 }
-                if(stringObjectMap.get("DRP") != null){
+                if(stringObjectMap.get("DRP") == null){//todo 改变pcp雨量模型的逻辑。如果站点有一个时间没数据，则把有数据的时间全部置为null
                     flag = true;
                 }
+
                 ll.add(stringObjectMap);
             }
-            if (flag){
-                for (Map map : ll){
-                    if(map.get("DRP") == null ){
-                        map.put("DRP",0.5);
+            if (flag){ //todo pcp判断Drp置为null
+               /* for (Map map : ll){
+                    Map newMap = new HashMap(map);
+                    if(newMap.get("DRP") != null ){
+                        newMap.put("DRP",null);
                     }
-
-                }
+                    map = newMap;
+                    System.out.println("map:"+map.get("DRP"));
+                }*/
+                ll.clear();
             }
 
             resultMap.put("LIST",ll);
