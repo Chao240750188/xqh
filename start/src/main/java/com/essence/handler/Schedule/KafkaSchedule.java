@@ -73,7 +73,7 @@ public class KafkaSchedule {
                 waterMap.put("threhold",null);
                 waterMap.put("alarm_time", DateUtil.dateToStringNormal3(time));
                 waterMap.put("monitor_data", null);
-                //waterMap.put("alarm_content","超警戒水位");
+                waterMap.put("alarm_content","超警戒水位");
             }
             waterWarning.addAll(rainWarning);
 
