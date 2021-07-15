@@ -81,6 +81,14 @@ public class GisPathConfigurationUtil {
     }
 
     /**
+     * 获取shp模板的路径--城市内涝
+     * @return
+     */
+    public static String getCsnlModelShpTempletePath(){
+        return props.getProperty("csnlModelShpTempletePath");
+    }
+
+    /**
      * 获取mxd模板的路径
      * @return
      */
@@ -105,6 +113,13 @@ public class GisPathConfigurationUtil {
         return props.getProperty("mxdTemplateHSFX02");
     }
 
+    /**
+     * 模型MODEL_CSNL的mxd模板名称
+     * @return
+     */
+    public  static String getMxdTemplateCSNL(){
+        return props.getProperty("mxdTemplateCSNL");
+    }
 
     /**
      * 获取导出图片的格式

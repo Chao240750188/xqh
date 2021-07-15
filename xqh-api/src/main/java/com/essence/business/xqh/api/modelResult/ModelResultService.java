@@ -15,4 +15,6 @@ public interface ModelResultService {
      * @return void
      **/
     public void getResultMaxDepthToPicture(List<GridResultDto> gridResultDtoList,String modelId,String planId,Object processNum);
+
+    public void getCsnlResultMaxDepthToPicture(List<GridResultDto> gridResultDtoList,String planId,Object processNum);
 }

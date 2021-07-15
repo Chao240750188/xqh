@@ -9,4 +9,12 @@ public interface PlanProcessDataService {
      * @throws Exception
      */
     public void readDepthCsvFile(String filePath,String dataType,String modelId,String planId) throws Exception;
+
+    /**
+     * 城市内涝模型生成最大水深过程图片
+     * @param filePath
+     * @param dataType
+     * @throws Exception
+     */
+    public void readCsnlDepthCsvFile(String filePath, String dataType, String planId) throws Exception;
 }

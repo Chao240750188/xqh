@@ -1694,12 +1694,10 @@ public class ModelCallHsfxtkServiceImpl implements ModelCallHsfxtkService {
 
     @Override
     public Object verticalSectionLineChart(YwkNodeInfoVo ywkNodeInfoVo) {
-        Optional<YwkMileageEmphasis> byId = ywkMileageEmphasisDao.findById(ywkNodeInfoVo.getMileage());
         YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(ywkNodeInfoVo.getnPlanid());
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         DecimalFormat df = new DecimalFormat("0.00");
         Date startTime = planInfo.getdCaculatestarttm();
-        Date endTime = planInfo.getdCaculateendtm();
         Integer aLong = Math.toIntExact(planInfo.getnOutputtm());
         JSONObject result = new JSONObject();
 
