@@ -365,13 +365,14 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
 
         Long step = planInfo.getnOutputtm();//分钟
         Long count = ywkPlaninRainfallDao.countByPlanIdWithTime(planInfo.getnPlanid(),startTime,endTime);
-        List<Map<String, Object>> stPptnRWithSTCD = new ArrayList<>();
-        if (count != 0){//原来是小时  实时数据是小时  都先按照整点来
-            stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planInfo.getnPlanid());
-        }
-        else {
-            stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
-        }
+        List<Map<String, Object>> stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
+//        List<Map<String, Object>> stPptnRWithSTCD = new ArrayList<>();
+//        if (count != 0){//原来是小时  实时数据是小时  都先按照整点来
+//            stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planInfo.getnPlanid());
+//        }
+//        else {
+//            stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
+//        }
         Map<String,List<Map<String,Object>>> handleMap = new HashMap<>();
         List<Map<String,Object>> nullList = new ArrayList<>();
         for (Map<String,Object> datas : stPptnRWithSTCD){// A.STCD,B.TM,B.DRP
@@ -490,6 +491,7 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
             resultMap.put("LIST",new ArrayList<>());
             results.add(resultMap);
         }
+
         return results;
     }
 
@@ -808,7 +810,7 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
             }
 
             planInfo.setdCaculatestarttm(DateUtil.getNextHour(planInfo.getdCaculatestarttm(),-72));
-            List<Map<String, Object>> before72results = getRainfalls(planInfo);
+            List<Map<String, Object>> before72results = getRainsInfo(planInfo);
             if (CollectionUtils.isEmpty(before72results)) {
                 System.out.println("雨量信息为空，无法计算");
                 throw new RuntimeException("雨量信息为空，无法计算");
@@ -863,49 +865,49 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
             //1，写入pcp_HRU.csv
             int result0 = writeDataToInputPcpHRUCsv(PCP_HANDLE_MODEL_TEMPLATE_INPUT, PCP_HANDLE_MODEL_TEMPLATE, planInfo);
             if (result0 == 0) {
-                System.out.println("水文模型之PCP模型:写入pcp_HRU失败");
-                throw new RuntimeException("水文模型之PCP模型:写入pcp_HRU失败");
+                System.out.println("堤防漫溢之PCP模型:写入pcp_HRU失败");
+                throw new RuntimeException("堤防漫溢之PCP模型:写入pcp_HRU失败");
             }
             //2,写入pcp_station.csv
             int result1 = writeDataToInputPcpStationCsv(PCP_HANDLE_MODEL_TEMPLATE_INPUT, before72results, planInfo);
             if (result1 == 0) {
-                System.out.println("水文模型之PCP模型:写入pcp_station失败");
-                throw new RuntimeException("水文模型之PCP模型:写入pcp_station失败");
+                System.out.println("堤防漫溢之PCP模型:写入pcp_station失败");
+                throw new RuntimeException("堤防漫溢之PCP模型:写入pcp_station失败");
             }
             //3.复制config以及可执行文件
             int result2 = copyPCPExeFile(PCP_HANDLE_MODEL_RUN, PCP_HANDLE_MODEL_RUN_PLAN);
             if (result2 == 0) {
-                System.out.println("水文模型之PCP模型:复制执行文件与config文件写入失败。。。");
-                throw new RuntimeException("水文模型之PCP模型:复制执行文件与config文件写入失败。。。");
+                System.out.println("堤防漫溢之PCP模型:复制执行文件与config文件写入失败。。。");
+                throw new RuntimeException("堤防漫溢之PCP模型:复制执行文件与config文件写入失败。。。");
 
             }
             //4,修改config文件
             int result3 = writeDataToPcpConfig(PCP_HANDLE_MODEL_RUN_PLAN, PCP_HANDLE_MODEL_TEMPLATE_INPUT, PCP_HANDLE_MODEL_TEMPLATE_OUTPUT);
             if (result3 == 0) {
-                System.out.println("水文模型之PCP模型:修改config文件失败");
-                throw new RuntimeException("水文模型之PCP模型:修改config文件失败");
+                System.out.println("堤防漫溢之PCP模型:修改config文件失败");
+                throw new RuntimeException("堤防漫溢之PCP模型:修改config文件失败");
 
             }
             long endTime = System.currentTimeMillis();   //获取开始时间
-            System.out.println("水文模型之PCP模型:组装pcp模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
+            System.out.println("堤防漫溢之PCP模型:组装pcp模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
             //5.调用模型
             //调用模型计算
             startTime = System.currentTimeMillis();
-            System.out.println("水文模型之PCP模型:开始水文模型PCP模型计算。。。");
-            System.out.println("水文模型之PCP模型:模型计算路径为。。。" + PCP_HANDLE_MODEL_RUN_PLAN + File.separator + "startUp.bat");
+            System.out.println("堤防漫溢之PCP模型:开始堤防漫溢PCP模型计算。。。");
+            System.out.println("堤防漫溢之PCP模型:模型计算路径为。。。" + PCP_HANDLE_MODEL_RUN_PLAN + File.separator + "startUp.bat");
             runModelExe(PCP_HANDLE_MODEL_RUN_PLAN + File.separator + "startUp.bat");
             endTime = System.currentTimeMillis();
-            System.out.println("水文模型之PCP模型:模型计算结束。。。，所用时间为:" + (endTime - startTime) + "毫秒");
+            System.out.println("堤防漫溢之PCP模型:模型计算结束。。。，所用时间为:" + (endTime - startTime) + "毫秒");
             startTime = System.currentTimeMillis();
             //TODO 判断模型是否执行成功
             //判断是否执行成功，是否有error文件
             String pcp_result = PCP_HANDLE_MODEL_TEMPLATE_OUTPUT + File.separator + "hru_p_result.csv";
             File pcp_resultFile = new File(pcp_result);
             if (pcp_resultFile.exists()) {//存在表示执行成功
-                System.out.println("水文模型之PCP模型:pcp模型执行成功hru_p_result.csv文件存在");
+                System.out.println("堤防漫溢之PCP模型:pcp模型执行成功hru_p_result.csv文件存在");
             } else {
-                System.out.println("水文模型之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");//todo 执行失败
-                throw new RuntimeException("水文模型之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");
+                System.out.println("堤防漫溢之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");//todo 执行失败
+                throw new RuntimeException("堤防漫溢之PCP模型:pcp模型执行成功hru_p_result.csv文件不存在");
             }
             //TODO 上面的入参条件没存库
             //TODO 第二个shuiwen模型
@@ -913,63 +915,63 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
             int result4 = writeDataToInputShuiWenChuFaDuanMianCsv(SHUIWEN_MODEL_TEMPLATE_INPUT, planInfo);
 
             if (result4 == 0) {
-                System.out.println("水文模型之水文模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
-                throw new RuntimeException("水文模型之水文模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
+                System.out.println("堤防漫溢之堤防漫溢模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
+                throw new RuntimeException("堤防漫溢之堤防漫溢模型:写入chufaduanmian跟chufaduanmian_shuru.csv失败");
 
             }
-            //7 cope pcp模型的输出文件到水文模型的输入文件里
+            //7 cope pcp模型的输出文件到堤防漫溢的输入文件里
             int result5 = copeFirstOutPutHruP(PCP_HANDLE_MODEL_TEMPLATE_OUTPUT, SHUIWEN_MODEL_TEMPLATE_INPUT);
             if (result5 == 0) {
-                System.out.println("水文模型之水文模型:copy数据处理模型PCP输出文件hru_p_result失败");
-                throw new RuntimeException("水文模型之水文模型:copy数据处理模型PCP输出文件hru_p_result失败");
+                System.out.println("堤防漫溢之堤防漫溢模型:copy数据处理模型PCP输出文件hru_p_result失败");
+                throw new RuntimeException("堤防漫溢之堤防漫溢模型:copy数据处理模型PCP输出文件hru_p_result失败");
 
             }
 
             //9 copy剩下的率定csv输入文件
             int result7 = copyOtherShuiWenLvDingCsv(SHUIWEN_MODEL_TEMPLATE, SHUIWEN_MODEL_TEMPLATE_INPUT);
             if (result7 == 0) {
-                System.out.println("水文模型之水文模型: copy剩下的率定csv输入文件失败");
-                throw new RuntimeException("水文模型之水文模型: copy剩下的率定csv输入文件失败");
+                System.out.println("堤防漫溢之堤防漫溢模型: copy剩下的率定csv输入文件失败");
+                throw new RuntimeException("堤防漫溢之堤防漫溢模型: copy剩下的率定csv输入文件失败");
 
             }
             //10 复制shuiwen cofig以及可执行文件
             int result8 = copyShuiWenExeFile(SHUIWEN_MODEL_RUN, SHUIWEN_MODEL_RUN_PLAN);
             if (result8 == 0) {
-                System.out.println("水文模型之水文模型:复制执行文件与config文件写入失败。。。");
-                throw new RuntimeException("水文模型之水文模型:复制执行文件与config文件写入失败。。。");
+                System.out.println("堤防漫溢之堤防漫溢模型:复制执行文件与config文件写入失败。。。");
+                throw new RuntimeException("堤防漫溢之堤防漫溢模型:复制执行文件与config文件写入失败。。。");
 
             }
             //11,修改shuiwen config文件
             int result9 = writeDataToShuiWenConfig(SHUIWEN_MODEL_RUN_PLAN, SHUIWEN_MODEL_TEMPLATE_INPUT, SHUIWEN_MODEL_TEMPLATE_OUTPUT, 0, planInfo);
             if (result9 == 0) {
-                System.out.println("水文模型之水文模型:修改config文件失败");
-                throw new RuntimeException("水文模型之水文模型:修改config文件失败");
+                System.out.println("堤防漫溢之堤防漫溢模型:修改config文件失败");
+                throw new RuntimeException("堤防漫溢之堤防漫溢模型:修改config文件失败");
 
             }
             endTime = System.currentTimeMillis();
-            System.out.println("水文模型之PCP模型:组装shuiwen模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
+            System.out.println("堤防漫溢之PCP模型:组装shuiwen模型所用的参数的时间为:" + (endTime - startTime) + "毫秒");
 
             //12,
             //调用模型计算
             startTime = System.currentTimeMillis();
-            System.out.println("水文模型之水文模型:开始水文模型shuiwen模型计算。。。");
-            System.out.println("水文模型之水文模型:模型计算路径为。。。" + SHUIWEN_MODEL_RUN_PLAN + File.separator + "startUp.bat");
+            System.out.println("堤防漫溢之堤防漫溢模型:开始堤防漫溢shuiwen模型计算。。。");
+            System.out.println("堤防漫溢之堤防漫溢模型:模型计算路径为。。。" + SHUIWEN_MODEL_RUN_PLAN + File.separator + "startUp.bat");
             runModelExe(SHUIWEN_MODEL_RUN_PLAN + File.separator + "startUp.bat");
             endTime = System.currentTimeMillis();
-            System.out.println("水文模型之水文模型:模型计算结束。。。所用时间为:" + (endTime - startTime) + "毫秒");
+            System.out.println("堤防漫溢之堤防漫溢模型:模型计算结束。。。所用时间为:" + (endTime - startTime) + "毫秒");
 
             //判断是否执行成功，是否有error文件
             String errorStr = SHUIWEN_MODEL_TEMPLATE_OUTPUT + File.separator + "error_log.txt";
             File errorFile = new File(errorStr);
             planInfo.setdCaculatestarttm(originalStartTm);
             if (errorFile.exists()) {//存在表示执行失败
-                System.out.println("水文模型之水文模型:模型计算失败。。存在error_log文件");
+                System.out.println("堤防漫溢之堤防漫溢模型:模型计算失败。。存在error_log文件");
                 planInfo.setnPlanstatus(-1L);
                 ywkPlaninfoDao.save(planInfo);
                 CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
                 return;//todo 执行失败
             } else {
-                System.out.println("水文模型之水文模型:模型计算成功。。不存在error_log文件");
+                System.out.println("堤防漫溢之堤防漫溢模型:模型计算成功。。不存在error_log文件");
                 planInfo.setnPlanstatus(2L);
                 ywkPlaninfoDao.save(planInfo);
                 CacheUtil.saveOrUpdate("planInfo", planInfo.getnPlanid(), planInfo);
@@ -1064,7 +1066,7 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
                 readDatas.add(split);
             }
         } catch (Exception e) {
-            System.err.println("水文模型之水文模型-率定：reachInput.csv输入文件读取错误:read errors :" + e);
+            System.err.println("堤防漫溢之堤防漫溢模型-率定：reachInput.csv输入文件读取错误:read errors :" + e);
             return 0;
         } finally {
             try {
@@ -1102,12 +1104,12 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
                 bw.newLine();
             }
             bw.close();
-            System.out.println("水文模型之水文模型-率定:水文模型reachInput.csv输入文件写入成功");
+            System.out.println("堤防漫溢之堤防漫溢模型-率定:堤防漫溢reachInput.csv输入文件写入成功");
 
             return 1;
         } catch (Exception e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水文模型之水文模型-率定:水文模型reachInput.csv输入文件写入失败");
+            System.out.println("堤防漫溢之堤防漫溢模型-率定:堤防漫溢reachInput.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         }
@@ -1193,7 +1195,7 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
                 readDatas.add(split);
             }
         } catch (Exception e) {
-            System.err.println("水文模型之水文模型-率定：Watershed.csv输入文件读取错误:read errors :" + e);
+            System.err.println("堤防漫溢之堤防漫溢模型-率定：Watershed.csv输入文件读取错误:read errors :" + e);
             return 0;
         } finally {
             try {
@@ -1238,11 +1240,11 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
                 bw.newLine();
             }
             bw.close();
-            System.out.println("水文模型之水文模型-率定:水文模型Watershed.csv输入文件写入成功");
+            System.out.println("堤防漫溢之堤防漫溢模型-率定:堤防漫溢Watershed.csv输入文件写入成功");
             return 1;
         } catch (Exception e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水文模型之水文模型-率定:水文模型Watershed.csv输入文件写入失败");
+            System.out.println("堤防漫溢之堤防漫溢模型-率定:堤防漫溢Watershed.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         }
@@ -1250,7 +1252,7 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
     }
 
     /**
-     * 修改水文模型config文件
+     * 修改堤防漫溢config文件
      *
      * @param shuiwen_model_run_plan
      * @param shuiwen_model_template_input
@@ -1376,18 +1378,18 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
                 bw.newLine();
             }
             bw.close();
-            System.out.println("水文模型之水文模型:写入水文模型config成功");
+            System.out.println("堤防漫溢之堤防漫溢模型:写入堤防漫溢config成功");
             return 1;
         } catch (Exception e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水文模型之水文模型:写入水文模型config失败");
+            System.out.println("堤防漫溢之堤防漫溢模型:写入堤防漫溢config失败");
             e.printStackTrace();
             return 0;
         }
     }
 
     /**
-     * cope 水文模型exe可执行文件
+     * cope 堤防漫溢exe可执行文件
      *
      * @param shuiwen_model_run
      * @param shuiwen_model_run_plan
@@ -1402,10 +1404,10 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         try {
             FileUtil.copyFile(exeUrl, exeInputUrl, true);
             FileUtil.copyFile(batUrl, batInputUrl, true);
-            System.err.println("水文模型之水文模型：copy执行文件exe,bat文件成功");
+            System.err.println("堤防漫溢之堤防漫溢模型：copy执行文件exe,bat文件成功");
             return 1;
         } catch (Exception e) {
-            System.err.println("水文模型之水文模型：copy执行文件exe,bat文件错误" + e.getMessage());
+            System.err.println("堤防漫溢之堤防漫溢模型：copy执行文件exe,bat文件错误" + e.getMessage());
             return 0;
         }
     }
@@ -1514,10 +1516,10 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
             FileUtil.copyFile(shuikuShuiweiKuRongRead, shuikuShuiweiKuRongInput, true);
             FileUtil.copyFile(unitRead, unitInput, true);
             FileUtil.copyFile(watershedRead, watershedInput, true);
-            System.err.println("水文模型之水文模型：copy剩下的率定csv输入文件成功");
+            System.err.println("堤防漫溢之堤防漫溢模型：copy剩下的率定csv输入文件成功");
             return 1;
         } catch (Exception e) {
-            System.err.println("水文模型之水文模型：copy剩下的率定csv输入文件失败" + e.getMessage());
+            System.err.println("堤防漫溢之堤防漫溢模型：copy剩下的率定csv输入文件失败" + e.getMessage());
             return 0;
         }
     }
@@ -1603,11 +1605,11 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
             bw.write("function," + 1 + otherFunction);
             bw.newLine();
             bw.close();
-            System.out.println("水文模型之水文模型:水文模型model_selection输入文件写入成功");
+            System.out.println("堤防漫溢之堤防漫溢模型:堤防漫溢model_selection输入文件写入成功");
             return 1;
         } catch (Exception e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水文模型之水文模型:水文模型model_selection输入文件写入失败");
+            System.out.println("堤防漫溢之堤防漫溢模型:堤防漫溢model_selection输入文件写入失败");
             e.printStackTrace();
             return 0;
         }
@@ -1628,17 +1630,17 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
 
         try {
             FileUtil.copyFile(pcp_hru_p_result, shuiwen_hru_p_result_input, true);
-            System.err.println("水文模型之水文模型：copy数据处理模型PCP输出文件hru_p_result文件成功");
+            System.err.println("堤防漫溢之堤防漫溢模型：copy数据处理模型PCP输出文件hru_p_result文件成功");
             return 1;
         } catch (Exception e) {
-            System.err.println("水文模型之水文模型：copy数据处理模型PCP输出文件hru_p_result文件失败" + e.getMessage());
+            System.err.println("堤防漫溢之堤防漫溢模型：copy数据处理模型PCP输出文件hru_p_result文件失败" + e.getMessage());
             return 0;
         }
 
     }
 
     /**
-     * 水文模型，chufaduanmian 跟chufaduanmian_shuru
+     * 堤防漫溢，chufaduanmian 跟chufaduanmian_shuru
      *
      * @param shuiwen_model_template_input
      * @param
@@ -1715,10 +1717,10 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
                 bw.newLine();
             }
             bw.close();
-            System.out.println("水文模型之水文模型:水文模型ChuFaDuanMian.csv输入文件写入成功");
+            System.out.println("堤防漫溢之堤防漫溢模型:堤防漫溢ChuFaDuanMian.csv输入文件写入成功");
         } catch (Exception e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水文模型之水文模型:水文模型ChuFaDuanMian.csv输入文件写入失败");
+            System.out.println("堤防漫溢之堤防漫溢模型:堤防漫溢ChuFaDuanMian.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         }
@@ -1738,11 +1740,11 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
                 bw.newLine();
             }
             bw.close();
-            System.out.println("水文模型之水文模型:水文模型ChuFaDuanMianShuRu.csv输入文件写入成功");
+            System.out.println("堤防漫溢之堤防漫溢模型:堤防漫溢ChuFaDuanMianShuRu.csv输入文件写入成功");
             return 1;
         } catch (Exception e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水文模型之水文模型:水文模型ChuFaDuanMianShuRu.csv输入文件写入失败");
+            System.out.println("堤防漫溢之堤防漫溢模型:堤防漫溢ChuFaDuanMianShuRu.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         }
@@ -1765,16 +1767,16 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         try {
             FileUtil.copyFile(exeUrl, exeInputUrl, true);
             FileUtil.copyFile(batUrl, batInputUrl, true);
-            System.err.println("水文模型之PCP模型：copy执行文件exe,bat文件成功");
+            System.err.println("堤防漫溢之PCP模型：copy执行文件exe,bat文件成功");
             return 1;
         } catch (Exception e) {
-            System.err.println("水文模型之PCP模型：copy执行文件exe,bat文件错误" + e.getMessage());
+            System.err.println("堤防漫溢之PCP模型：copy执行文件exe,bat文件错误" + e.getMessage());
             return 0;
         }
     }
 
     /**
-     * 修改水文模型的数据模型的config文件
+     * 修改堤防漫溢的数据模型的config文件
      *
      * @param pcp_handle_model_run_plan
      * @param pcp_handle_model_template_input
@@ -1801,11 +1803,11 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
             bw.write(jinduUrl);
             bw.newLine();
             bw.close();
-            System.out.println("水文模型之PCP模型:写入水文模型config成功");
+            System.out.println("堤防漫溢之PCP模型:写入堤防漫溢config成功");
             return 1;
         } catch (Exception e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水文模型之PCP模型:写入水文模型config失败");
+            System.out.println("堤防漫溢之PCP模型:写入堤防漫溢config失败");
             e.printStackTrace();
             return 0;
         }
@@ -1856,11 +1858,11 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
                 bw.newLine();
             }
             bw.close();
-            System.out.println("水文模型之PCP模型:水文模型pcp_station.csv输入文件写入成功");
+            System.out.println("堤防漫溢之PCP模型:堤防漫溢pcp_station.csv输入文件写入成功");
             return 1;
         } catch (Exception e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水文模型之PCP模型:水文模型pcp_station.csv输入文件写入失败");
+            System.out.println("堤防漫溢之PCP模型:堤防漫溢pcp_station.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         }
@@ -1891,7 +1893,7 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
                 readDatas.add(split);
             }
         } catch (Exception e) {
-            System.err.println("水文模型之PCP模型：pcp_HRU.csv输入文件读取错误:read errors :" + e);
+            System.err.println("堤防漫溢之PCP模型：pcp_HRU.csv输入文件读取错误:read errors :" + e);
             return 0;
         } finally {
             try {
@@ -1933,11 +1935,11 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
                 bw.newLine();
             }
             bw.close();
-            System.out.println("水文模型之PCP模型:水文模型pcp_HRU.csv输入文件写入成功");
+            System.out.println("堤防漫溢之PCP模型:堤防漫溢pcp_HRU.csv输入文件写入成功");
             return 1;
         } catch (Exception e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("水文模型之PCP模型:水文模型pcp_HRU.csv输入文件写入失败");
+            System.out.println("堤防漫溢之PCP模型:堤防漫溢pcp_HRU.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         }
@@ -2155,7 +2157,7 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
                 resultMap.put(split.get(0), new ArrayList<>(split.subList(1, split.size())));
             }
         } catch (Exception e) {
-            System.err.println("水文模型调用结果读取失败:read errors :" + e);
+            System.err.println("堤防漫溢调用结果读取失败:read errors :" + e);
             return new HashMap<>();
         } finally {
             try {
@@ -2242,7 +2244,7 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         Date endTime = planInfo.getdCaculateendtm();
         DecimalFormat df = new DecimalFormat("0.000");
         Long step = planInfo.getnOutputtm();//步长(小时)
-        //读取水文模型输出路径
+        //读取堤防漫溢输出路径
         String SWYB_SHUIWEN_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("DFMY_MODEL_PATH");
         String out = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT");
 
@@ -3534,11 +3536,11 @@ public class ProjectJointDispatchServiceImpl implements ProjectJointDispatchServ
         //运行进度
         jsonObject.put("process", 0.0);
         //运行状态 1运行结束 0运行中
-        jsonObject.put("runStatus", 1);
+        jsonObject.put("runStatus", 0);
         //运行时间
         jsonObject.put("time", 0);
         //描述
-        jsonObject.put("describ", "模型运行出现异常！");
+        jsonObject.put("describ", "模型运行准备中！");
 
         String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
         String hsfx_model_template_output = hsfx_path +

@@ -110,6 +110,9 @@ public class YwkPlaninfo {
     @Transient
     private Integer isWarnIng;//告警
 
+    @Transient
+    private Double roughness;//糙率
+
     public Integer getIsWarnIng() {
         return isWarnIng;
     }
@@ -356,5 +359,13 @@ public class YwkPlaninfo {
 
     public void setRname(String rname) {
         this.rname = rname;
+    }
+
+    public Double getRoughness() {
+        return roughness;
+    }
+
+    public void setRoughness(Double roughness) {
+        this.roughness = roughness;
     }
 }

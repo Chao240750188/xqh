@@ -12,6 +12,7 @@ public class YwkBreakBasicDto {
     private Double startZ;
     private Double lgtd;
     private Double lttd;
+    private String breakName;
 
 
     public String getIdModelId() {
@@ -84,5 +85,13 @@ public class YwkBreakBasicDto {
 
     public void setLttd(Double lttd) {
         this.lttd = lttd;
+    }
+
+    public String getBreakName() {
+        return breakName;
+    }
+
+    public void setBreakName(String breakName) {
+        this.breakName = breakName;
     }
 }

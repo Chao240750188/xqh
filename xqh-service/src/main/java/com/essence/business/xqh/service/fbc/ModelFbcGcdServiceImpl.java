@@ -330,9 +330,11 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         Map<String, List<YwkRiverRoughnessParam>> paramMap = paramList.stream().collect(Collectors.groupingBy(YwkRiverRoughnessParam::getRoughnessParamid));
         //封装参数
         for (YwkModelRoughnessParam roughnessParam : modelRoughnessList) {
-            roughnessParam.setParamList(paramMap.get(roughnessParam.getRoughnessParamid()));
+            List<YwkRiverRoughnessParam> collect = paramMap.get(roughnessParam.getRoughnessParamid()).stream().sorted(Comparator.comparing(YwkRiverRoughnessParam::getMileage)).collect(Collectors.toList());
+            roughnessParam.setParamList(collect);
             list.add(roughnessParam);
         }
+
         return list;
     }
 
@@ -1801,11 +1803,11 @@ public class ModelFbcGcdServiceImpl implements ModelFbcGcdService {
         //运行进度
         jsonObject.put("process", 0.0);
         //运行状态 1运行结束 0运行中
-        jsonObject.put("runStatus", 1);
+        jsonObject.put("runStatus", 0);
         //运行时间
         jsonObject.put("time", 0);
         //描述
-        jsonObject.put("describ", "模型运行出现异常！");
+        jsonObject.put("describ", "模型运行准备中！");
 
         String hsfx_path = PropertiesUtil.read("/filePath.properties").getProperty("HSFX_MODEL");
         String hsfx_model_template_output = hsfx_path +

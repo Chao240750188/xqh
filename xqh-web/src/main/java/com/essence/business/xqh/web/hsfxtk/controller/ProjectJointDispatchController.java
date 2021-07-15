@@ -224,9 +224,7 @@ public class ProjectJointDispatchController {
     }
 
     /**
-     * 水文调度模型计算执行new版本
-     *
-     * @return tag 为0是第一次运算，为1是率定运算
+     * 堤防漫溢模型计算
      */
     @RequestMapping(value = "/modelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage modelCall(@PathVariable String planId) {
@@ -236,8 +234,8 @@ public class ProjectJointDispatchController {
             return SystemSecurityMessage.getFailMsg("方案不存在！，模型调用失败", null);
         }
         projectJointDispatchService.modelCall(planInfo);
-        System.out.println("防洪与报警水文调度模型正在运行中。。。请稍等！" + Thread.currentThread().getName());
-        return SystemSecurityMessage.getSuccessMsg("防洪与报警水文调度模型正在运行中。。。请稍等！");
+        System.out.println("堤防漫溢模型正在运行中。。。请稍等！" + Thread.currentThread().getName());
+        return SystemSecurityMessage.getSuccessMsg("堤防漫溢模型正在运行中。。。请稍等！");
 
     }
 

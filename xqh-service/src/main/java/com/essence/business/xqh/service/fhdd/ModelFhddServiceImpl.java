@@ -312,13 +312,14 @@ public class ModelFhddServiceImpl implements ModelFhddService {
 
         Long step = planInfo.getnOutputtm();//分钟
         Long count = ywkPlaninRainfallDao.countByPlanIdWithTime(planInfo.getnPlanid(),startTime,endTime);
-        List<Map<String, Object>> stPptnRWithSTCD = new ArrayList<>();
-        if (count != 0){//原来是小时  实时数据是小时  都先按照整点来
-            stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planInfo.getnPlanid());
-        }
-        else {
-            stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
-        }
+        List<Map<String, Object>> stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
+//        List<Map<String, Object>> stPptnRWithSTCD = new ArrayList<>();
+//        if (count != 0){//原来是小时  实时数据是小时  都先按照整点来
+//            stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planInfo.getnPlanid());
+//        }
+//        else {
+//            stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
+//        }
         Map<String,List<Map<String,Object>>> handleMap = new HashMap<>();
         List<Map<String,Object>> nullList = new ArrayList<>();
         for (Map<String,Object> datas : stPptnRWithSTCD){// A.STCD,B.TM,B.DRP
