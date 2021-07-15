@@ -160,7 +160,7 @@ public class ThirdWaringServiceImpl implements ThirdWaringService {
                 resultMap.put("stcd", stcd);
                 resultMap.put("stnm", stStbprpB.getStnm());
                 resultMap.put("alarm_lev", 0);
-
+                resultMap.put("alarm_content","未超过超警戒水位");
                 Map<String, Object> map = riverWayDataMap.get(stcd);
                 if (map != null && map.get("z") != null) {
                     z = Double.parseDouble(map.get("z").toString());
@@ -171,6 +171,7 @@ public class ThirdWaringServiceImpl implements ThirdWaringService {
                     double wrz = Double.parseDouble(tRvfcchStandard.getWrz() == null ? "0" : tRvfcchStandard.getWrz());
                     if (wrz < z) {
                         resultMap.put("alarm_lev", 1);
+                        resultMap.put("alarm_content", "超过超警戒水位");
                     }
 
                 }
