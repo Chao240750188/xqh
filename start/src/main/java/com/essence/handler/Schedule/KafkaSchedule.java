@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.essence.business.xqh.api.Third.ThirdWaringService;
 import com.essence.business.xqh.common.util.DateUtil;
+import com.essence.framework.util.StrUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,25 +62,49 @@ public class KafkaSchedule {
             Date time = DateUtil.getCurrentTime();
 
             for (Map rainMap:rainWarning){
-                rainMap.put("id",null);
+                rainMap.put("id", StrUtil.getUUID());
                 rainMap.put("alarm_type",2);
-                rainMap.put("threhold",null);
+                rainMap.put("threhold","");
                 rainMap.put("alarm_time", DateUtil.dateToStringNormal3(time));
-                rainMap.put("monitor_data", null);
+                rainMap.put("monitor_data", "");
+                String message = JSON.toJSONString(rainMap, SerializerFeature.WriteMapNullValue);
+                kafkaTemplate.send("alarmTopic", message).addCallback(success -> {//异步推送，不用等待一条休息的推送成功后在推送下一条
+                    // 消息发送到的topic
+                    String topic = ((SendResult)success).getRecordMetadata().topic();
+                    // 消息发送到的分区
+                    int partition = ((SendResult)success).getRecordMetadata().partition();
+                    // 消息在分区内的offset
+                    long offset = ((SendResult)success).getRecordMetadata().offset();
+                    System.out.println("发送消息成功:" + topic + "-" + partition + "-" + offset);
+                }, failure -> {
+                    System.out.println("发送消息失败:" + failure.getMessage());
+                });
             }
             for (Map waterMap:waterWarning){
-                waterMap.put("id",null);
+                waterMap.put("id",StrUtil.getUUID());
                 waterMap.put("alarm_type",3);
-                waterMap.put("threhold",null);
+                waterMap.put("threhold","");
                 waterMap.put("alarm_time", DateUtil.dateToStringNormal3(time));
-                waterMap.put("monitor_data", null);
+                waterMap.put("monitor_data", "");
                 waterMap.put("alarm_content","超警戒水位");
+                String message = JSON.toJSONString(waterMap, SerializerFeature.WriteMapNullValue);
+                kafkaTemplate.send("alarmTopic", message).addCallback(success -> {
+                    // 消息发送到的topic
+                    String topic = ((SendResult)success).getRecordMetadata().topic();
+                    // 消息发送到的分区
+                    int partition = ((SendResult)success).getRecordMetadata().partition();
+                    // 消息在分区内的offset
+                    long offset = ((SendResult)success).getRecordMetadata().offset();
+                    System.out.println("发送消息成功:" + topic + "-" + partition + "-" + offset);
+                }, failure -> {
+                    System.out.println("发送消息失败:" + failure.getMessage());
+                });
             }
-            waterWarning.addAll(rainWarning);
+            //waterWarning.addAll(rainWarning);
 
-            String message = JSON.toJSONString(waterWarning, SerializerFeature.WriteMapNullValue);
+            //String message = JSON.toJSONString(waterWarning, SerializerFeature.WriteMapNullValue);
 
-            kafkaTemplate.send("alarmTopic", message).addCallback(success -> {
+            /*kafkaTemplate.send("alarmTopic", message).addCallback(success -> {
                 // 消息发送到的topic
                 String topic = ((SendResult)success).getRecordMetadata().topic();
                 // 消息发送到的分区
@@ -89,7 +114,7 @@ public class KafkaSchedule {
                 System.out.println("发送消息成功:" + topic + "-" + partition + "-" + offset);
             }, failure -> {
                 System.out.println("发送消息失败:" + failure.getMessage());
-            });
+            });*/
 
 
         } catch (Exception e) {

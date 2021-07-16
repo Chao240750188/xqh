@@ -44,10 +44,12 @@ public class KafkaConsumer {
     public void onMessage2(ConsumerRecord<?, ?> record) {
         System.out.println("alarm1+topic:"+record.topic()+"|partition:"+record.partition()+"|offset:"+record.offset()+"|value:"+record.value());
          String message = (String) record.value();
-         List<Map> result = JSON.parseArray(message, Map.class);
+         Map map1 = JSON.parseObject(message, Map.class);
+         System.out.println("map:"+map1.toString());
+         /*List<Map> result = JSON.parseArray(message, Map.class);
          for (Map map :result){
              System.out.println("map:"+map.toString());
-         }
+         }*/
      }
 
 
