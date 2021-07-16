@@ -40,7 +40,7 @@ public class KafkaConsumer {
         System.out.println("test1+topic:"+record.topic()+"|partition:"+record.partition()+"|offset:"+record.offset()+"|value:"+record.value());
     }*/
 
-     @KafkaListener(id = "alarm1",groupId = "alarm-group",topics = {"alarmTopic"})
+     @KafkaListener(id = "alarm1",groupId = "alarm-group1",topics = {"alarmTopic"})
     public void onMessage2(ConsumerRecord<?, ?> record) {
         System.out.println("alarm1+topic:"+record.topic()+"|partition:"+record.partition()+"|offset:"+record.offset()+"|value:"+record.value());
          String message = (String) record.value();
@@ -107,6 +107,15 @@ public class KafkaConsumer {
     //2.Topic分区发生变化
 
 
+    //todo kafka确保每个partition只能同一个group中的同一个consumer消费
+    //todo 一条消息只能被某一个消费者消费的模式称为单播。要实现消息单播，只要让这些消费者属于同一个消费者组即可。
+    //todo 因为一条消息只能被Kafka同一个分组下某一个消费者消费，而不是所有消费者都能消费
+    /**
+     * todo ：groupId = "alarm-group" 我跟武浩起了俩个项目。所以有俩个消费者且在同一个group_id里面。所以消息只能被我跟武浩
+     * todo：其中一个人消费。每个partition只能同一个group中的同一个consumer消费。而一条消息是存在partition里的。我跟武浩我们俩个
+     * todo：会分担不同的分区进行消费。如果我把groupId改成alarm-group1.那么我跟五号俩个消费者消费所以partition分区，就是可以消费所有的信息
+     * todo：就是广播喽
+     */
 
 
 }
