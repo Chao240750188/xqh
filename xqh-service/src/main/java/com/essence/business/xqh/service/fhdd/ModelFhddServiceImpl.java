@@ -1076,8 +1076,8 @@ public class ModelFhddServiceImpl implements ModelFhddService {
             valObj.put("RCS_ID", wrpRcsBsin.getRvcrcrsccd()); //河道断面编码
             valObj.put("RCS_NAME", wrpName); //河道断面名称
             String stcd = PropertiesUtil.read("/filePath.properties").getProperty("skddxx.RSCD_RSR." + planInfo.getRscd());
-            valObj.put("fsltdz",stRsvrfsrBDao.findByStcd(stcd).getFsltdz()); //方案对应汛限水位
-            valObj.put("damel",stRsvrfcchBDao.findByStcd(stcd).getDamel()); //方案对应水库坝顶高程
+            valObj.put("fsltdz",stRsvrfsrBDao.findByStcd(stcd)==null?null:stRsvrfsrBDao.findByStcd(stcd).getFsltdz()); //方案对应汛限水位
+            valObj.put("damel",stRsvrfcchBDao.findByStcd(stcd)==null?null:stRsvrfcchBDao.findByStcd(stcd).getDamel()); //方案对应水库坝顶高程
             JSONArray ZList = new JSONArray();
             valObj.put("zValues", ZList); // 水位
             JSONArray rainList = new JSONArray();

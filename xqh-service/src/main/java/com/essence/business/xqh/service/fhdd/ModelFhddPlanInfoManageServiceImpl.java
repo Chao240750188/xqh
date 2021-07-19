@@ -57,6 +57,9 @@ public class ModelFhddPlanInfoManageServiceImpl implements ModelFhddPlanInfoMana
     @Autowired
     WrpRsrBsinDao wrpRsrBsinDao;
 
+    @Autowired
+    YwkPlaninRainfallDao ywkPlaninRainfallDao;//方案雨量
+
     @Override
     public Paginator getPlanList(PaginatorParam paginatorParam) {
         String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("FHDD");
@@ -174,6 +177,8 @@ public class ModelFhddPlanInfoManageServiceImpl implements ModelFhddPlanInfoMana
         ywkPlanOutputQDao.deleteByNPlanid(planInfo.getnPlanid());
 
         ywkPlanInputZDao.deleteByNPlanid(planInfo.getnPlanid());
+
+        ywkPlaninRainfallDao.deleteByNPlanid(planInfo.getnPlanid()); //删除方案对应雨量
 
         //删除对应模型文件
         try {

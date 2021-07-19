@@ -64,6 +64,9 @@ public class ModelSkddXxPlanInfoManageServiceImpl implements ModelSkddXxPlanInfo
     @Autowired
     WrpRsrBsinDao wrpRsrBsinDao;
 
+    @Autowired
+    YwkPlaninRainfallDao ywkPlaninRainfallDao;//方案雨量
+
     @Override
     public Paginator getPlanList(PaginatorParam paginatorParam) {
         String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("SKDD_XX");
@@ -181,6 +184,8 @@ public class ModelSkddXxPlanInfoManageServiceImpl implements ModelSkddXxPlanInfo
         ywkPlanOutputQDao.deleteByNPlanid(planInfo.getnPlanid());
 
         ywkPlanInputZDao.deleteByNPlanid(planInfo.getnPlanid()); //删除方案对应的初始水位和下泄流量
+
+        ywkPlaninRainfallDao.deleteByNPlanid(planInfo.getnPlanid()); //删除方案对应雨量
 
         //删除对应模型文件
         try {
