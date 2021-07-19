@@ -102,7 +102,7 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
         while (startT.isBefore(endT)){
             LocalDateTime endTim = startT.plusHours(step);
             Date time = Date.from(startT.atZone(ZoneId.systemDefault()).toInstant());
-            Double collect = stPptnRS.stream().filter(t -> (t.getTm().compareTo(time))>=0).filter(t -> t.getTm()
+            Double collect = stPptnRS.stream().filter(t->t.getDrp()!=null).filter(t -> (t.getTm().compareTo(time))>=0).filter(t -> t.getTm()
                     .before(Date.from(endTim.atZone(ZoneId.systemDefault()).toInstant()))).collect(Collectors.summingDouble(StPptnR::getDrp));
             RainDataResultDto dataResultDto = new RainDataResultDto();
             dataResultDto.setRainfall(collect);
@@ -144,11 +144,11 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
             try {
                 String stcd = map.get("stcd").toString();
                 //水位
-                double z = Double.parseDouble(map.get("z").toString());
                 TRvfcchB tRvfcchStandard = collectWarningHD.get(stcd);
-                if(tRvfcchStandard==null){
+                if(tRvfcchStandard==null ||map.get("z") == null){
                     continue;
                 }
+                double z = Double.parseDouble(map.get("z").toString());
                 //警戒水位
                 double wrz = Double.parseDouble(tRvfcchStandard.getWrz()==null?"0":tRvfcchStandard.getWrz());
                 //保证水位
@@ -176,11 +176,12 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
             try {
                 String stcd = map.get("stcd").toString();
                 //水位
-                double z = Double.parseDouble(map.get("RZ").toString());
                 TRsvrfsrB tRsvrfsrB = collectWarningSK.get(stcd);
-                if(tRsvrfsrB == null){
+                if(tRsvrfsrB == null||map.get("RZ") == null){
                     continue;
                 }
+                double z = Double.parseDouble(map.get("RZ").toString());
+
                 //汛险水位
                 double fsltdz = Double.parseDouble(tRsvrfsrB.getFsltdz()==null?"0":tRsvrfsrB.getFsltdz());
                 if(fsltdz<z){
@@ -197,11 +198,12 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
             try {
                 String stcd = map.get("stcd").toString();
                 //水位
-                double z = Double.parseDouble(map.get("UPZ").toString());
                 TRvfcchB tRvfcchStandard = collectWarningHD.get(stcd);
-                if(tRvfcchStandard == null){
+                if(tRvfcchStandard == null||map.get("UPZ")==null){
                     continue;
                 }
+                double z = Double.parseDouble(map.get("UPZ").toString());
+
                 //警戒水位
                 double wrz = Double.parseDouble(tRvfcchStandard.getWrz()==null?"0":tRvfcchStandard.getWrz());
                 //保证水位
@@ -227,8 +229,12 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
             try {
                 String stcd = map.get("stcd").toString();
                 //水位
-                double z = Double.parseDouble(map.get("TDZ").toString());
                 TRvfcchB tRvfcchStandard = collectWarningHD.get(stcd);
+                if (map.get("TDZ") == null||tRvfcchStandard == null){
+                    continue;
+                }
+                double z = Double.parseDouble(map.get("TDZ").toString());
+
                 //警戒水位
                 double wrz = Double.parseDouble(tRvfcchStandard.getWrz()==null?"0":tRvfcchStandard.getWrz());
                 //保证水位
@@ -351,7 +357,9 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
         TRvfcchB tRvfcchB = tRvfcchBDao.findByStcd(stcd);
         for (TRiverR riverR : riverRS) {
             RiverWayDataDetailDto dto = new RiverWayDataDetailDto();
-            BeanUtils.copyProperties(tRvfcchB,dto);
+            if(tRvfcchB != null){
+                BeanUtils.copyProperties(tRvfcchB,dto);
+            }
             if(riverR.getQ()!=null){
                 double flow = Double.parseDouble(riverR.getQ());
                 dto.setFlow(Double.parseDouble(format.format(flow)));
@@ -361,10 +369,10 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
                 dto.setWaterLevel(Double.parseDouble(format.format(waterLevel)));
             }
             //获取警戒水位
-            String wrz = tRvfcchB.getWrz();
+            //String wrz = tRvfcchB.getWrz();
             //距警戒
-            if(wrz!=null && riverR.getZ()!=null){
-                dto.setDistance(Double.parseDouble(riverR.getZ())-Double.parseDouble(wrz));
+            if(tRvfcchB!=null&&tRvfcchB.getWrz()!=null && riverR.getZ()!=null){
+                dto.setDistance(Double.parseDouble(riverR.getZ())-Double.parseDouble(tRvfcchB.getWrz()));
             }
             dto.setTm(riverR.getTm());
             dto.setWptn(riverR.getWptn());
