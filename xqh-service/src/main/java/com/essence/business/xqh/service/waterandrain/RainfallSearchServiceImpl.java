@@ -206,11 +206,16 @@ public class RainfallSearchServiceImpl implements RainfallSearchService {
 
         TreeSet<BigDecimal> set = new TreeSet<>();
         List<RainfallTendencyDto> list = new ArrayList<>();
-        while (startTime.getTime() <= endTime.getTime()) {
+
+        while (startTime.getTime() < DateUtil.getNextDay(endTime,1).getTime()) {
+            Date day = DateUtil.getNextHour(DateUtil.getThisDay(startTime), 8);
+            if(startTime.before(day)){
+                day = DateUtil.getNextDay(day, -1);
+            }
             RainfallTendencyDto dto = new RainfallTendencyDto();
-            dto.setTm(startTime);
-            dto.setShowTm(DateUtil.dateToStringDay2(startTime));
-            BigDecimal bigDecimal = map.get(startTime) == null ? new BigDecimal(0) : map.get(startTime);
+            dto.setTm(day);
+            dto.setShowTm(DateUtil.dateToStringDay2(day));
+            BigDecimal bigDecimal = map.get(day) == null ? new BigDecimal(0) : map.get(day);
             dto.setRainfall(bigDecimal);
             set.add(bigDecimal);
             list.add(dto);
@@ -229,7 +234,6 @@ public class RainfallSearchServiceImpl implements RainfallSearchService {
         resultMap.put("list", list);
         return resultMap;
     }
-
     /**
      * 时段雨量-单个站点雨量过程线
      *
