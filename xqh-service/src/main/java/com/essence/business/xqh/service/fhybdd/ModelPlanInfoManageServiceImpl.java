@@ -100,7 +100,8 @@ public class ModelPlanInfoManageServiceImpl implements ModelPlanInfoManageServic
         return all;
     }
 
-
+    @Autowired
+    YwkPlaninRainfallDao ywkPlaninRainfallDao;//方案雨量
     @Transactional
     @Override
     public void deleteByPlanId(YwkPlaninfo planInfo) {
@@ -140,7 +141,7 @@ public class ModelPlanInfoManageServiceImpl implements ModelPlanInfoManageServic
             }
         }
         ywkPlaninfoDao.delete(planInfo.getnPlanid());
-
+        ywkPlaninRainfallDao.deleteByNPlanid(planInfo.getnPlanid());
         ywkPlanOutputQDao.deleteByNPlanid(planInfo.getnPlanid());
 
         //删除对应模型文件
