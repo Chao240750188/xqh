@@ -72,16 +72,16 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
 
     private static final Map<String, String> SK_DD = new HashMap<>();
     static {
-        SK_DD.put("RSR_001","起调水位为兴利水位187.00m，按50年一遇防洪高水位190.73m控泄265m3/s；当库水位高于50年一遇防洪高水位时不再控泄，按自由出流敞泄。");
-        SK_DD.put("RSR_002","起调水位为兴利水位78.00m，水库洪水调节计算按20年一遇防洪高水位78.63m控泄509m3/s；当库水位高于20年一遇防洪高水位时不再控泄，按自由出流敞泄。");
-        SK_DD.put("RSR_003","起调水位为汛限水位46.60m，按20年一遇防洪高水位47.10m控泄570m3/s；当库水位高于20年一遇防洪高水位时不再控泄，按自由出流敞泄。");
-        SK_DD.put("RSR_004","起调水位为兴利水位304.00m，按20年一遇防洪高水位306.66m控泄218m3/s；当库水位高于20年一遇防洪高水位时不再控泄，按自由出流敞泄。");
-        SK_DD.put("RSR_005","起调水位为兴利水位103.3m，在警戒水位106.3m以下控制250m3/s，超警戒水位敞泄；充分利用芽庄湖调蓄，浒山闸过流能力148m3/s；继续发挥浒山泺滞洪区的滞蓄作用，遇超过20年一遇洪水时，临时滞蓄，错峰下泄，分洪流量60m3/s。");
-        SK_DD.put("RSR_006","起调水位为兴利水位336.10m，水库无闸控制，自由出流敞泄。");
-        SK_DD.put("RSR_007","汛中限制水位（汛限水位）：348.00m，相应库容904.6万m3；\n" +
+        SK_DD.put("41801788","起调水位为兴利水位187.00m，按50年一遇防洪高水位190.73m控泄265m3/s；当库水位高于50年一遇防洪高水位时不再控泄，按自由出流敞泄。");
+        SK_DD.put("4180154B","起调水位为兴利水位78.00m，水库洪水调节计算按20年一遇防洪高水位78.63m控泄509m3/s；当库水位高于20年一遇防洪高水位时不再控泄，按自由出流敞泄。");
+        SK_DD.put("41801888","起调水位为汛限水位46.60m，按20年一遇防洪高水位47.10m控泄570m3/s；当库水位高于20年一遇防洪高水位时不再控泄，按自由出流敞泄。");
+        SK_DD.put("4180157B","起调水位为兴利水位304.00m，按20年一遇防洪高水位306.66m控泄218m3/s；当库水位高于20年一遇防洪高水位时不再控泄，按自由出流敞泄。");
+        SK_DD.put("41802888","起调水位为兴利水位103.3m，在警戒水位106.3m以下控制250m3/s，超警戒水位敞泄；充分利用芽庄湖调蓄，浒山闸过流能力148m3/s；继续发挥浒山泺滞洪区的滞蓄作用，遇超过20年一遇洪水时，临时滞蓄，错峰下泄，分洪流量60m3/s。");
+        SK_DD.put("41804788","起调水位为兴利水位336.10m，水库无闸控制，自由出流敞泄。");
+        SK_DD.put("41823450","汛中限制水位（汛限水位）：348.00m，相应库容904.6万m3；\n" +
                 "警戒水位：349.00m, 相应库容1086万m3，相应泄量309m3/s；允许最高水位：351.38m，相应库容1633万m3，相应泄量809m3/s。");
-        SK_DD.put("RSR_008","起调水位为汛期水位233.00m，水库为二级控泄，一级按20年一遇防洪高水位234.63m控泄700m3/s，二级按100年一遇防洪高水位235.77m控泄2910m3/s；当库水位高于100年一遇防洪高水位时不再控泄，按自由出流敞泄。");
-        SK_DD.put("RSR_009","起调水位为兴利水位83.00m，水库为二级控泄，一级按20年一遇防洪高水位83.34m控泄300m3/s，二级按50年一遇防洪高水位83.75m控泄526m3/s；当库水位高于50年一遇防洪高水位时不再控泄，按自由出流敞泄。");
+        SK_DD.put("41804700","起调水位为汛期水位233.00m，水库为二级控泄，一级按20年一遇防洪高水位234.63m控泄700m3/s，二级按100年一遇防洪高水位235.77m控泄2910m3/s；当库水位高于100年一遇防洪高水位时不再控泄，按自由出流敞泄。");
+        SK_DD.put("41803900","起调水位为兴利水位83.00m，水库为二级控泄，一级按20年一遇防洪高水位83.34m控泄300m3/s，二级按50年一遇防洪高水位83.75m控泄526m3/s；当库水位高于50年一遇防洪高水位时不再控泄，按自由出流敞泄。");
     }
 
     @Autowired
@@ -463,7 +463,7 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                     }
                     switch (stcd){
 
-                        case "RSR_001"://y = 2.6198x2 - 867.14x + 71775
+                        case "41801788"://y = 2.6198x2 - 867.14x + 71775
 
                             startValue = new BigDecimal("2.6198").multiply(startZValue.pow(2))
                                     .subtract(new BigDecimal("867.14").multiply(startZValue)).add(new BigDecimal("71775")).setScale(2,BigDecimal.ROUND_HALF_UP);
@@ -472,7 +472,7 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                             avgHistoryValue = new BigDecimal("2.6198").multiply(avgZHistoryValue.pow(2))
                                     .subtract(new BigDecimal("867.14").multiply(avgZHistoryValue)).add(new BigDecimal("71775")).setScale(2,BigDecimal.ROUND_HALF_UP);
                             break;
-                        case "RSR_002"://y = 8.9233x2 - 1206.3x + 40828
+                        case "4180154B"://y = 8.9233x2 - 1206.3x + 40828
 
                             startValue = new BigDecimal("8.9233").multiply(startZValue.pow(2))
                                     .subtract(new BigDecimal("1206.3").multiply(startZValue)).add(new BigDecimal("40828")).setScale(2,BigDecimal.ROUND_HALF_UP);
@@ -481,7 +481,7 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                             avgHistoryValue = new BigDecimal("8.9233").multiply(avgZHistoryValue.pow(2))
                                     .subtract(new BigDecimal("1206.3").multiply(avgZHistoryValue)).add(new BigDecimal("40828")).setScale(2,BigDecimal.ROUND_HALF_UP);
                             break;
-                        case "RSR_003"://y = 2.8675x2 - 142.23x + 1322.8
+                        case "41801888"://y = 2.8675x2 - 142.23x + 1322.8
 
                             startValue = new BigDecimal("2.8675").multiply(startZValue.pow(2))
                                     .subtract(new BigDecimal("142.23").multiply(startZValue)).add(new BigDecimal("1322.8")).setScale(2,BigDecimal.ROUND_HALF_UP);
@@ -491,7 +491,7 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                                     .subtract(new BigDecimal("142.23").multiply(avgZHistoryValue)).add(new BigDecimal("1322.8")).setScale(2,BigDecimal.ROUND_HALF_UP);
                             break;
 
-                        case "RSR_004"://y = 1.3855x2 - 764.01x + 105316
+                        case "4180157B"://y = 1.3855x2 - 764.01x + 105316
 
                             startValue = new BigDecimal("1.3855").multiply(startZValue.pow(2))
                                     .subtract(new BigDecimal("764.01").multiply(startZValue)).add(new BigDecimal("105316")).setScale(2,BigDecimal.ROUND_HALF_UP);
@@ -500,7 +500,7 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                             avgHistoryValue = new BigDecimal("1.3855").multiply(avgZHistoryValue.pow(2))
                                     .subtract(new BigDecimal("764.01").multiply(avgZHistoryValue)).add(new BigDecimal("105316")).setScale(2,BigDecimal.ROUND_HALF_UP);
                             break;
-                        case "RSR_005"://y = 5.497x2 - 1020.7x + 47394
+                        case "41802888"://y = 5.497x2 - 1020.7x + 47394
 
                             startValue = new BigDecimal("5.497").multiply(startZValue.pow(2))
                                     .subtract(new BigDecimal("1020.7").multiply(startZValue)).add(new BigDecimal("47394")).setScale(2,BigDecimal.ROUND_HALF_UP);
@@ -509,7 +509,7 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                             avgHistoryValue = new BigDecimal("5.497").multiply(avgZHistoryValue.pow(2))
                                     .subtract(new BigDecimal("1020.7").multiply(avgZHistoryValue)).add(new BigDecimal("47394")).setScale(2,BigDecimal.ROUND_HALF_UP);
                             break;
-                        case "RSR_006"://y = 1.5041x2 - 896.85x + 133839
+                        case "41804788"://y = 1.5041x2 - 896.85x + 133839
 
                             startValue = new BigDecimal("1.5041").multiply(startZValue.pow(2))
                                     .subtract(new BigDecimal("896.85").multiply(startZValue)).add(new BigDecimal("133839")).setScale(2,BigDecimal.ROUND_HALF_UP);
@@ -518,7 +518,7 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                             avgHistoryValue = new BigDecimal("1.5041").multiply(avgZHistoryValue.pow(2))
                                     .subtract(new BigDecimal("896.85").multiply(avgZHistoryValue)).add(new BigDecimal("133839")).setScale(2,BigDecimal.ROUND_HALF_UP);
                             break;
-                        case "RSR_007"://y = 8.6731x2 - 5857.2x + 988887
+                        case "41823450"://y = 8.6731x2 - 5857.2x + 988887
 
                             startValue = new BigDecimal("8.6731").multiply(startZValue.pow(2))
                                     .subtract(new BigDecimal("5857.2").multiply(startZValue)).add(new BigDecimal("988887")).setScale(2,BigDecimal.ROUND_HALF_UP);
@@ -527,7 +527,7 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                             avgHistoryValue = new BigDecimal("8.6731").multiply(avgZHistoryValue.pow(2))
                                     .subtract(new BigDecimal("5857.2").multiply(avgZHistoryValue)).add(new BigDecimal("988887")).setScale(2,BigDecimal.ROUND_HALF_UP);
                             break;
-                        case "RSR_008"://y = 9.8014x2 - 3900x + 388112
+                        case "41804700"://y = 9.8014x2 - 3900x + 388112
 
                             startValue = new BigDecimal("9.8014").multiply(startZValue.pow(2))
                                     .subtract(new BigDecimal("3900").multiply(startZValue)).add(new BigDecimal("388112")).setScale(2,BigDecimal.ROUND_HALF_UP);
@@ -536,7 +536,7 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                             avgHistoryValue = new BigDecimal("9.8014").multiply(avgZHistoryValue.pow(2))
                                     .subtract(new BigDecimal("3900").multiply(avgZHistoryValue)).add(new BigDecimal("388112")).setScale(2,BigDecimal.ROUND_HALF_UP);
                             break;
-                        case "RSR_009"://y = 13.174x2 - 1685.4x + 53907  //得到的是万
+                        case "41803900"://y = 13.174x2 - 1685.4x + 53907  //得到的是万
 
                             startValue = new BigDecimal("13.174").multiply(startZValue.pow(2))
                                     .subtract(new BigDecimal("1685.4").multiply(startZValue)).add(new BigDecimal("53907")).setScale(2,BigDecimal.ROUND_HALF_UP);
@@ -546,6 +546,10 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                                     .subtract(new BigDecimal("1685.4").multiply(avgZHistoryValue)).add(new BigDecimal("53907")).setScale(2,BigDecimal.ROUND_HALF_UP);
                             break;
                         default:
+                            startValue = new BigDecimal(0);
+                            endValue = new BigDecimal(0);
+                            avgHistoryValue = new BigDecimal(0);
+
                     }//break方法
                     Map<String,String> skDdMap = new HashMap<>();
                     skDdMap.put("stcd",stcd);
@@ -1508,53 +1512,55 @@ public class AnalysisOfFloodServiceImpl implements AnalysisOfFloodService {
                 BigDecimal avgValue = null;
                 switch (stcd){
 
-                    case "RSR_001"://y = 2.6198x2 - 867.14x + 71775
+                    case "41801788"://y = 2.6198x2 - 867.14x + 71775
                         avgValue = new BigDecimal("2.6198").multiply(avgWaterLevel.pow(2))
                                 .subtract(new BigDecimal("867.14").multiply(avgWaterLevel)).add(new BigDecimal("71775")).setScale(2,BigDecimal.ROUND_HALF_UP);
                         break;
-                    case "RSR_002"://y = 8.9233x2 - 1206.3x + 40828
+                    case "4180154B"://y = 8.9233x2 - 1206.3x + 40828
 
                         avgValue = new BigDecimal("8.9233").multiply(avgWaterLevel.pow(2))
                                 .subtract(new BigDecimal("1206.3").multiply(avgWaterLevel)).add(new BigDecimal("40828")).setScale(2,BigDecimal.ROUND_HALF_UP);
                         break;
-                    case "RSR_003"://y = 2.8675x2 - 142.23x + 1322.8
+                    case "41801888"://y = 2.8675x2 - 142.23x + 1322.8
                         avgValue = new BigDecimal("2.8675").multiply(avgWaterLevel.pow(2))
                                 .subtract(new BigDecimal("142.23").multiply(avgWaterLevel)).add(new BigDecimal("1322.8")).setScale(2,BigDecimal.ROUND_HALF_UP);
 
                         break;
 
-                    case "RSR_004"://y = 1.3855x2 - 764.01x + 105316
+                    case "4180157B"://y = 1.3855x2 - 764.01x + 105316
 
                         avgValue = new BigDecimal("1.3855").multiply(avgWaterLevel.pow(2))
                                 .subtract(new BigDecimal("764.01").multiply(avgWaterLevel)).add(new BigDecimal("105316")).setScale(2,BigDecimal.ROUND_HALF_UP);
                         break;
-                    case "RSR_005"://y = 5.497x2 - 1020.7x + 47394
+                    case "41802888"://y = 5.497x2 - 1020.7x + 47394
                         avgValue = new BigDecimal("5.497").multiply(avgWaterLevel.pow(2))
                                 .subtract(new BigDecimal("1020.7").multiply(avgWaterLevel)).add(new BigDecimal("47394")).setScale(2,BigDecimal.ROUND_HALF_UP);
                         break;
-                    case "RSR_006"://y = 1.5041x2 - 896.85x + 133839
+                    case "41804788"://y = 1.5041x2 - 896.85x + 133839
 
                         avgValue = new BigDecimal("1.5041").multiply(avgWaterLevel.pow(2))
                                 .subtract(new BigDecimal("896.85").multiply(avgWaterLevel)).add(new BigDecimal("133839")).setScale(2,BigDecimal.ROUND_HALF_UP);
                         break;
-                    case "RSR_007"://y = 8.6731x2 - 5857.2x + 988887
+                    case "41823450"://y = 8.6731x2 - 5857.2x + 988887
 
                         avgValue = new BigDecimal("8.6731").multiply(avgWaterLevel.pow(2))
                                 .subtract(new BigDecimal("5857.2").multiply(avgWaterLevel)).add(new BigDecimal("988887")).setScale(2,BigDecimal.ROUND_HALF_UP);
 
                         break;
-                    case "RSR_008"://y = 9.8014x2 - 3900x + 388112
+                    case "41804700"://y = 9.8014x2 - 3900x + 388112
 
                         avgValue = new BigDecimal("9.8014").multiply(avgWaterLevel.pow(2))
                                 .subtract(new BigDecimal("3900").multiply(avgWaterLevel)).add(new BigDecimal("388112")).setScale(2,BigDecimal.ROUND_HALF_UP);
 
                         break;
-                    case "RSR_009"://y = 13.174x2 - 1685.4x + 53907  //得到的是万
+                    case "41803900"://y = 13.174x2 - 1685.4x + 53907  //得到的是万
 
                         avgValue = new BigDecimal("13.174").multiply(avgWaterLevel.pow(2))
                                 .subtract(new BigDecimal("1685.4").multiply(avgWaterLevel)).add(new BigDecimal("53907")).setScale(2,BigDecimal.ROUND_HALF_UP);
                         break;
                     default:
+                        avgValue = new BigDecimal(0);
+                        break;
                 }//break方法
                 dataDto.setWaterStorage(avgValue.doubleValue());
                 TRsvrfsrB tRsvrfsrB = collectWarningSK.get(stcd);
