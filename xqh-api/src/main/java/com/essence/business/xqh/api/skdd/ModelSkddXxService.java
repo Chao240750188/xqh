@@ -30,7 +30,7 @@ public interface ModelSkddXxService {
      * @param vo
      * @return
      */
-    String savePlan(ModelSkddXxPlanVo vo);
+    String savePlan(ModelSkddXxPlanVo vo) throws Exception;
 
     /**
      * 获取方案信息
