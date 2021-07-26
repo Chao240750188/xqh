@@ -91,4 +91,38 @@ public interface StPptnRDao extends EssenceJpaRepository<StPptnR, String> {
 
     @Query(value = "SELECT B.STCD,B.DRP,B.TM FROM ST_PPTN_R B WHERE STCD= ?1 AND TM >=?2 AND TM <=?3 ", nativeQuery = true)
     List<Map<String, Object>> findDataByStcdAndTmBetween(String stcd, Date startTime, Date endTime);
+
+    //todo 每隔30分钟
+    @Query(value = " SELECT\n" +
+            " \n" +
+            " CASE \n" +
+            "\tWHEN  LPAD( ( FLOOR( TO_CHAR( TM, 'mi' )  / 30 ) +1 ) * 30, 2, 0)=60 THEN\n" +
+            "\t\tTO_CHAR(TM+1/24,'yyyy-mm-dd hh24') || ':00' \n" +
+            "\tELSE\n" +
+            "\t\tTO_CHAR( TM, 'yyyy-mm-dd hh24' )  || ':' || LPAD( ( FLOOR( TO_CHAR( TM, 'mi' )  / 30 ) +1 ) * 30, 2, 0)\n" +
+            "END TM,\n" +
+            "  STCD,\n" +
+            " NVL(SUM( DRP ), 0) DRP \n" +
+            "FROM\n" +
+            " ST_PPTN_R \n" +
+            "WHERE\n" +
+            " TM BETWEEN to_date( ?1, 'yyyy-mm-dd hh24:mi:ss' ) \n" +
+            " AND to_date( ?2, 'yyyy-mm-dd hh24:mi:ss' ) \n" +
+            "GROUP BY\n" +
+            "\n" +
+            "CASE \n" +
+            "\tWHEN  LPAD( ( FLOOR( TO_CHAR( TM, 'mi' )  / 30 ) +1 ) * 30, 2, 0)=60 THEN\n" +
+            "\t\tTO_CHAR(TM+1/24,'yyyy-mm-dd hh24') || ':00' \n" +
+            "\tELSE\n" +
+            "\t\tTO_CHAR( TM, 'yyyy-mm-dd hh24' )  || ':' || LPAD( ( FLOOR( TO_CHAR( TM, 'mi' )  / 30 ) +1 ) * 30, 2, 0)\n" +
+            "END , stcd ORDER BY TM ",nativeQuery = true)
+    List<Map<String, Object>> findRainGroupStcdAndTimeWithMinutiue(String startTimeStr, String endTimeStr);
+
+    @Query(value = "\n" +
+            "\n" +
+            "select STCD,TO_CHAR(tm+1/24,'yyyy-mm-dd hh24') ||':00' TM, NVL(SUM( DRP ), 0) DRP from ST_PPTN_R WHERE\n" +
+            " TM BETWEEN to_date(?1, 'yyyy-mm-dd hh24:mi:ss' ) \n" +
+            " AND to_date(?2, 'yyyy-mm-dd hh24:mi:ss' ) \n" +
+            " GROUP BY TO_CHAR(tm+1/24,'yyyy-mm-dd hh24') ||':00',stcd order by TM\n",nativeQuery = true)
+    List<Map<String,Object>> findRainGroupStcdAndTimeWithHour(String startTimeStr,String endTimeStr);
 }

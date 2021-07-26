@@ -26,7 +26,7 @@ public interface ModelCallFhybddNewService {
      * @param vo
      * @return
      */
-    String savePlan(ModelCallBySWDDVo vo);
+    String savePlan(ModelCallBySWDDVo vo)throws Exception;
 
     /**
      * 根据方案获取雨量信息

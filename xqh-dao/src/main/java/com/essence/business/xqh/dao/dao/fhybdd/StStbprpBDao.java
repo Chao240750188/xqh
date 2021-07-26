@@ -189,4 +189,8 @@ public interface StStbprpBDao extends EssenceJpaRepository<StStbprpB, String> {
 
     @Query(value = "SELECT T.* FROM ST_STBPRP_B T LEFT JOIN ST_STSMTASK_B M ON T.STCD=M.STCD WHERE T.USFL='1' AND M.ZFL=1 ", nativeQuery = true)
     public List<StStbprpB> findUseWaterLevelStbprpBStation();
+
+
+    @Query(value = "SELECT B.*  FROM ST_STBPRP_B B INNER JOIN ST_STSMTASK_B M ON B.STCD = M.STCD WHERE B.USFL = '1' AND M.PFL = '1' ",nativeQuery = true)
+    List<StStbprpB> findUsePPStation();
 }

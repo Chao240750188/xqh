@@ -20,11 +20,11 @@ public interface YwkPlaninRainfallDao extends EssenceJpaRepository<YwkPlaninRain
     void deleteByNPlanid(String planId);
 
 
-    @Query(value = "select A.STCD,A.STNM,A.LGTD,A.LTTD,B.TM,B.DRP from ST_STBPRP_B A LEFT JOIN(\n" +
+    @Query(value =
             "SELECT TO_CHAR(D_TIME,'yyyy-mm-dd hh24:mi') TM,C_STCD STCD ,N_DRP DRP FROM YWK_PLANIN_RAINFALL  " +
             "where D_TIME BETWEEN to_date(?1,'yyyy-mm-dd hh24:mi:ss')\n" +
             "and to_date(?2,'yyyy-mm-dd hh24:mi:ss') and N_PLANID = ?3\n" +
-            ")B on A.STCD = B.STCD ORDER BY tm asc",nativeQuery = true)
+            " ORDER BY tm asc",nativeQuery = true)
     List<Map<String, Object>> findStPptnRWithSTCD(String startTimeStr, String endTimeStr, String planId);
 
 

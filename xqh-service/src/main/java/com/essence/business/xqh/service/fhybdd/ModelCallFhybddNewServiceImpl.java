@@ -15,6 +15,8 @@ import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.*;
+import org.hibernate.query.internal.NativeQueryImpl;
+import org.hibernate.transform.Transformers;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -24,6 +26,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.io.*;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -88,16 +91,18 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
         return planinfo;
     }
     @Override
-    public String savePlan(ModelCallBySWDDVo vo) {
+    public String savePlan(ModelCallBySWDDVo vo) throws Exception {
 
         String planSystem = PropertiesUtil.read("/filePath.properties").getProperty("XT_SWYB");
         List<YwkPlaninfo> isAll = ywkPlaninfoDao.findByCPlannameAndPlanSystem(vo.getcPlanname(), planSystem);
         if (!CollectionUtils.isEmpty(isAll)){
             return "isExist";
         }
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH");
 
-        Date startTime = vo.getStartTime(); //开始时间
-        Date endTIme = vo.getEndTime();  //结束时间
+        Date startTime = format.parse(format.format(vo.getStartTime())); //开始时间
+        Date endTIme = format.parse(format.format(vo.getEndTime())); //开始时间
+        //System.out.println(DateUtil.dateToStringNormal(startTime));
         Date periodEndTime = vo.getPeriodEndTime();//预见结束时间
         if (periodEndTime != null) {
             endTIme = periodEndTime;
@@ -140,147 +145,136 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
     @Override
     public List<Map<String,Object>> getRainfalls(YwkPlaninfo planInfo)throws Exception {
         SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        SimpleDateFormat formatHour = new SimpleDateFormat("yyyy-MM-dd HH:");
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
 
         String startTimeStr = format1.format(startTime);
         String endTimeStr = format1.format(endTime);
-
+        List<String> timeResults = new ArrayList();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         //Long step = planInfo.getnOutputtm() / 60;//步长
         Long step = planInfo.getnOutputtm();//分钟
-        //switch (step)
-        //Long count = ywkPlaninRainfallDao.countByPlanId(planInfo.getnPlanid());
+
+        while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
+            String hourStart = format.format(startTime);
+            timeResults.add(hourStart);
+            startTime = DateUtil.getNextMinute(startTime, step.intValue());//h获取分钟
+        }
+
         Long count = ywkPlaninRainfallDao.countByPlanIdWithTime(planInfo.getnPlanid(),startTime,endTime);
         List<Map<String, Object>> stPptnRWithSTCD = new ArrayList<>();
         if (count != 0){//原来是小时  实时数据是小时  都先按照整点来
             stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planInfo.getnPlanid());
         }
         else {
-            stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
-        }
-        Map<String,List<Map<String,Object>>> handleMap = new HashMap<>();
-        List<Map<String,Object>> nullList = new ArrayList<>();
-        for (Map<String,Object> datas : stPptnRWithSTCD){// A.STCD,B.TM,B.DRP
-            Object tm = datas.get("TM");
-            if (tm == null){
-                nullList.add(datas);
-                continue;
-            }
-            List<Map<String, Object>> handles = handleMap.get(datas.get("STCD")+"");
-            if (CollectionUtils.isEmpty(handles)) {
-                handles = new ArrayList<>();
-            }
-            handles.add(datas);
-            handleMap.put(datas.get("STCD")+"", handles);//存在有时间但是drp为null的 后面被优化了
-        }
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        List<Map<String,Object>> results = new ArrayList<>();
-        List<String> timeResults = new ArrayList();
-        while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
-            String hourStart = format.format(startTime);
-            timeResults.add(hourStart);
-            startTime = DateUtil.getNextMinute(startTime, step.intValue());//h获取分钟
-        }
-        Set<Map.Entry<String, List<Map<String, Object>>>> entries = handleMap.entrySet();
-
-        for (Map.Entry<String, List<Map<String, Object>>> entry : entries) {
-            List<Map<String, Object>> list = entry.getValue();
-            Iterator<Map<String, Object>> iterator = list.iterator();
-           /* if (CollectionUtils.isEmpty(list)){
-                continue;
-            }*/
-            Map<String,Object> resultMap = new HashMap<>();
-            resultMap.put("STCD",entry.getKey());//TODO 现在存在库里每个小时多个数据点
-            String stnm = list.get(0).get("STNM")+"";
-            String lgtd = list.get(0).get("LGTD")+"";
-            String lttd = list.get(0).get("LTTD")+"";
-            resultMap.put("STNM",stnm);
-            resultMap.put("LGTD",lgtd);
-            resultMap.put("LTTD",lttd);
-
-            while (iterator.hasNext()){
-                Map<String, Object> next = iterator.next();//为啥要remove呢。
-                String tm = next.get("TM")+"";
-                if (!timeResults.contains(tm)){
-                    iterator.remove();
-                }
-            }
-
-            Map<String,Map<String,Object>> dataM = new HashMap();
-            for(Map<String, Object> m : list){
-                String tm = m.get("TM")+"";
-                dataM.put(tm,m);
-            }
-            boolean flag = false;
-            List<Map<String,Object>> ll = new ArrayList<>();
-            for (String time : timeResults){
-                String newTime = "";
-                if (dataM.get(time) == null && step.intValue() < 60){//9点 是8点到9点的降雨量  都是整点的 9：00 9:30   10:00 算5 10 30步长
-                    //if (dataM.get(newTime) != null && step.intValue() < 30){ //实时数据30分钟一个点整点的时候，算5   10步长
-                    //if (dataM.get(newTime) != null && step.intValue() < 10){ //实时数据10分钟一个点整点的时候，算步长
-                    newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),60));//TODO 一个小时的整点 算5 15 30
-                    //newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),30));//TODO 30分钟的整点数据，算5 15
-                    //newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),10));//TODO 10分钟的整点数据 算5
-                }else{
-                    newTime = time;
-                }
-
-                Map<String, Object> stringObjectMap = dataM.get(newTime);
-                if (stringObjectMap == null){
-                    stringObjectMap = new HashMap<>();
-                    stringObjectMap.put("STCD",entry.getKey());
-                    stringObjectMap.put("STNM",stnm);
-                    stringObjectMap.put("LGTD",lgtd);
-                    stringObjectMap.put("LTTD",lttd);
-                    stringObjectMap.put("TM",time);
-
-                    stringObjectMap.put("DRP",null);
-
-                }else {
-                    if (dataM.get(time) == null && step.intValue()<60){ //todo if (step.intValue()<30){ 更上面的一样
-                        Long divise = 60L/step;
-                        //Long divise = 30L/step; TODO
-                        //Long divise = 10L/step;
-                        Map mm = new HashMap(stringObjectMap);
-                        mm.put("TM",time);
-                        if (mm.get("DRP")!= null){
-                            mm.put("DRP",new BigDecimal(mm.get("DRP")+"").divide(new BigDecimal(divise),2,BigDecimal.ROUND_HALF_UP));
+            //stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
+            Date startttt = format.parse(startTimeStr);
+            startTimeStr = format.format(DateUtil.getNextMinute(startttt, -step.intValue()));
+            if (step.intValue() == 30){ //todo 往前算30分   [ )
+                stPptnRWithSTCD = stPptnRDao.findRainGroupStcdAndTimeWithMinutiue(startTimeStr, endTimeStr);
+            }else {
+                    //往前算1小时。往前算2小时，3小时
+                List<Map<String,Object>> feng = stPptnRDao.findRainGroupStcdAndTimeWithHour(startTimeStr, endTimeStr);
+                    if (step > 60 && !CollectionUtils.isEmpty(feng)){
+                        for (String time : timeResults){
+                            Date timeDate = format.parse(time);
+                            List<String> timeList = new ArrayList<>();
+                            for (int i = 0; i <step.intValue()/60;i++){
+                                timeList.add(format.format(timeDate));
+                                timeDate = DateUtil.getNextMinute(timeDate,-60);
+                            }
+                            //todo  stcd 跟drp
+                            Map<String, Double> collect = feng.stream().filter(t -> timeList.contains(t.get("TM"))).
+                                    collect(Collectors.groupingBy(t -> (String)t.get("STCD"), Collectors.summingDouble(t -> ((BigDecimal) ((Map) t).get("DRP")).doubleValue())));
+                            Set<Map.Entry<String, Double>> entries = collect.entrySet();
+                            Iterator<Map.Entry<String, Double>> iterator = entries.iterator();
+                            while (iterator.hasNext()){
+                                Map dataMap = new HashMap();
+                                Map.Entry<String, Double> next = iterator.next();
+                                String stcd = next.getKey();
+                                Double drp = next.getValue();
+                                dataMap.put("STCD",stcd);
+                                dataMap.put("TM",time);
+                                dataMap.put("DRP",new BigDecimal(drp));
+                                stPptnRWithSTCD.add(dataMap);
+                            }
                         }
-                        stringObjectMap = mm;
+                    }else {
+                        stPptnRWithSTCD = feng;
                     }
-                }
-                if(stringObjectMap.get("DRP") == null){//todo 改变pcp雨量模型的逻辑。如果站点有一个时间没数据，则把有数据的时间全部置为null
-                    flag = true;
-                }
 
-                ll.add(stringObjectMap);
             }
-            if (flag){ //todo pcp判断Drp置为null
-               /* for (Map map : ll){
-                    Map newMap = new HashMap(map);
-                    if(newMap.get("DRP") != null ){
-                        newMap.put("DRP",null);
-                    }
-                    map = newMap;
-                    System.out.println("map:"+map.get("DRP"));
-                }*/
-               ll.clear();
-            }
-
-            resultMap.put("LIST",ll);
-            results.add(resultMap);
-
         }
-        for (Map<String,Object> nullMap : nullList){
+        Set<String> rainStcds = stPptnRWithSTCD.stream().map(t -> {
+            String stcd = (String) t.get("STCD");
+            return stcd;
+        }).collect(Collectors.toSet());
+        List<StStbprpB> usePPStation = stStbprpBDao.findUsePPStation();
+
+        Map<String, StStbprpB> allRainStationMap = usePPStation.stream().collect(Collectors.toMap(StStbprpB::getStcd, Function.identity()));
+
+        List<StStbprpB> nullList ;
+        if (CollectionUtils.isEmpty(rainStcds)){
+            nullList = usePPStation;
+        }else {
+            nullList = usePPStation.stream().filter(t->!rainStcds.contains(t.getStcd())).collect(Collectors.toList());
+        }
+
+        Map<String, Map<String, BigDecimal>> rainMap = stPptnRWithSTCD.stream().collect(Collectors.groupingBy(t -> (String) ((Map)t).get("STCD"),
+               Collectors.toMap(tm->(String)((Map)tm).get("TM"),tm->(BigDecimal)((Map)tm).get("DRP"))
+        ));
+        List<Map<String,Object>> results = new ArrayList<>();
+
+        Set<Map.Entry<String, Map<String, BigDecimal>>> entries = rainMap.entrySet();
+        for (Map.Entry<String, Map<String, BigDecimal>> entry : entries) {
+            String stcd = entry.getKey();
+            Map<String, BigDecimal> tmMap = entry.getValue();
+            StStbprpB stStbprpB = allRainStationMap.get(stcd);
+
             Map<String,Object> resultMap = new HashMap<>();
-            resultMap.put("STCD",nullMap.get("STCD"));
-            resultMap.put("STNM",nullMap.get("STNM"));
-            resultMap.put("LGTD",nullMap.get("LGTD"));
-            resultMap.put("LTTD",nullMap.get("LTTD"));
-            resultMap.put("LIST",new ArrayList<>());
+            resultMap.put("STCD",stcd);
+            resultMap.put("STNM",stStbprpB.getStnm());
+            resultMap.put("LGTD",stStbprpB.getLgtd());
+            resultMap.put("LTTD",stStbprpB.getLttd());
+
+
+            List<Map<String,Object>> llDatas = new ArrayList<>();
+            for (String time : timeResults){
+
+                BigDecimal drpValue = tmMap.get(time);
+                if (drpValue == null){
+                    drpValue = new BigDecimal(0d);
+                }
+                drpValue = drpValue.setScale(2,BigDecimal.ROUND_HALF_UP);
+                Map<String, Object> rainDataMap = new HashMap<>();
+                rainDataMap.put("TM",time);
+                rainDataMap.put("DRP",drpValue);
+                rainDataMap.put("STCD",stcd);
+                rainDataMap.put("LGTD",stStbprpB.getLgtd());
+                rainDataMap.put("LTTD",stStbprpB.getLttd());
+                llDatas.add(rainDataMap);
+            }
+            resultMap.put("LIST",llDatas);
             results.add(resultMap);
+        } //todo 都是null的站点不要显示了。。但是下载模板的里面得有
+        for (StStbprpB nullStStbprpb : nullList){
+            Map<String,Object> nullMap = new HashMap<>();
+            nullMap.put("STCD",nullStStbprpb.getStcd());
+            nullMap.put("STNM",nullStStbprpb.getStnm());
+            nullMap.put("LGTD",nullStStbprpb.getLgtd());
+            nullMap.put("LTTD",nullStStbprpb.getLttd());
+            nullMap.put("LIST",new ArrayList<>());
+            results.add(nullMap);
+
         }
+        results.sort(Comparator.comparing(t -> {
+            List list = (List) ((Map) t).get("LIST");
+            return list.size();
+        }).reversed());
+        /*List<Map<String, Object>> list1 = results.stream().sorted(Comparator.comparing(t -> {
+            List list = (List) ((Map) t).get("LIST");
+            return list.size();
+        }).reversed()).collect(Collectors.toList());*/
         //TODO 修改雨量值并不修改基础表的数据，只修改缓存的的数据
         CacheUtil.saveOrUpdate("rainfall", planInfo.getnPlanid()+"new", results);
         return results;
@@ -772,20 +766,63 @@ public class ModelCallFhybddNewServiceImpl implements ModelCallFhybddNewService 
 
             List<Map<String, Object>> results = getRainfalls(planInfo);//todo 这个地方先获取72小时之前的雨量，后获取现在的雨量。保证缓存的准去行
             Map<Object, Map<String, Object>> resultMap = results.stream().collect(Collectors.toMap(t -> t.get("STCD"), Function.identity()));
+            Date cStartTime = planInfo.getdCaculatestarttm();//计算开始
+            Date cEndTime = planInfo.getdCaculateendtm();//计算结束
+            List<String> timeResults = new ArrayList<>();
+            Date cBeforeStartTime = newPlan.getdCaculatestarttm();//前72小时开始
+            Date cBeforeEndTime = newPlan.getdCaculateendtm();//前72小时结束
+            List<String> beforeTimeResults = new ArrayList<>();
+            Long step = planInfo.getnOutputtm();
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            while (cStartTime.before(DateUtil.getNextMillis(cEndTime,1))) {
+                String hourStart = format.format(cStartTime);
+                timeResults.add(hourStart);
+                cStartTime = DateUtil.getNextMinute(cStartTime, step.intValue());//
+            }
+            //前72小时
+            while (cBeforeStartTime.before(DateUtil.getNextMillis(cBeforeEndTime,1))) {
+                String hourStart = format.format(cBeforeStartTime);
+                beforeTimeResults.add(hourStart);
+                cBeforeStartTime = DateUtil.getNextMinute(cBeforeStartTime, step.intValue());//h获取分钟
+            }
+
 
             for (Map<String,Object> map : before72results){
                 String stcd = map.get("STCD")+"";
+
                 List<Map<String,Object>> beforeList = (List<Map<String, Object>>) map.get("LIST");
-                List<Object> beforeDrpValues = beforeList.stream().map(key -> key.get("DRP")).collect(Collectors.toList());//todo new 7月8日
+                List<Object> beforeDrpValues = beforeList.stream().map(key -> key.get("DRP")).collect(Collectors.toList());//todo new 7月23日
                 Map<String, Object> thisMap = resultMap.get(stcd);
                 List<Map<String,Object>> thisList = (List<Map<String, Object>>) thisMap.get("LIST");
-                List<Object> drpValues = thisList.stream().map(key -> key.get("DRP")).collect(Collectors.toList());//todo new 7月8日
+                List<Object> drpValues = thisList.stream().map(key -> key.get("DRP")).collect(Collectors.toList());//todo new 7月23日
+
                 if (beforeDrpValues.size()== 0 && drpValues.size() != 0){
-                    thisMap.put("LIST",new ArrayList<>());
-                    thisList = new ArrayList<>();
+
+                    for (String time : beforeTimeResults){
+                        Map<String,Object> flatMap = new HashMap();
+                        flatMap.put("TM",time);
+                        flatMap.put("STCD",stcd);
+                        flatMap.put("DRP",new BigDecimal(0));
+                        beforeList.add(flatMap);
+                    }
+                    /*List<Map> zz = new ArrayList<>();
+                    tmList.stream().forEach(m->{
+                        Map<String,Object> flatMap = new HashMap();
+                        flatMap.put("TM",m);
+                        flatMap.put("STCD",stcd);
+                        //beforeList.add(flatMap);
+                        zz.add(flatMap);
+                    });*/
+
                 }else if (beforeDrpValues.size() != 0 && drpValues.size() == 0){
-                    map.put("LIST",new ArrayList<>());
-                    beforeList = new ArrayList<>();
+                    for (String time : timeResults){
+                        Map<String,Object> flatMap = new HashMap();
+                        flatMap.put("TM",time);
+                        flatMap.put("STCD",stcd);
+                        flatMap.put("DRP",new BigDecimal(0));
+                        thisList.add(flatMap);//todo 这个地方修改会影响到上面的类
+                    }
+                    //map.put("LIST",new ArrayList<>());
                 }
                 if (!CollectionUtils.isEmpty(beforeList)){
                     beforeList = beforeList.subList(0,beforeList.size()-1);
