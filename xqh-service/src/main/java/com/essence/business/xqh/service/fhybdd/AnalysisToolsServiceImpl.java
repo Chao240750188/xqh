@@ -2,14 +2,20 @@ package com.essence.business.xqh.service.fhybdd;
 
 import com.essence.business.xqh.api.fhybdd.service.AnalysisToolsService;
 import com.essence.business.xqh.common.util.DateUtil;
+import com.essence.business.xqh.common.util.ExcelUtil;
 import com.essence.business.xqh.dao.dao.fhybdd.StZvarlBDao;
 import com.essence.business.xqh.dao.dao.fhybdd.WrpRsrBsinDao;
-import com.essence.business.xqh.dao.dao.floodScheduling.SkddStZvarlBDao;
 import com.essence.business.xqh.dao.entity.fhybdd.StZvarlB;
-import com.essence.business.xqh.dao.entity.floodScheduling.SkddStZvarlB;
+import com.essence.business.xqh.dao.entity.fhybdd.WrpRsrBsin;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -365,7 +371,6 @@ public class AnalysisToolsServiceImpl implements AnalysisToolsService {
 
     @Override
     public Object getReservoirList() {
-
         return wrpRsrBsinDao.findAll();
     }
 
@@ -393,5 +398,122 @@ public class AnalysisToolsServiceImpl implements AnalysisToolsService {
             results.add(getJkrftrkInformation(map));
         }
         return results;
+    }
+
+
+    @Override
+    public Workbook exportBeforeGetJkrftrkInformationTemplate(Map map) {
+
+        // 获取区分好的开始时间
+        List<String> obj ;
+        try {
+            obj = (List<String>) beforeGetJkrftrkInformationWithSection(map);
+        } catch (Exception e) {
+            obj = null;
+            e.printStackTrace();
+        }
+
+        //封装边界模板数据
+        XSSFWorkbook workbook = new XSSFWorkbook();
+
+        //设置样式
+        XSSFFont font = workbook.createFont();
+        font.setFontHeightInPoints((short) 11);//字体高度
+        font.setFontName("宋体");//字体
+        XSSFCellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setFont(font);
+        style.setWrapText(true);//自动换行
+        XSSFSheet sheet = workbook.createSheet("出库流量导入模板");
+        //填充表头
+        //第一行
+        XSSFRow row = sheet.createRow(0);
+        XSSFCell cell0 = row.createCell(0);
+        cell0.setCellStyle(style);
+        cell0.setCellValue("序号");
+
+        XSSFCell cell1 = row.createCell(1);
+        cell1.setCellStyle(style);
+        cell1.setCellValue("起始时间");
+
+        XSSFCell cell2 = row.createCell(2);
+        cell2.setCellStyle(style);
+        cell2.setCellValue("终止时间");
+
+        XSSFCell cell3 = row.createCell(3);
+        cell3.setCellStyle(style);
+        cell3.setCellValue("平均出库流量(m³/s)");
+
+        XSSFCell cell4 = row.createCell(4);
+        cell4.setCellStyle(style);
+        cell4.setCellValue("起始水位(m)");
+
+        XSSFCell cell5 = row.createCell(5);
+        cell5.setCellStyle(style);
+        cell5.setCellValue("终止水位(m)");
+
+        //设置自动列宽
+        sheet.setColumnWidth(0, 3200);
+        sheet.setColumnWidth(1, 5100);
+        sheet.setColumnWidth(2, 5100);
+        sheet.setColumnWidth(3, 5100);
+        sheet.setColumnWidth(4, 5100);
+        sheet.setColumnWidth(5, 5100);
+        // 填充内容
+        if (null != obj){
+            for (int i = 1; i < obj.size(); i++) {
+                XSSFRow rowi = sheet.createRow(i);
+                // 序号
+                XSSFCell celli0 = rowi.createCell(0);
+                celli0.setCellStyle(style);
+                celli0.setCellValue(i);
+                // 开始时间
+                XSSFCell celli1 = rowi.createCell(1);
+                celli1.setCellStyle(style);
+                celli1.setCellValue(obj.get(i - 1));
+                // 结束时间   结束时间是索引为i的值
+                XSSFCell celli2 = rowi.createCell(2);
+                celli2.setCellStyle(style);
+                celli2.setCellValue( obj.get(i));
+
+            }
+
+        }
+        return workbook;
+    }
+
+
+    @Override
+    public List<Object> importBeforeGetJkrftrkInformation(MultipartFile mutilpartFile) throws IOException {
+
+
+        //解析ecxel数据 不包含第一行
+        List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile, 1);
+        List<Object> list = new ArrayList<>();
+        // 判断有无数据 时间-每个边界的值集合
+        if (excelList != null && excelList.size() > 0) {
+            // 遍历每行数据（除了标题）
+            for (int i = 0; i < excelList.size(); i++) {
+                // 从第二行获取数据
+                Map<String, Object> dataMap = new HashMap<>();
+                String[] strings = excelList.get(i);
+
+                // excel会自动将整数转成一位小数，
+
+                // 封装返回对象
+                  // 处理一下序号的小数位
+                dataMap.put("id", ((Double) Double.parseDouble(strings[0])).intValue());
+                dataMap.put("startTime", strings[1]);
+                dataMap.put("endTime", strings[2]);
+                dataMap.put("deliveryValue", strings[3]);
+                dataMap.put("startWaterLevel", strings[4]);
+                dataMap.put("endWaterLevel", strings[5]);
+                list.add(dataMap);
+
+            }
+        }
+
+        return  list ;
     }
 }
