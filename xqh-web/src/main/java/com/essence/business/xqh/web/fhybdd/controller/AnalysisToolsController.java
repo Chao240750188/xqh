@@ -2,15 +2,17 @@ package com.essence.business.xqh.web.fhybdd.controller;
 
 import com.essence.business.xqh.api.fhybdd.service.AnalysisToolsService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
+import com.essence.business.xqh.common.util.ExcelUtil;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.crypto.Data;
+import java.io.OutputStream;
+import java.util.*;
 
 @RequestMapping("/analysisTool")
 @RestController
@@ -138,6 +140,63 @@ public class AnalysisToolsController {
 
         }
     }
+    /**
+     * 下载出库流量模板
+     *
+     * @param response
+     * @throws Exception
+     */
+    @RequestMapping(value = "/exportBeforeGetJkrftrkInformationTemplate/{rsrId}/{startTime}/{endTime}/{step}", method = RequestMethod.GET)
+    public void exportCwBoundaryTemplate(HttpServletRequest request, HttpServletResponse response,
+                                         @PathVariable String rsrId, @PathVariable String startTime, @PathVariable String endTime, @PathVariable String step) {
+        try {
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("rsrId",rsrId);
+            map.put("step",step);
+            map.put("startTime",startTime);
+            map.put("endTime",endTime);
+            Workbook workbook = analysisToolsService.exportBeforeGetJkrftrkInformationTemplate(map);
+            //响应尾
+            response.setContentType("applicationnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            String fileName = "出库流量模板.xlsx";
+            response.setHeader("Content-disposition", "attachment;filename=" + new String(fileName.getBytes(), "iso_8859_1"));
+            OutputStream ouputStream = response.getOutputStream();
+            workbook.write(ouputStream);
+            ouputStream.flush();
+            ouputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
+    /**
+     * 上传出库流量数据解析-Excel导入
+     *
+     * @return SystemSecurityMessage 返回结果json
+     */
+    @RequestMapping(value = "/importBeforeGetJkrftrkInformation", method = RequestMethod.POST)
+    public SystemSecurityMessage importBeforeGetJkrftrkInformation(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile) {
+        SystemSecurityMessage SystemSecurityMessage = null;
+        // 出库流量文件上传解析
+        String checkFlog = ExcelUtil.checkFile(mutilpartFile);
+        if (mutilpartFile == null) {
+            SystemSecurityMessage = new SystemSecurityMessage("error", "上传文件为空！", null);
+        } else if (!"excel".equals(checkFlog)) {
+            SystemSecurityMessage = new SystemSecurityMessage("error", "上传文件类型错误！", null);
+        } else {
+            // 解析表格数据为对象类型
+            try {
+                List<Object> boundaryList = analysisToolsService.importBeforeGetJkrftrkInformation(mutilpartFile);
+                SystemSecurityMessage = new SystemSecurityMessage("ok", "出库流量数据表上传解析成功!", boundaryList);
+            } catch (Exception e) {
+                String eMessage = "";
+                if (e != null) {
+                    eMessage = e.getMessage();
+                }
+                SystemSecurityMessage = new SystemSecurityMessage("error", "出库流量数据表上传解析失败，错误原因：" + eMessage, null);
+            }
+        }
+        return SystemSecurityMessage;
+    }
 
 }
