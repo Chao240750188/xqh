@@ -1,5 +1,9 @@
 package com.essence.business.xqh.api.fhybdd.service;
 
+import org.apache.poi.ss.usermodel.Workbook;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -54,4 +58,18 @@ public interface AnalysisToolsService {
      * @return
      */
     List<Map<String, Object>> getFloodList();
+
+    /**
+     * 下载出库流量模板
+     * @return
+     */
+    Workbook exportBeforeGetJkrftrkInformationTemplate(Map map);
+
+
+    /**
+     * 上传出库流量数据解析-Excel导入
+     * @param mutilpartFile
+     * @return
+     */
+    List<Object> importBeforeGetJkrftrkInformation(MultipartFile mutilpartFile) throws IOException;
 }
