@@ -1,5 +1,6 @@
 package com.essence.business.xqh.service.fbc;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.essence.business.xqh.api.fbc.ModelCallFbcService;
 import com.essence.business.xqh.api.fbc.dto.PlanInfoFbcVo;
@@ -23,6 +24,7 @@ import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -458,13 +460,13 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
     }
 
     @Override
-    public List<FbcHdpHhtdzW> fbcModelCall(String planId) {
+    @Async
+    public void fbcModelCall(String planId) {
         List<FbcHdpHhtdzW> dzwList = new ArrayList<>();
         //调用模型计算
         YwkPlaninfo planInfo = ywkPlaninfoDao.findOneById(planId);
         if (planInfo == null) {
             System.out.println("计划planid没有找到记录");
-            return dzwList;
         }
         //写入模型输入文件路径
         String fbc_path = PropertiesUtil.read("/filePath.properties").getProperty("FBC_MODEL");
@@ -494,7 +496,6 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         int copyResult = copyModelRunInputTemplateFile(fbc_model_template_run, fbc_model_template_run_plan,fbc_model_template_input);
         if (copyResult == 0) {
             System.out.println("风暴潮模型模板文件复制失败。。。");
-            return dzwList;
         }
 
         //根据方案获取条件数据
@@ -521,25 +522,42 @@ public class ModelCallFbcServiceImpl implements ModelCallFbcService {
         int resultBoundary = writeDataToInputFbcCsv(planInfo,fbc_model_template_input,zList,qList,directionList,speedList,pressureList,minimumPressureList,maximumSpeedList,fbcPerfaceTideLevelList,fbcShortestDistanceList);
         if (resultBoundary == 0) {
             System.out.println("风暴潮模型计算:边界fbc.csv输入文件写入失败。。。");
-            return dzwList;
         }
         //修改config文件
         int resultConfig = writeConfig(fbc_model_template_run_plan, fbc_model_template_input, fbc_model_template_output);
         if (resultConfig == 0) {
             System.out.println("水动力模型计算:config文件写入失败。。。");
-            return dzwList;
         }
         //调用模型计算
         System.out.println("风暴潮模型计算:开始风暴潮模型计算。。。");
         runModelExe(fbc_model_template_run_plan + File.separator + "startUp.bat");
         System.out.println("水动力模型计算:水动力模型计算结束。。。");
 
-        //模型计算完成调用接口保存输出结果文件
-        dzwList = (List<FbcHdpHhtdzW>) getModelResultCsv(planId);
-        if(dzwList.size()>0){
-            fbcHdpHhtdzWDao.saveAll(dzwList);
+    }
+
+    @Override
+    public Object getModelRunStatus(String planId) {
+        List<FbcHdpHhtdzW> dzwList = new ArrayList<>();
+
+        String FBC_MODEL = PropertiesUtil.read("/filePath.properties").getProperty("FBC_MODEL");
+        String FBC_MODEL_OUTPUT_RESULT = FBC_MODEL + File.separator + PropertiesUtil.read("/filePath.properties").getProperty("MODEL_OUTPUT")
+                + File.separator+ planId +"/result.csv";//输出的地址
+
+        File file = new File(FBC_MODEL_OUTPUT_RESULT);
+        JSONObject result = new JSONObject();
+        if(file.exists()){
+            //模型计算完成调用接口保存输出结果文件
+            dzwList = (List<FbcHdpHhtdzW>) getModelResultCsv(planId);
+            if(dzwList.size()>0){
+                fbcHdpHhtdzWDao.saveAll(dzwList);
+            }
+            result.put("describe", "模型运行成功");
+            result.put("runStatus",1);
+        }else {
+            result.put("describe", "模型正在运行中...");
+            result.put("runStatus",0);
         }
-        return dzwList;
+        return result;
     }
 
     private void runModelExe(String modelRunPath) {

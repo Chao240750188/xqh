@@ -124,7 +124,7 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
 
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH");
         Date startTime = format.parse(format.format(vo.getStartTime())); //开始时间
-        Date endTIme = format.parse(format.format(vo.getEndTime()));  //结束时间
+        Date endTime = format.parse(format.format(vo.getEndTime()));  //结束时间
         int step = vo.getStep();//以小时为单位
         int timeType = vo.getTimeType();
         //方案基本信息入库
@@ -135,7 +135,7 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
         ywkPlaninfo.setnCreateuser("user");
         ywkPlaninfo.setnPlancurrenttime(new Date());
         ywkPlaninfo.setdCaculatestarttm(startTime);//方案计算开始时间
-        ywkPlaninfo.setdCaculateendtm(endTIme);//方案计算结束时间
+        ywkPlaninfo.setdCaculateendtm(endTime);//方案计算结束时间
         ywkPlaninfo.setnPlanstatus(0l);//方案状态
 
         if (0 == timeType) {
@@ -144,9 +144,9 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
             ywkPlaninfo.setnOutputtm(step * 60L);//设置间隔分钟
         }
         ywkPlaninfo.setdRainstarttime(startTime);
-        ywkPlaninfo.setdRainendtime(endTIme);
+        ywkPlaninfo.setdRainendtime(endTime);
         ywkPlaninfo.setdOpensourcestarttime(startTime);
-        ywkPlaninfo.setdOpensourceendtime(endTIme);
+        ywkPlaninfo.setdOpensourceendtime(endTime);
         ywkPlaninfo.setnCreatetime(DateUtil.getCurrentTime());
         ywkPlaninfo.setRiverId(vo.getRvcd());
         ywkPlaninfo.setnCalibrationStatus(0l);
@@ -321,151 +321,6 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
         return results;
     }
 
-    public List<Map<String, Object>> getRainfalls(YwkPlaninfo planInfo) throws ParseException {
-        SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        SimpleDateFormat formatHour = new SimpleDateFormat("yyyy-MM-dd HH:");
-        Date startTime = planInfo.getdCaculatestarttm();
-        Date endTime = planInfo.getdCaculateendtm();
-
-        String startTimeStr = format1.format(startTime);
-        String endTimeStr = format1.format(endTime);
-
-        Long step = planInfo.getnOutputtm();//分钟
-        Long count = ywkPlaninRainfallDao.countByPlanIdWithTime(planInfo.getnPlanid(),startTime,endTime);
-        List<Map<String, Object>> stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
-//        List<Map<String, Object>> stPptnRWithSTCD = new ArrayList<>();
-//        if (count != 0){//原来是小时  实时数据是小时  都先按照整点来
-//            stPptnRWithSTCD = ywkPlaninRainfallDao.findStPptnRWithSTCD(startTimeStr,endTimeStr,planInfo.getnPlanid());
-//        }
-//        else {
-//            stPptnRWithSTCD = stPptnRDao.findStPptnRWithSTCD(startTimeStr, endTimeStr);
-//        }
-        Map<String,List<Map<String,Object>>> handleMap = new HashMap<>();
-        List<Map<String,Object>> nullList = new ArrayList<>();
-        for (Map<String,Object> datas : stPptnRWithSTCD){// A.STCD,B.TM,B.DRP
-            Object tm = datas.get("TM");
-            if (tm == null){
-                nullList.add(datas);
-                continue;
-            }
-            List<Map<String, Object>> handles = handleMap.get(datas.get("STCD")+"");
-            if (CollectionUtils.isEmpty(handles)) {
-                handles = new ArrayList<>();
-            }
-            handles.add(datas);
-            handleMap.put(datas.get("STCD")+"", handles);//存在有时间但是drp为null的 后面被优化了
-        }
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        List<Map<String,Object>> results = new ArrayList<>();
-        List<String> timeResults = new ArrayList();
-        while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
-            String hourStart = format.format(startTime);
-            timeResults.add(hourStart);
-            startTime = DateUtil.getNextMinute(startTime, step.intValue());//h获取分钟
-        }
-        Set<Map.Entry<String, List<Map<String, Object>>>> entries = handleMap.entrySet();
-
-        for (Map.Entry<String, List<Map<String, Object>>> entry : entries) {
-            List<Map<String, Object>> list = entry.getValue();
-            Iterator<Map<String, Object>> iterator = list.iterator();
-           /* if (CollectionUtils.isEmpty(list)){
-                continue;
-            }*/
-            Map<String,Object> resultMap = new HashMap<>();
-            resultMap.put("STCD",entry.getKey());//TODO 现在存在库里每个小时多个数据点
-            String stnm = list.get(0).get("STNM")+"";
-            String lgtd = list.get(0).get("LGTD")+"";
-            String lttd = list.get(0).get("LTTD")+"";
-            resultMap.put("STNM",stnm);
-            resultMap.put("LGTD",lgtd);
-            resultMap.put("LTTD",lttd);
-
-            while (iterator.hasNext()){
-                Map<String, Object> next = iterator.next();//为啥要remove呢。
-                String tm = next.get("TM")+"";
-                if (!timeResults.contains(tm)){
-                    iterator.remove();
-                }
-            }
-
-            Map<String,Map<String,Object>> dataM = new HashMap();
-            for(Map<String, Object> m : list){
-                String tm = m.get("TM")+"";
-                dataM.put(tm,m);
-            }
-            boolean flag = false;
-            List<Map<String,Object>> ll = new ArrayList<>();
-            for (String time : timeResults){
-                String newTime = "";
-                if (dataM.get(time) == null && step.intValue() < 60){//9点 是8点到9点的降雨量  都是整点的 9：00 9:30   10:00 算5 10 30步长
-                    //if (dataM.get(newTime) != null && step.intValue() < 30){ //实时数据30分钟一个点整点的时候，算5   10步长
-                    //if (dataM.get(newTime) != null && step.intValue() < 10){ //实时数据10分钟一个点整点的时候，算步长
-                    newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),60));//TODO 一个小时的整点 算5 15 30
-                    //newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),30));//TODO 30分钟的整点数据，算5 15
-                    //newTime = format.format(DateUtil.getNextMinute(formatHour.parse(formatHour.format(format.parse(time))),10));//TODO 10分钟的整点数据 算5
-                }else{
-                    newTime = time;
-                }
-
-                Map<String, Object> stringObjectMap = dataM.get(newTime);
-                if (stringObjectMap == null){
-                    stringObjectMap = new HashMap<>();
-                    stringObjectMap.put("STCD",entry.getKey());
-                    stringObjectMap.put("STNM",stnm);
-                    stringObjectMap.put("LGTD",lgtd);
-                    stringObjectMap.put("LTTD",lttd);
-                    stringObjectMap.put("TM",time);
-
-                    stringObjectMap.put("DRP",null);
-
-                }else {
-                    if (dataM.get(time) == null && step.intValue()<60){ //todo if (step.intValue()<30){ 更上面的一样
-                        Long divise = 60L/step;
-                        //Long divise = 30L/step; TODO
-                        //Long divise = 10L/step;
-                        Map mm = new HashMap(stringObjectMap);
-                        mm.put("TM",time);
-                        if (mm.get("DRP")!= null){
-                            mm.put("DRP",new BigDecimal(mm.get("DRP")+"").divide(new BigDecimal(divise),2,BigDecimal.ROUND_HALF_UP));
-                        }
-                        stringObjectMap = mm;
-                    }
-                }
-                if(stringObjectMap.get("DRP") == null){//todo 改变pcp雨量模型的逻辑。如果站点有一个时间没数据，则把有数据的时间全部置为null
-                    flag = true;
-                }
-
-                ll.add(stringObjectMap);
-            }
-            if (flag){ //todo pcp判断Drp置为null
-               /* for (Map map : ll){
-                    Map newMap = new HashMap(map);
-                    if(newMap.get("DRP") != null ){
-                        newMap.put("DRP",null);
-                    }
-                    map = newMap;
-                    System.out.println("map:"+map.get("DRP"));
-                }*/
-                ll.clear();
-            }
-
-            resultMap.put("LIST",ll);
-            results.add(resultMap);
-
-        }
-        for (Map<String,Object> nullMap : nullList){
-            Map<String,Object> resultMap = new HashMap<>();
-            resultMap.put("STCD",nullMap.get("STCD"));
-            resultMap.put("STNM",nullMap.get("STNM"));
-            resultMap.put("LGTD",nullMap.get("LGTD"));
-            resultMap.put("LTTD",nullMap.get("LTTD"));
-            resultMap.put("LIST",new ArrayList<>());
-            results.add(resultMap);
-        }
-
-        return results;
-    }
-
     @Autowired
     ModelCallHandleDataService modelCallHandleDataService;
 
@@ -477,28 +332,28 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
         Date startTime = planInfo.getdCaculatestarttm();
         Date endTime = planInfo.getdCaculateendtm();
         Long step = planInfo.getnOutputtm();//分钟
-        while (startTime.before(DateUtil.getNextMillis(endTime, 1))) {
+        while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
             String hourStart = format.format(startTime);
             timeResults.add(hourStart);
             startTime = DateUtil.getNextMinute(startTime, step.intValue());
         }
         List<YwkPlaninRainfall> insertList = new ArrayList<>();
-        for (Map<String, Object> map : results) {//
+        for (Map<String,Object> map : results){//
             String id = map.get("STCD") + "";//STCD<STNM<LGTD<LTTD<LIST
-            List<Map<String, Object>> list = (List<Map<String, Object>>) map.get("LIST");
+            List<Map<String,Object>> list = (List<Map<String,Object>>) map.get("LIST");
             int z = 0;
-            if (CollectionUtils.isEmpty(list)) {
+            if (CollectionUtils.isEmpty(list)){
                 continue;
             }
-            for (Map<String, Object> m : list) {//TODO null值不存
+            for (Map<String,Object> m : list){//TODO null值不存
                 Object drp = m.get("DRP");
                 String time = timeResults.get(z);//TODO 为什么不用tm时间呢  防止表格被人 改 用程序的时间
                 z++;
-                if (drp == null) {
+                if (drp == null){
                     continue;
                 }
-                String drpStr = (drp + "").trim();
-                if ("".equals(drpStr)) {
+                String drpStr = (drp+"").trim();
+                if ("".equals(drpStr)){
                     continue;
                 }
                 YwkPlaninRainfall ywkPlaninRainfall = new YwkPlaninRainfall();
@@ -507,14 +362,14 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
                 ywkPlaninRainfall.setnPlanid(planInfo.getnPlanid());
                 try {
                     ywkPlaninRainfall.setdTime(format.parse(time));
-                } catch (Exception e) {
+                }catch (Exception e){
                     System.out.println("时间出错");
                     e.printStackTrace();
                 }
                 try {
                     Double drpValue = Double.parseDouble(drpStr);
                     ywkPlaninRainfall.setnDrp(drpValue);
-                } catch (Exception e) {
+                }catch (Exception e){
                     ywkPlaninRainfall.setnDrp(null);
                     System.out.println("雨量值不正确");
                     continue;
@@ -536,15 +391,15 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
         if (insertLength > 0) {
             futures.add(modelCallHandleDataService.saveRainToDb(insertList.subList(i, i + insertLength)));
         }
-        System.out.println("futures.size" + futures.size());
+        System.out.println("futures.size"+futures.size());
         CompletableFuture[] completableFutures = new CompletableFuture[futures.size()];
-        for (int j = 0; j < futures.size(); j++) {
+        for (int j = 0;j < futures.size();j++){
             completableFutures[j] = futures.get(j);
         }
         System.out.println("等待多线程执行完毕。。。。");
         CompletableFuture.allOf(completableFutures).join();//全部执行完后 然后主线程结束
         System.out.println("多线程执行完毕，结束主线程。。。。");
-        return;
+        return ;
     }
 
     @Override
@@ -787,16 +642,94 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
     public void modelPcpCall(YwkPlaninfo planInfo) {
 
         System.out.println("洪水资源化调度Pcp模型运算线程！" + Thread.currentThread().getName());
-        Date originalStartTm = planInfo.getdCaculatestarttm();
         try{
             //雨量信息表
-            long startTime = System.currentTimeMillis(); //获取开始时间
+            long startTime=System.currentTimeMillis();   //获取开始时间
 
             Long aLong = ywkPlaninRainfallDao.countByPlanId(planInfo.getnPlanid());
             if (aLong == 0L) {
                 System.out.println("方案雨量表没有保存数据");
                 throw new RuntimeException("方案雨量表没有保存数据");
             }
+            YwkPlaninfo newPlan = new YwkPlaninfo();
+            BeanUtils.copyProperties(planInfo,newPlan);
+            newPlan.setdCaculatestarttm(DateUtil.getNextHour(planInfo.getdCaculatestarttm(),-72));
+            newPlan.setdCaculateendtm(planInfo.getdCaculatestarttm());
+            List<Map<String, Object>> before72results = getRainfallsInfo(newPlan);//todo 这个地方先获取72小时之前的雨量，后获取现在的雨量。保证缓存的准去行
+
+            List<Map<String, Object>> results = getRainfallsInfo(planInfo);//todo 这个地方先获取72小时之前的雨量，后获取现在的雨量。保证缓存的准去行
+            Map<Object, Map<String, Object>> resultMap = results.stream().collect(Collectors.toMap(t -> t.get("STCD"), Function.identity()));
+            Date cStartTime = planInfo.getdCaculatestarttm();//计算开始
+            Date cEndTime = planInfo.getdCaculateendtm();//计算结束
+            List<String> timeResults = new ArrayList<>();
+            Date cBeforeStartTime = newPlan.getdCaculatestarttm();//前72小时开始
+            Date cBeforeEndTime = newPlan.getdCaculateendtm();//前72小时结束
+            List<String> beforeTimeResults = new ArrayList<>();
+            Long step = planInfo.getnOutputtm();
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            while (cStartTime.before(DateUtil.getNextMillis(cEndTime,1))) {
+                String hourStart = format.format(cStartTime);
+                timeResults.add(hourStart);
+                cStartTime = DateUtil.getNextMinute(cStartTime, step.intValue());//
+            }
+            //前72小时
+            while (cBeforeStartTime.before(DateUtil.getNextMillis(cBeforeEndTime,1))) {
+                String hourStart = format.format(cBeforeStartTime);
+                beforeTimeResults.add(hourStart);
+                cBeforeStartTime = DateUtil.getNextMinute(cBeforeStartTime, step.intValue());//h获取分钟
+            }
+
+
+            for (Map<String,Object> map : before72results){
+                String stcd = map.get("STCD")+"";
+
+                List<Map<String,Object>> beforeList = (List<Map<String, Object>>) map.get("LIST");
+                List<Object> beforeDrpValues = beforeList.stream().map(key -> key.get("DRP")).collect(Collectors.toList());//todo new 7月23日
+                Map<String, Object> thisMap = resultMap.get(stcd);
+                List<Map<String,Object>> thisList = (List<Map<String, Object>>) thisMap.get("LIST");
+                List<Object> drpValues = thisList.stream().map(key -> key.get("DRP")).collect(Collectors.toList());//todo new 7月23日
+
+                if (beforeDrpValues.size()== 0 && drpValues.size() != 0){
+
+                    for (String time : beforeTimeResults){
+                        Map<String,Object> flatMap = new HashMap();
+                        flatMap.put("TM",time);
+                        flatMap.put("STCD",stcd);
+                        flatMap.put("DRP",new BigDecimal(0));
+                        beforeList.add(flatMap);
+                    }
+                    /*List<Map> zz = new ArrayList<>();
+                    tmList.stream().forEach(m->{
+                        Map<String,Object> flatMap = new HashMap();
+                        flatMap.put("TM",m);
+                        flatMap.put("STCD",stcd);
+                        //beforeList.add(flatMap);
+                        zz.add(flatMap);
+                    });*/
+
+                }else if (beforeDrpValues.size() != 0 && drpValues.size() == 0){
+                    for (String time : timeResults){
+                        Map<String,Object> flatMap = new HashMap();
+                        flatMap.put("TM",time);
+                        flatMap.put("STCD",stcd);
+                        flatMap.put("DRP",new BigDecimal(0));
+                        thisList.add(flatMap);//todo 这个地方修改会影响到上面的类
+                    }
+                    //map.put("LIST",new ArrayList<>());
+                }
+                if (!CollectionUtils.isEmpty(beforeList)){
+                    beforeList = beforeList.subList(0,beforeList.size()-1);
+                }
+                beforeList.addAll(thisList);
+                map.put("LIST",beforeList);
+            }
+
+            //before72results.addAll(results);
+            if (CollectionUtils.isEmpty(before72results)) {
+                System.out.println("雨量信息为空，无法计算");
+                throw new RuntimeException("雨量信息为空，无法计算");
+            }
+
             //创建入参、出参
             String SKDD_XX_PCP_HANDLE_MODEL_PATH = PropertiesUtil.read("/filePath.properties").getProperty("SKDD_XX_PCP_HANDLE_MODEL_PATH");
             String template = PropertiesUtil.read("/filePath.properties").getProperty("MODEL_TEMPLATE");
@@ -819,8 +752,6 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
             outPcpPath.mkdir();
             runPcpPath.mkdir();
 
-            planInfo.setdCaculatestarttm(DateUtil.getNextHour(planInfo.getdCaculatestarttm(),-72));
-            List<Map<String, Object>> before72results = getRainfalls(planInfo);
             if (CollectionUtils.isEmpty(before72results)) {
                 System.out.println("雨量信息为空，无法计算");
                 throw new RuntimeException("雨量信息为空，无法计算");
@@ -874,7 +805,6 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
             File pcp_resultFile = new File(pcp_result);
             if (pcp_resultFile.exists()) {//存在表示执行成功
                 System.out.println("洪水资源化调度Pcp模型:pcp模型执行成功hru_p_result.csv文件存在");
-                planInfo.setdCaculatestarttm(originalStartTm);
                 planInfo.setnPlanstatus(3L);
                 ywkPlaninfoDao.save(planInfo);
             } else {
@@ -886,7 +816,6 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
         }catch (Exception e){
             e.printStackTrace();
             System.err.println("洪水资源化调度Pcp模型执行失败，请联系管理员" + e.getMessage());
-            planInfo.setdCaculatestarttm(originalStartTm);
             planInfo.setnPlanstatus(-1L);
             ywkPlaninfoDao.save(planInfo);
         }
@@ -1031,7 +960,6 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
     public void modelCall(YwkPlaninfo planInfo) {
 
         System.out.println("模型运算线程！" + Thread.currentThread().getName());
-//        Date originalStartTm = planInfo.getdCaculatestarttm();
         try {
             //雨量信息表
             long startTime=System.currentTimeMillis();   //获取开始时间
@@ -1045,9 +973,9 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
             BeanUtils.copyProperties(planInfo,newPlan);
             newPlan.setdCaculatestarttm(DateUtil.getNextHour(planInfo.getdCaculatestarttm(),-72));
             newPlan.setdCaculateendtm(planInfo.getdCaculatestarttm());
-            List<Map<String, Object>> before72results = getRainfalls(newPlan);//todo 这个地方先获取72小时之前的雨量，后获取现在的雨量。保证缓存的准去行
+            List<Map<String, Object>> before72results = getRainfallsInfo(newPlan);//todo 这个地方先获取72小时之前的雨量，后获取现在的雨量。保证缓存的准去行
 
-            List<Map<String, Object>> results = getRainfalls(planInfo);//todo 这个地方先获取72小时之前的雨量，后获取现在的雨量。保证缓存的准去行
+            List<Map<String, Object>> results = getRainfallsInfo(planInfo);//todo 这个地方先获取72小时之前的雨量，后获取现在的雨量。保证缓存的准去行
             Map<Object, Map<String, Object>> resultMap = results.stream().collect(Collectors.toMap(t -> t.get("STCD"), Function.identity()));
             Date cStartTime = planInfo.getdCaculatestarttm();//计算开始
             Date cEndTime = planInfo.getdCaculateendtm();//计算结束
@@ -2235,7 +2163,7 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
 
         String pcpHRUInputUrl = pcp_handle_model_template_input + File.separator + "pcp_HRU.csv";
 
-        String pcpHRUReadUrl = pcp_handle_model_template + File.separator + "pcp_HRU.csv";
+        String pcpHRUReadUrl = pcp_handle_model_template +  File.separator + "pcp_HRU.csv";
 
         List<List<String>> readDatas = new ArrayList();
         /* 读取数据 */
@@ -2248,12 +2176,12 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
                 readDatas.add(split);
             }
         } catch (Exception e) {
-            System.err.println("洪水资源化模型之PCP模型：pcp_HRU.csv输入文件读取错误:read errors :" + e);
+            System.err.println("水文模型之PCP模型：pcp_HRU.csv输入文件读取错误:read errors :" + e);
             return 0;
         } finally {
             try {
                 br.close();
-            } catch (Exception e) {
+            }catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -2263,20 +2191,21 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
             bw.write("" + "," + "LGTD" + "," + "LTTD"); //编写表头
 
             Date startTime = planInfo.getdCaculatestarttm();
+            startTime = DateUtil.getNextHour(startTime,-72);
             Date endTime = planInfo.getdCaculateendtm();
             int size = 0;
             //Long step = planInfo.getnOutputtm() / 60;//步长
-            Long step = planInfo.getnOutputtm();//
+            Long step = planInfo.getnOutputtm() ;//
 
             DecimalFormat format = new DecimalFormat("0.00");
-            Double hour = Double.parseDouble(format.format(step * 1.0 / 60));
+            Double hour = Double.parseDouble(format.format(step*1.0 / 60));
 
-            while (startTime.before(DateUtil.getNextMillis(endTime, 1))) {
+            while (startTime.before(DateUtil.getNextMillis(endTime,1))) {
                 size++;//TODO 修改这个地方的时间序列值。
                 startTime = DateUtil.getNextMinute(startTime, step.intValue());
             }
-            for (int i = 0; i < size; i++) {
-                bw.write("," + i * hour);
+            for (int i = 0 ;i < size;i++){
+                bw.write("," + i*hour);
             }
             bw.newLine();
             for (int i = 1; i < readDatas.size(); i++) {
@@ -2290,11 +2219,11 @@ public class ModelSkddXxServiceImpl implements ModelSkddXxService {
                 bw.newLine();
             }
             bw.close();
-            System.out.println("洪水资源化模型之PCP模型:洪水资源化模型pcp_HRU.csv输入文件写入成功");
+            System.out.println("水文模型之PCP模型:水文模型pcp_HRU.csv输入文件写入成功");
             return 1;
         } catch (Exception e) {
             // File对象的创建过程中的异常捕获
-            System.out.println("洪水资源化模型之PCP模型:洪水资源化模型pcp_HRU.csv输入文件写入失败");
+            System.out.println("水文模型之PCP模型:水文模型pcp_HRU.csv输入文件写入失败");
             e.printStackTrace();
             return 0;
         }

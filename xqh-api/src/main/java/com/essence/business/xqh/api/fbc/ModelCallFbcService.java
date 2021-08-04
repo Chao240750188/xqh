@@ -61,7 +61,7 @@ public interface ModelCallFbcService {
      * @param planId
      * @return
      */
-    List<FbcHdpHhtdzW> fbcModelCall(String planId);
+    void fbcModelCall(String planId);
 
     /**
      * 获取模型运行输出结果(预报潮位数据)
@@ -103,4 +103,6 @@ public interface ModelCallFbcService {
      * @param planId
      */
     void deleteAllInputByPlanId(String planId);
+
+    Object getModelRunStatus(String planId);
 }

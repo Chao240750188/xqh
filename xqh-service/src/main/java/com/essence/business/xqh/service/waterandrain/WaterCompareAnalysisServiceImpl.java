@@ -223,4 +223,9 @@ public class WaterCompareAnalysisServiceImpl implements WaterCompareAnalysisServ
         resultMap.put("list", resultList);
         return resultMap;
     }
+
+    @Override
+    public List<StStbprpB> searchAllRainfallStations() {
+        return stStbprpBDao.findUsePPStation();
+    }
 }

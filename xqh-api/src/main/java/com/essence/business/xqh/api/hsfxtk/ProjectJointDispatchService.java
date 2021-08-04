@@ -34,7 +34,7 @@ public interface ProjectJointDispatchService {
      * @param vo
      * @return
      */
-    String savePlan(ModelCallBySWDDVo vo);
+    String savePlan(ModelCallBySWDDVo vo)throws Exception;
 
     /**
      * 根据联合调度方案获取雨量信息

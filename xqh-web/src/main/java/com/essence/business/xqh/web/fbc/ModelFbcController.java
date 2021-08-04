@@ -9,6 +9,7 @@ import com.essence.business.xqh.api.hsfxtk.dto.YwkPlanInfoBoundaryDto;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.common.util.ExcelUtil;
 import com.essence.business.xqh.dao.entity.fbc.FbcHdpHhtdzW;
+import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -91,6 +92,8 @@ public class ModelFbcController {
         }
     }
 
+
+
     /**
      * 下载边界条件（水位，流量）数据模板
      *
@@ -169,13 +172,14 @@ public class ModelFbcController {
     @RequestMapping(value = "/fbcModelCall/{planId}", method = RequestMethod.GET)
     public SystemSecurityMessage fbcModelCall(@PathVariable  String planId) {
         try {
-            List<FbcHdpHhtdzW> fbcHdpHhtdzWS = modelCallFbcService.fbcModelCall(planId);
-            return SystemSecurityMessage.getSuccessMsg("调用风暴潮模型成功！",fbcHdpHhtdzWS);
+            modelCallFbcService.fbcModelCall(planId);
+            return SystemSecurityMessage.getSuccessMsg("风暴潮模型模型正在运行中。。。请稍等！");
         }catch (Exception e){
             e.printStackTrace();
             return SystemSecurityMessage.getFailMsg("调用风暴潮模型失败！",null);
         }
     }
+
 
     /**
      * 获取模型运行输出结果(预报潮位数据)
@@ -185,6 +189,22 @@ public class ModelFbcController {
     public SystemSecurityMessage getModelResultTdz(@PathVariable String planId){
         Object results = modelCallFbcService.getModelResultTdz(planId);
         return SystemSecurityMessage.getSuccessMsg("获取模型计算结果潮位数据成功",results);
+
+    }
+
+    /**
+     * 获取模型运行状态
+     * @return
+     */
+    @RequestMapping(value = "/getModelRunStatus/{planId}",method = RequestMethod.GET)
+    public SystemSecurityMessage getModelRunStatus(@PathVariable String planId){
+        try{
+            Object result = modelCallFbcService.getModelRunStatus(planId);
+            return SystemSecurityMessage.getSuccessMsg("获取模型运行状态",result);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getSuccessMsg("获取模型运行状态失败");
+        }
 
     }
 

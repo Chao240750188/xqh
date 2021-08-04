@@ -155,5 +155,14 @@
            overflowToDisk="false"
            memoryStoreEvictionPolicy="FIFO"
     />
+    <!-- 方案精度评定模型参数交互  -->
+    <cache name="sectionWaterLevelFlow"
+           maxElementsInMemory="10000"
+           eternal="false"
+           timeToIdleSeconds="1800"
+           timeToLiveSeconds="1800"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="FIFO"
+    />
 
 </ehcache>

@@ -204,7 +204,6 @@ public class PlanProcessDataServiceImpl implements PlanProcessDataService {
         } else {
             dataListMap = readCsnlModelMaxDepthCsvFileData(filePath);
         }
-        System.out.println("dataListMap.size：" + dataListMap.size());
         //如果有输出数据 - 过程数据  或 最大水深数据
         if (dataListMap.size() > 0) {
             for (Map.Entry<String, List<GridResultDto>> entry : dataListMap.entrySet()) {

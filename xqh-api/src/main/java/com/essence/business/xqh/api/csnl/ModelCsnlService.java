@@ -29,7 +29,7 @@ public interface ModelCsnlService {
      * @param vo
      * @return
      */
-    String savePlanToDb(PlanInfoCsnlVo vo);
+    String savePlanToDb(PlanInfoCsnlVo vo) throws Exception;
 
     /**
      * 获取方案信息

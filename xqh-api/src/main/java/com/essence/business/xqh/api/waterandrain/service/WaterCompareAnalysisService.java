@@ -1,6 +1,7 @@
 package com.essence.business.xqh.api.waterandrain.service;
 
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
+import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 
 import java.util.List;
 import java.util.Map;
@@ -26,4 +27,6 @@ public interface WaterCompareAnalysisService {
      * @return
      */
     Map<String, Object> getWaterLevelTendency(QueryParamDto dto,String flag);
+
+    List<StStbprpB> searchAllRainfallStations();
 }

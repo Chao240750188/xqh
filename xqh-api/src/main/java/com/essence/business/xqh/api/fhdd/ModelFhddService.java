@@ -29,7 +29,7 @@ public interface ModelFhddService {
      * @param vo
      * @return
      */
-    String savePlan(ModelFhddPlanVo vo);
+    String savePlan(ModelFhddPlanVo vo) throws Exception ;
 
     /**
      * 根据方案id查询方案信息

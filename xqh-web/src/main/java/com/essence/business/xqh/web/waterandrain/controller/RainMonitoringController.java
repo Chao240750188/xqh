@@ -650,4 +650,17 @@ public class RainMonitoringController {
             return new SystemSecurityMessage("error", "查询失败");
         }
     }
+
+    /**
+     * 查询所有可用雨量站
+     * @return
+     */
+    @GetMapping(value = "/searchAllRainfallStations")
+    public SystemSecurityMessage searchAllRainfallStations() {
+        try {
+            return new SystemSecurityMessage("ok", "查询所有雨量站成功", waterCompareAnalysisService.searchAllRainfallStations());
+        } catch (Exception exception) {
+            return new SystemSecurityMessage("error", "查询所有雨量站失败");
+        }
+    }
 }
