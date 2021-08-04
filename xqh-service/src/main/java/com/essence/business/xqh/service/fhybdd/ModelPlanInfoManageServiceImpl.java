@@ -353,8 +353,8 @@ public class ModelPlanInfoManageServiceImpl implements ModelPlanInfoManageServic
             map = new HashMap<>();
             map.put("time", sdf.format(time));
             //暂时无法获取，先全部设置为0
-            map.put("y_true", "");//实际水位
-            map.put("s_true", "");//实际流量
+            map.put("y_true", 0+"");//实际水位
+            map.put("s_true", 0+"");//实际流量
             result.add(map);
             index++;
         }
