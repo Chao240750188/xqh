@@ -65,6 +65,16 @@ public class WrpRsrBsin {
 
     @Column(name = "RVCRCRSCCD")
     private String rvcrcrsccd;
+    @Column(name = "STSTCD")
+    private String ststcd;
+
+    public String getStstcd() {
+        return ststcd;
+    }
+
+    public void setStstcd(String ststcd) {
+        this.ststcd = ststcd;
+    }
 
     public String getRvcrcrsccd() {
         return rvcrcrsccd;

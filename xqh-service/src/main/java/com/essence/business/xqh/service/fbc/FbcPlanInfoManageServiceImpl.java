@@ -212,4 +212,12 @@ public class FbcPlanInfoManageServiceImpl implements FbcPlanInfoManageService {
 
         }
     }
+
+    @Override
+    public  List<YwkBreakBasic> getBreakAllList() {
+        List<YwkBreakBasic> model_hsfx_01 = ywkBreakBasicDao.findsByModelId("MODEL_HSFX_01");
+        List<YwkBreakBasic> model_hsfx_02 = ywkBreakBasicDao.findsByModelId("MODEL_HSFX_02");
+        model_hsfx_01.addAll(model_hsfx_02);
+        return model_hsfx_01;
+    }
 }

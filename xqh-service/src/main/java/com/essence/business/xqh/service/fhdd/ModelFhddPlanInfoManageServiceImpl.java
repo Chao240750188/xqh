@@ -97,7 +97,7 @@ public class ModelFhddPlanInfoManageServiceImpl implements ModelFhddPlanInfoMana
         List<WrpRsrBsin> allWRB = wrpRsrBsinDao.findAll();
         Map<String, String> map = new HashMap<>();
         for(WrpRsrBsin wrb: allWRB){
-            map.put(wrb.getRscd(), wrb.getRsnm());
+            map.put(wrb.getStstcd(), wrb.getRsnm());
         }
 
         for (YwkPlaninfo planinfo : items){

@@ -1,6 +1,7 @@
 package com.essence.business.xqh.web.fbc;
 import com.essence.business.xqh.api.fbc.FbcPlanInfoManageService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
+import com.essence.business.xqh.dao.entity.hsfxtk.YwkBreakBasic;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,5 +104,15 @@ public class FbcPlanInfoManageController {
             return SystemSecurityMessage.getFailMsg("删除方案信息失败！");
 
         }
+    }
+
+    /**
+     * 获取所有溃口列表，风暴潮跟水动力公用
+     * @return
+     */
+    @RequestMapping(value = "/getBreakAllList",method = RequestMethod.GET)
+    public SystemSecurityMessage getBreakAllList(){
+        List<YwkBreakBasic> breakAllList = planInfoManageService.getBreakAllList();
+        return SystemSecurityMessage.getSuccessMsg("获取溃口列表信息成功",breakAllList);
     }
 }

@@ -454,8 +454,13 @@ public class WaterBriefingServiceImpl implements WaterBriefingService {
                 if (newValue.get("FLOW") != null) {
                     newFlow = new BigDecimal(newValue.get("FLOW").toString());
                 }
+                if (newValue.get("TM") != null){
+                    dto.setTime(DateUtil.dateToStringNormal3((Date)newValue.get("TM")));
+                }
+
                 dto.setWaterLevel(newWaterLevel);
                 dto.setFlow(newFlow);
+
                 if (linkedList.size() > 1) {
                     Map<String, Object> oldValue = linkedList.get(1);//最早的数据
                     BigDecimal oldWaterLevel = null;//水位

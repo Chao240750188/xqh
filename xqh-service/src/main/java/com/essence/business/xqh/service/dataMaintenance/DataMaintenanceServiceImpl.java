@@ -118,6 +118,7 @@ public class DataMaintenanceServiceImpl implements DataMaintenanceService {
     public WrpRsrBsin saveOrWrpRsrBsin(WrpRsrBsin wrpRsrBsin) {
         if(StrUtil.isEmpty(wrpRsrBsin.getRscd())){
             wrpRsrBsin.setRscd(StrUtil.getUUID());
+            wrpRsrBsin.setStstcd(wrpRsrBsin.getRscd());
         }
         wrpRsrBsin.setDtupdt(DateUtil.getCurrentTime());
         return wrpRsrBsinDao.save(wrpRsrBsin);
@@ -185,10 +186,10 @@ public class DataMaintenanceServiceImpl implements DataMaintenanceService {
         //封装数据
         for(WrpRsrBsin rsrBsin:rsrBsinList){
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("rscd",rsrBsin.getRscd());
+            jsonObject.put("rscd",rsrBsin.getStstcd());
             jsonObject.put("rsnm",rsrBsin.getRsnm());
             if(krMap!=null)
-                jsonObject.put("dataList",krMap.get(rsrBsin.getRscd()));
+                jsonObject.put("dataList",krMap.get(rsrBsin.getStstcd()));
             jsonArray.add(jsonObject);
         }
         return jsonArray;

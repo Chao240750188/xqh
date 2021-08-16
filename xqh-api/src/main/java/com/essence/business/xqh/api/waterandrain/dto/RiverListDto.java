@@ -1,6 +1,7 @@
 package com.essence.business.xqh.api.waterandrain.dto;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * @author fengpp
@@ -10,6 +11,7 @@ public class RiverListDto {
     private String stcd;
     private String stnm;
     private BigDecimal waterLevel;//水位
+    private String time;//水位对应时间
     private BigDecimal waterLevelChange;//水位变幅
     private BigDecimal flow;//流量
     private BigDecimal flowChange;//流量变幅
@@ -60,5 +62,13 @@ public class RiverListDto {
 
     public void setFlowChange(BigDecimal flowChange) {
         this.flowChange = flowChange;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
     }
 }

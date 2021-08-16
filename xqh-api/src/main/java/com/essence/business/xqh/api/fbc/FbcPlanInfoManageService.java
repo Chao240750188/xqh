@@ -1,5 +1,6 @@
 package com.essence.business.xqh.api.fbc;
 
+import com.essence.business.xqh.dao.entity.hsfxtk.YwkBreakBasic;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
 
@@ -47,4 +48,9 @@ public interface FbcPlanInfoManageService {
      * @return
      */
     void deleteAllInputByPlanId(String planId);
+
+    /**
+     * 获取所有溃口列表
+     */
+    List<YwkBreakBasic> getBreakAllList();
 }

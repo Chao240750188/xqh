@@ -75,7 +75,12 @@ public class SystemMonitorController {
                 // 文件系统类型名，比如本地硬盘、光驱、网络文件系统等
                 diskMnitorDto.setLocal(fs.getTypeName());
                 FileSystemUsage usage = null;
-                usage = sigar.getFileSystemUsage(fs.getDirName());
+                try {
+                    usage = sigar.getFileSystemUsage(fs.getDirName());
+                }catch (SigarException e){
+                    System.out.println("getFileSystemUsage..报错啦");
+                    continue;
+                }
                 switch (fs.getType()) {
                     case 0: // TYPE_UNKNOWN ：未知
                         break;
