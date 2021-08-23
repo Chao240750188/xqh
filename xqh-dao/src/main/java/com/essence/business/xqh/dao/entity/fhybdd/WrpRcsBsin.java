@@ -40,6 +40,8 @@ public class WrpRcsBsin {
     private String rvcrcrscov;
     @Column(name = "DTUPDT")
     private Timestamp dtupdt;
+    @Column(name = "RELATIONSTCD")
+    private String relationStcd;
 
 
     public String getRvcrcrsccd() {
@@ -162,6 +164,14 @@ public class WrpRcsBsin {
         this.dtupdt = dtupdt;
     }
 
+    public String getRelationStcd() {
+        return relationStcd;
+    }
+
+    public void setRelationStcd(String relationStcd) {
+        this.relationStcd = relationStcd;
+    }
+
     @Override
     public String toString() {
         return "WrpRcsBsin{" +
@@ -180,6 +190,7 @@ public class WrpRcsBsin {
                 ", dtpl='" + dtpl + '\'' +
                 ", rvcrcrscov='" + rvcrcrscov + '\'' +
                 ", dtupdt=" + dtupdt +
+                ", relationStcd='" + relationStcd + '\'' +
                 '}';
     }
 }

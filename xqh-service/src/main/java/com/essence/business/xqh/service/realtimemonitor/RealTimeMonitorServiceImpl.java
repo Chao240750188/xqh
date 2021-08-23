@@ -295,6 +295,9 @@ public class RealTimeMonitorServiceImpl implements RealTimeMonitorService {
                 if(map!=null && map.get("q") != null){
                     dataDto.setFlow(Double.parseDouble(map.get("q").toString()));
                 }
+                if(map!=null && map.get("tm") != null){
+                    dataDto.setTime((Date) map.get("tm"));
+                }
                 TRvfcchB tRvfcchStandard = collectWarningHD.get(stcd);
 
                 if(tRvfcchStandard != null){

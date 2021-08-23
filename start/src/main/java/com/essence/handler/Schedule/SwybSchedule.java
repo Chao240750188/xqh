@@ -46,7 +46,7 @@ public class SwybSchedule {
     YwkPlaninRainfallDao ywkPlaninRainfallDao;
 
     @Scheduled(cron = " 0 0 4 * * ?") //每天凌晨四点开始自动进行预报计算
-//    @Scheduled(cron = "0 */10 * * * ?")
+//    @Scheduled(cron = "*/20 * * * * ?")
     @Async
     public void generateSwyb() throws Exception {
         ModelCallBySWDDVo vo = new ModelCallBySWDDVo();
@@ -75,10 +75,10 @@ public class SwybSchedule {
             YwkPlaninfo planInfoByPlanId = modelCallFhybddNewService.getPlanInfoByPlanId(nPlanid);
             List<Map<String, Object>> rainfalls = modelCallFhybddNewService.getRainfalls(planInfoByPlanId);
             modelCallFhybddNewService.saveRainfallsFromCacheToDb(planInfoByPlanId, rainfalls);
-            Thread.sleep(5000);
-            int count = ywkPlaninRainfallDao.findByTM(endTime);
-            while (count==0){
-                count = ywkPlaninRainfallDao.findByTM(endTime);
+            Thread.sleep(6000);
+            int count = ywkPlaninRainfallDao.findCountTMBetween(startTime, endTime);
+            if(count==0){
+                return;
             }
             modelCallFhybddNewService.modelCallPCP(planInfoByPlanId);
             Thread.sleep(15000);

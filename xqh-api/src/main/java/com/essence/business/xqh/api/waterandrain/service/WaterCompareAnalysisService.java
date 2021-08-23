@@ -2,6 +2,8 @@ package com.essence.business.xqh.api.waterandrain.service;
 
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
 import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -28,5 +30,21 @@ public interface WaterCompareAnalysisService {
      */
     Map<String, Object> getWaterLevelTendency(QueryParamDto dto,String flag);
 
+    /**
+     * 功能描述 查询所有可用雨量站
+     * @param
+     * @return
+     */
     List<StStbprpB> searchAllRainfallStations();
+
+    /**
+     * 功能描述 查询单个雨量站时段内降雨
+     * @param dto
+     * @return java.lang.Object
+     */
+    List<Map<String, Object>> searchOneStationRainfall(QueryParamDto dto);
+
+    Workbook exportTriggerFlowTemplate(QueryParamDto dto);
+
+    List<Map<String, Object>> importOneStationRainfall(MultipartFile mutilpartFile);
 }

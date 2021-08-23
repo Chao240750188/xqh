@@ -4,15 +4,22 @@ import com.essence.business.xqh.api.waterandrain.service.*;
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.common.util.DateUtil;
+import com.essence.business.xqh.common.util.ExcelUtil;
+import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
+import oracle.jdbc.proxy.annotation.Post;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author fengpp
@@ -662,5 +669,66 @@ public class RainMonitoringController {
         } catch (Exception exception) {
             return new SystemSecurityMessage("error", "查询所有雨量站失败");
         }
+    }
+
+    /**
+     * 功能描述 查询单个雨量站时段内降雨
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/searchOneStationRainfall")
+    public SystemSecurityMessage searchOneStationRainfall(@RequestBody QueryParamDto dto) {
+        try {
+            List<Map<String, Object>> result = waterCompareAnalysisService.searchOneStationRainfall(dto);
+            return new SystemSecurityMessage("ok", "查询雨量站时段内降雨数据成功", result);
+        } catch (Exception exception) {
+            return new SystemSecurityMessage("error", "查询雨量站时段内降雨数据失败");
+        }
+    }
+
+    @PostMapping(value = "/exportOneStationRainfall")
+    public void exportOneStationRainfall(HttpServletResponse response, @RequestBody QueryParamDto dto) {
+        try {
+            Workbook workbook = waterCompareAnalysisService.exportTriggerFlowTemplate(dto);
+            //响应尾
+            response.setContentType("applicationnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            String fileName = "雨量站降雨数据.xlsx";
+            response.setHeader("Content-disposition", "attachment;filename=" + new String(fileName.getBytes(), "iso_8859_1"));
+            OutputStream ouputStream = response.getOutputStream();
+            workbook.write(ouputStream);
+            ouputStream.flush();
+            ouputStream.close();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+    }
+
+    @RequestMapping(value = "/importOneStationRainfall", method = RequestMethod.POST)
+    public SystemSecurityMessage importOneStationRainfall(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile) {
+        SystemSecurityMessage SystemSecurityMessage = null;
+        // 检查文件类型是否符合要求
+        String checkFlog = ExcelUtil.checkFile(mutilpartFile);
+        if (mutilpartFile == null) {
+            SystemSecurityMessage = new SystemSecurityMessage("error", "上传文件为空！", null);
+        } else if (!"excel".equals(checkFlog)) {
+            SystemSecurityMessage = new SystemSecurityMessage("error", "上传文件类型错误！", null);
+        } else {
+            // 解析表格数据为对象类型
+            try {
+                List<Map<String,Object>> list = waterCompareAnalysisService.importOneStationRainfall(mutilpartFile);
+                if (CollectionUtils.isEmpty(list)){
+                    SystemSecurityMessage = new SystemSecurityMessage("error", "雨量信息数据上传解析失败" );
+                }else {
+                    SystemSecurityMessage = new SystemSecurityMessage("ok", "雨量信息数据上传解析成功!", list);
+                }
+            } catch (Exception e) {
+                String eMessage = "";
+                if (e != null) {
+                    eMessage = e.getMessage();
+                }
+                SystemSecurityMessage = new SystemSecurityMessage("error", "雨量信息数据上传解析失败，错误原因：" + eMessage, null);
+            }
+        }
+        return SystemSecurityMessage;
     }
 }
