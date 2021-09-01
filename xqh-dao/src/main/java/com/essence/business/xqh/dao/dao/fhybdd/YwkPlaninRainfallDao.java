@@ -39,6 +39,6 @@ public interface YwkPlaninRainfallDao extends EssenceJpaRepository<YwkPlaninRain
     @Query(value = "SELECT count(C_ID)count FROM \"YWK_PLANIN_RAINFALL\" where N_PLANID = ?1 and D_TIME >= ?2 and D_TIME <?3",nativeQuery = true)
     Long countByPlanIdWithTime(String getnPlanid, Date startTime, Date endTime);
 
-    @Query(value = "SELECT count(1) FROM YWK_PLANIN_RAINFALL where D_TIME = ?1",nativeQuery = true)
-    int findByTM(Date endTime);
+    @Query(value = "SELECT count(1) FROM YWK_PLANIN_RAINFALL where D_TIME >= ?1 and D_TIME<=?2",nativeQuery = true)
+    int findCountTMBetween(Date startTime, Date endTime);
 }

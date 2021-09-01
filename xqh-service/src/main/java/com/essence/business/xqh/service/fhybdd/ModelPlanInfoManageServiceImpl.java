@@ -9,7 +9,10 @@ import com.essence.business.xqh.api.fhybdd.service.ModelPlanInfoManageService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
 import com.essence.business.xqh.common.util.*;
 import com.essence.business.xqh.dao.dao.fhybdd.*;
+import com.essence.business.xqh.dao.dao.information.StBRiverDao;
+import com.essence.business.xqh.dao.dao.realtimemonitor.TRiverRODao;
 import com.essence.business.xqh.dao.entity.fhybdd.*;
+import com.essence.business.xqh.dao.entity.realtimemonitor.TRiverR;
 import com.essence.framework.jpa.Criterion;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
@@ -33,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.io.*;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -68,6 +72,12 @@ public class ModelPlanInfoManageServiceImpl implements ModelPlanInfoManageServic
 
     @Autowired
     YwkPlanTriggerRcsFlowDao ywkPlanTriggerRcsFlowDao;
+
+    @Autowired
+    WrpRsrBsinDao wrpRsrBsinDao;
+
+    @Autowired
+    TRiverRODao tRiverRODao;
 
     @Override
     public Paginator getPlanList(PaginatorParam paginatorParam) {
@@ -344,24 +354,45 @@ public class ModelPlanInfoManageServiceImpl implements ModelPlanInfoManageServic
         Date endTime = planInfo.getdCaculateendtm();
         Long step = planInfo.getnOutputtm();//步长
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        DecimalFormat df = new DecimalFormat("0.000");
+        List<WrpRcsBsin> wrpList = wrpRcsBsinDao.findListByIds(modelPlanInfoManageDto.getRvcrcrsccds()); //断面
 
-        //目前并无断面对应的水位和流量数据，先封装成假数据
         Map<String, List<Map<String, String>>> resultMap = new HashMap<>();
         List<Map<String, String>> result = new ArrayList<>();
         Map<String, String> map = new HashMap<>();
-        int index = 0;
-        for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime, 1)); time = DateUtil.getNextMinute(time, step.intValue())) {
-            map = new HashMap<>();
-            map.put("time", sdf.format(time));
-            //暂时无法获取，先全部设置为0
-            map.put("y_true", 0+"");//实际水位
-            map.put("s_true", 0+"");//实际流量
-            result.add(map);
-            index++;
-        }
+        for (WrpRcsBsin wrpRcsBsin : wrpList) {
+            result = new ArrayList<>();
+            for (Date time = startTime; time.before(DateUtil.getNextMinute(endTime, 1)); time = DateUtil.getNextMinute(time, step.intValue())) {
+                String tm = sdf.format(time);
+                map = new HashMap<>();
+                map.put("time", tm);
+                String y_true = 0 + "";
+                String s_true = 0 + "";
+                TRiverR river = tRiverRODao.findByStcdAndTm(wrpRcsBsin.getRelationStcd(), tm);
+                if(river==null){
+                    TRiverR firstRiver = tRiverRODao.findFirstByStcdAndTm(wrpRcsBsin.getRelationStcd(), tm);
+                    TRiverR lastRiver = tRiverRODao.findLastByStcdAndTm(wrpRcsBsin.getRelationStcd(), tm);
+                    if(firstRiver==null && lastRiver!=null){
+                        y_true = lastRiver.getZ();
+                        s_true = lastRiver.getQ();
+                    }else if(firstRiver!=null && lastRiver==null){
+                        y_true = firstRiver.getZ();
+                        s_true = firstRiver.getQ();
+                    }else if(firstRiver!=null && lastRiver!=null){
+                        y_true = df.format((Double.valueOf(firstRiver.getZ()) + Double.valueOf(lastRiver.getZ()))/2) + "";
+                        s_true = df.format((Double.valueOf(firstRiver.getQ()) + Double.valueOf(lastRiver.getQ()))/2) + "";
+                    }
 
-        for (String rvcrcrsccd : modelPlanInfoManageDto.getRvcrcrsccds()) {
-            resultMap.put(rvcrcrsccd, result);
+                }else{
+                    y_true = river.getZ();
+                    s_true = river.getQ();
+                }
+
+                map.put("y_true", y_true);//实际水位
+                map.put("s_true", s_true);//实际流量
+                result.add(map);
+            }
+            resultMap.put(wrpRcsBsin.getRvcrcrsccd(), result);
         }
 
         CacheUtil.saveOrUpdate("sectionWaterLevelFlow", modelPlanInfoManageDto.getPlanId(), resultMap);
@@ -440,7 +471,10 @@ public class ModelPlanInfoManageServiceImpl implements ModelPlanInfoManageServic
     public Map<String, List<Map<String, String>>> importWaterLevelFlow(MultipartFile mutilpartFile, String modelPlanInfoManageDto) {
         JSONObject jsonObject = JSON.parseObject(modelPlanInfoManageDto);
         String planId = (String) jsonObject.get("planId");
-        List<String> rvcrcrsccdsList = (List<String>) jsonObject.get("rvcrcrsccds");
+        List<String> rvcrcrsccdsList = (List<String>) jsonObject.get("rvcrcrsccds"); //获取所有要计算的断面
+
+        List<WrpRcsBsin> listByIds = wrpRcsBsinDao.findListByIds(rvcrcrsccdsList);
+
 
         //解析ecxel数据 不包含第一行
         List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile, 1);

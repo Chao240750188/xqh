@@ -2,6 +2,9 @@ package com.essence.business.xqh.service.waterandrain;
 
 import com.essence.business.xqh.api.rainfall.vo.QueryParamDto;
 import com.essence.business.xqh.api.waterandrain.service.WaterCompareAnalysisService;
+import com.essence.business.xqh.common.util.DateUtil;
+import com.essence.business.xqh.common.util.ExcelUtil;
+import com.essence.business.xqh.dao.dao.fhybdd.StPptnRDao;
 import com.essence.business.xqh.dao.dao.fhybdd.StStbprpBDao;
 import com.essence.business.xqh.dao.dao.realtimemonitor.TRiverRODao;
 import com.essence.business.xqh.dao.dao.realtimemonitor.TRsvrRDao;
@@ -10,11 +13,23 @@ import com.essence.business.xqh.dao.entity.fhybdd.StStbprpB;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRiverR;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TRsvrR;
 import com.essence.business.xqh.dao.entity.realtimemonitor.TWasR;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 水情信息查询-水情对比分析
@@ -32,6 +47,8 @@ public class WaterCompareAnalysisServiceImpl implements WaterCompareAnalysisServ
     TRsvrRDao tRsvrRDao;
     @Autowired
     TWasRDao tWasRDao;
+    @Autowired
+    StPptnRDao stPptnRDao;
 
     /**
      * 水情信息查询-水情对比分析-左侧树
@@ -227,5 +244,120 @@ public class WaterCompareAnalysisServiceImpl implements WaterCompareAnalysisServ
     @Override
     public List<StStbprpB> searchAllRainfallStations() {
         return stStbprpBDao.findUsePPStation();
+    }
+
+    @Override
+    public List<Map<String, Object>> searchOneStationRainfall(QueryParamDto dto) {
+        SimpleDateFormat formatMil = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat formatToMin = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        Date startTime = dto.getStartTime();
+        Date endTime = dto.getEndTime();
+        List<Map<String, Object>> rainByStcdAndTimeBetween = stPptnRDao.findRainByStcdAndTimeBetween(dto.getStcd(), formatMil.format(startTime), formatMil.format(endTime));
+        List<Map<String, Object>> result = new ArrayList<>();
+        if(rainByStcdAndTimeBetween.size() == 0){
+            String stnm = stStbprpBDao.findByStcd(dto.getStcd()).getStnm();
+            for (Date time = DateUtil.getNextMinute(startTime, 60); time.before(DateUtil.getNextMinute(endTime, 60)); time = DateUtil.getNextMinute(time, 60)) {
+                String formatTime = formatToMin.format(time);
+                Map<String, Object> map = new HashMap<>();
+                map.put("STNM", stnm);
+                map.put("TM", formatTime);
+                map.put("DRP", 0);
+                result.add(map);
+            }
+        }else{
+            List<String> tmList = rainByStcdAndTimeBetween.stream().map(m -> m.get("TM").toString()).collect(Collectors.toList());
+            for (Date time = DateUtil.getNextMinute(startTime, 60); time.before(DateUtil.getNextMinute(endTime, 60)); time = DateUtil.getNextMinute(time, 60)) {
+                String formatTime = formatToMin.format(time);
+                Map<String, Object> map = new HashMap<>();
+                map.put("STNM", rainByStcdAndTimeBetween.get(0).get("STNM"));
+                if(!tmList.contains(formatTime)){
+                    map.put("TM", formatTime);
+                    map.put("DRP", 0);
+                }else{
+                    for (int i = 0; i < rainByStcdAndTimeBetween.size(); i++) {
+                        if(rainByStcdAndTimeBetween.get(i).get("TM").toString().equals(formatTime)){
+                            map.put("TM", formatTime);
+                            map.put("DRP", rainByStcdAndTimeBetween.get(i).get("DRP"));
+                        }
+                    }
+                }
+                result.add(map);
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public Workbook exportTriggerFlowTemplate(QueryParamDto dto) {
+        Date startTime = dto.getStartTime();
+        Date endTime = dto.getEndTime();
+
+        SimpleDateFormat formatToMin = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        //封装边界模板数据
+        XSSFWorkbook workbook = new XSSFWorkbook();
+
+        //设置样式
+        XSSFFont font = workbook.createFont();
+        font.setFontHeightInPoints((short) 11);//字体高度
+        font.setFontName("宋体");//字体
+        XSSFCellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setFont(font);
+        style.setWrapText(true);//自动换行
+        XSSFSheet sheet = workbook.createSheet("雨量站雨量数据导入模板");
+
+        //填充表头
+        //第一行
+        XSSFRow row = sheet.createRow(0);
+        XSSFCell cell = row.createCell(0);
+        cell.setCellStyle(style);
+        cell.setCellValue("雨量站名称");
+        //设置自动列宽
+        sheet.setColumnWidth(0, 2500);
+        sheet.setColumnWidth(1, 3500);
+
+        //封装数据
+        int beginLine = 0;
+        for (Date time = DateUtil.getNextMinute(startTime, 60); time.before(DateUtil.getNextMinute(endTime, 60)); time = DateUtil.getNextMinute(time, 60)) {
+            beginLine++;
+            sheet.setColumnWidth(beginLine, 5100);
+            XSSFCell c = row.createCell(beginLine);
+            String formatTime = formatToMin.format(time);
+            c.setCellValue(formatTime);
+            c.setCellStyle(style);
+        }
+
+        List<Map<String, Object>> result = searchOneStationRainfall(dto);
+        XSSFRow row1 = sheet.createRow(1);
+        XSSFCell c = row1.createCell(0);
+        c.setCellValue(result.get(0).get("STNM").toString());
+        c.setCellStyle(style);
+
+        beginLine = 0;
+        for (Date time = DateUtil.getNextMinute(startTime, 60); time.before(DateUtil.getNextMinute(endTime, 60)); time = DateUtil.getNextMinute(time, 60)) {
+            beginLine++;
+            c = row1.createCell(beginLine);
+            c.setCellValue(result.get(beginLine-1).get("DRP") + "");
+            c.setCellStyle(style);
+        }
+
+        return workbook;
+
+    }
+
+    @Override
+    public List<Map<String, Object>> importOneStationRainfall(MultipartFile mutilpartFile) {
+        List<String[]> strings = ExcelUtil.readFiles(mutilpartFile, 0);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (int i = 1; i < strings.get(0).length; i++) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("STNM", strings.get(1)[0]);
+            map.put("TM", strings.get(0)[i]);
+            map.put("DRP", strings.get(1)[i]);
+            result.add(map);
+        }
+        return result;
     }
 }

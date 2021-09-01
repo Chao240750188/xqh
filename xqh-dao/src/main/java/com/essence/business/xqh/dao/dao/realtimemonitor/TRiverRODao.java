@@ -98,4 +98,23 @@ public interface TRiverRODao extends EssenceJpaRepository<TRiverR, String> {
             "?2 and t.tm <= ?3 GROUP BY STCD) b " +
             "on a.STCD = b.STCD and a.Q = b.Q where a.tm >= ?2 and a.tm <= ?3",nativeQuery = true)
     List<TRiverR> getMaxQValueByTime(List<String> collect,Date startTime,Date endTime);
+
+    @Query(value = "SELECT * FROM ST_RIVER_R WHERE STCD = ?1 AND TM = to_date(?2,'yyyy-mm-dd hh24:mi:ss') ",nativeQuery = true)
+    TRiverR findByStcdAndTm(String relationStcd, String time);
+
+    @Query(value = "SELECT\n" +
+            "\t* \n" +
+            "FROM\n" +
+            "\t( SELECT * FROM ST_RIVER_R WHERE TM > to_date(?2,'yyyy-mm-dd hh24:mi:ss') AND STCD = ?1 ORDER BY TM ASC ) \n" +
+            "WHERE\n" +
+            "\tROWNUM = 1",nativeQuery = true)
+    TRiverR findFirstByStcdAndTm(String relationStcd, String time);
+
+    @Query(value = "SELECT\n" +
+            "\t* \n" +
+            "FROM\n" +
+            "\t( SELECT * FROM ST_RIVER_R WHERE TM < to_date(?2,'yyyy-mm-dd hh24:mi:ss') AND STCD = ?1 ORDER BY TM DESC ) \n" +
+            "WHERE\n" +
+            "\tROWNUM = 1",nativeQuery = true)
+    TRiverR findLastByStcdAndTm(String relationStcd, String time);
 }

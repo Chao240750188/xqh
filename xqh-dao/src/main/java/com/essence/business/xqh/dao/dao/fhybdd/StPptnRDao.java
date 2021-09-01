@@ -125,4 +125,29 @@ public interface StPptnRDao extends EssenceJpaRepository<StPptnR, String> {
             " AND to_date(?2, 'yyyy-mm-dd hh24:mi:ss' ) \n" +
             " GROUP BY TO_CHAR(tm+1/24,'yyyy-mm-dd hh24') ||':00',stcd order by TM\n",nativeQuery = true)
     List<Map<String,Object>> findRainGroupStcdAndTimeWithHour(String startTimeStr,String endTimeStr);
+
+    @Query(value = "SELECT\n" +
+            "\tSSA.TM TM,\n" +
+            "\tSSA.DRP DRP,\n" +
+            "\tSSB.STNM STNM \n" +
+            "FROM\n" +
+            "\t(\n" +
+            "\tSELECT\n" +
+            "\t\tTO_CHAR( tm + 1 / 24, 'yyyy-mm-dd hh24' ) || ':00' TM,\n" +
+            "\t\tSTCD,\n" +
+            "\t\tNVL( SUM( DRP ), 0 ) DRP \n" +
+            "\tFROM\n" +
+            "\t\tST_PPTN_R \n" +
+            "\tWHERE\n" +
+            "\t\tTM BETWEEN to_date( ?2, 'yyyy-mm-dd hh24:mi:ss' ) \n" +
+            "\t\tAND to_date( ?3, 'yyyy-mm-dd hh24:mi:ss' ) \n" +
+            "\t\tAND STCD = ?1 \n" +
+            "\tGROUP BY\n" +
+            "\t\tTO_CHAR( tm + 1 / 24, 'yyyy-mm-dd hh24' ) || ':00',\n" +
+            "\t\tSTCD \n" +
+            "\tORDER BY\n" +
+            "\t\tTM \n" +
+            "\t) SSA\n" +
+            "\tLEFT JOIN ST_STBPRP_B SSB ON SSA.STCD = SSB.STCD", nativeQuery = true)
+    List<Map<String,Object>> findRainByStcdAndTimeBetween(String stcd, String startTimeStr,String endTimeStr);
 }
