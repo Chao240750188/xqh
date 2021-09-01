@@ -1,13 +1,15 @@
 package com.essence.business.xqh.web.fhybdd.controller;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import com.essence.business.xqh.api.fhybdd.dto.CalibrationMSJGAndScsVo;
+import com.essence.business.xqh.api.fhybdd.dto.CalibrationXAJVo;
+import com.essence.business.xqh.api.fhybdd.dto.CalibrationXGGXVo;
 import com.essence.business.xqh.api.fhybdd.dto.ModelPlanInfoManageDto;
 import com.essence.business.xqh.api.fhybdd.service.ModelCallFhybddNewService;
 import com.essence.business.xqh.api.fhybdd.service.ModelPlanInfoManageService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
+import com.essence.business.xqh.common.util.CacheUtil;
 import com.essence.business.xqh.common.util.ExcelUtil;
-import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
+import com.essence.business.xqh.dao.entity.fhybdd.*;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -18,8 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -338,6 +340,193 @@ public class ModelPlanInfoManageController {
             return SystemSecurityMessage.getSuccessMsg("删除历史精度评定成功");
         }catch (Exception e){
             return SystemSecurityMessage.getSuccessMsg("删除历史精度评定失败");
+        }
+    }
+
+
+    //todo 周五从下面开始写  内外网的库从这里开始。区别 4张表
+    // 这个地方前端给下载模板文档 TODO 已测试
+    @RequestMapping(value = "/importParamWithDWX", method = RequestMethod.POST)
+    public SystemSecurityMessage importParamWithDWX(@RequestParam(value = "files", required = true) MultipartFile mutilpartFile) {
+
+        SystemSecurityMessage SystemSecurityMessage = null;
+        String checkFlog = ExcelUtil.checkFile(mutilpartFile);
+        if (mutilpartFile == null) {
+            SystemSecurityMessage = new SystemSecurityMessage("error", "上传文件为空！", null);
+        } else if (!"excel".equals(checkFlog)) {
+            SystemSecurityMessage = new SystemSecurityMessage("error", "上传文件类型错误！", null);
+        } else {
+            // 解析表格数据为对象类型
+            try {
+                List<Map<String,Double>> list = modelPlanInfoManageService.importParamWithDWX(mutilpartFile);
+                if (CollectionUtils.isEmpty(list)){
+                    SystemSecurityMessage = new SystemSecurityMessage("error", "维护单位线参数excel解析失败" );
+                }else {
+                    SystemSecurityMessage = new SystemSecurityMessage("ok", "维护单位线参数excel解析成功", list);
+                }
+            } catch (Exception e) {
+                String eMessage = "";
+                if (e != null) {
+                    eMessage = e.getMessage();
+                }
+                SystemSecurityMessage = new SystemSecurityMessage("error", "维护单位线参数excel解析失败，错误原因：" + eMessage, null);
+            }
+        }
+        return SystemSecurityMessage;
+    }
+
+
+
+    /**
+     * 数据管理:保存单位线参数 TODO 已测试
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/saveSwybDwxParamToDb", method = RequestMethod.GET)
+    public SystemSecurityMessage saveSwybDwxParamToDb() {
+
+        List<Map<String,Double>> result = (List<Map<String,Double>>) CacheUtil.get("paramCache", "dwx");
+
+        if (CollectionUtils.isEmpty(result)){
+            System.out.println("缓存里没有单位线参数信息");
+            return SystemSecurityMessage.getSuccessMsg("单位线参数信息未导入");
+        }
+        try {
+            modelPlanInfoManageService.saveSwybDwxParamToDb(result);
+            return SystemSecurityMessage.getSuccessMsg("数据维护:维护水文预报参数单位线成功");
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("数据维护:维护水文预报参数单位线失败！");
+
+        }
+    }
+
+    /**
+     * 参数维护 : 获取水文预报参数单位线
+     * @return
+     */
+    @RequestMapping(value = "/getSwybDwxParam", method = RequestMethod.GET)
+    public SystemSecurityMessage getSwybDwxParam() {
+
+        try {
+            List<YwkPlanBasicDwxParam> result = modelPlanInfoManageService.getSwybDwxParam();
+            return SystemSecurityMessage.getSuccessMsg("数据维护:获取水文预报参数单位线成功",result);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("数据维护:获取水文预报参数单位线失败！",new ArrayList<>());
+
+        }
+    }
+
+    /**
+      数据维护 ，维护预报参数新安江
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/saveSwybXajParamToDb", method = RequestMethod.POST)
+    public SystemSecurityMessage saveSwybXajParamToDb(@RequestBody List<CalibrationXAJVo> calibrationXAJVo) {
+
+        if (CollectionUtils.isEmpty(calibrationXAJVo)){
+            return SystemSecurityMessage.getSuccessMsg("没有新安江数据导入");
+        }
+        try {
+            modelPlanInfoManageService.saveSwybXajParamToDb(calibrationXAJVo);
+            return SystemSecurityMessage.getSuccessMsg("数据管理:维护水文预报参数新安江成功");
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("数据管理:维护水文预报参数新安江成功！");
+
+        }
+    }
+
+    /**
+     * 参数维护 : 获取水文预报参数新安江
+     * @return
+     */
+    @RequestMapping(value = "/getSwybXajParam", method = RequestMethod.GET)
+    public SystemSecurityMessage getSwybXajParam() {
+
+        try {
+            List<YwkPlanBasicXajParam> result = modelPlanInfoManageService.getSwybXajParam();
+            return SystemSecurityMessage.getSuccessMsg("数据维护:获取水文预报参数新安江成功",result);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("数据维护:获取水文预报参数新安江失败！",new ArrayList<>());
+
+        }
+    }
+    /**
+     * 数据维护,维护相关关系参数 TODO 未接入
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/saveSwybXggxParamToDb", method = RequestMethod.POST)
+    public SystemSecurityMessage saveSwybXggxParamToDb(@RequestBody List<CalibrationXGGXVo> calibrationXGGXVo) {
+
+        try {
+            modelPlanInfoManageService.saveSwybXggxParamToDb(calibrationXGGXVo);
+            return SystemSecurityMessage.getSuccessMsg("数据管理:维护相关关系参数成功");
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("数据管理:维护相关关系参数失败！");
+
+        }
+    }
+
+    /**
+     * 参数维护 : 获取水文预报参数相关关系
+     * @return
+     */
+    @RequestMapping(value = "/getSwybXggxParam", method = RequestMethod.GET)
+    public SystemSecurityMessage getSwybXggxParam() {
+
+        try {
+            List<YwkPlanBasicXggxParam> result = modelPlanInfoManageService.getSwybXggxParam();
+            return SystemSecurityMessage.getSuccessMsg("数据维护:获取水文预报参数相关关系成功",result);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("数据维护:获取水文预报参数相关关系失败！",new ArrayList<>());
+
+        }
+    }
+    /**
+     * 数据维护 ，维护预报参数scs跟msjg
+     * @return
+     */
+    @RequestMapping(value = "/saveSwybScsOrMsjgParamToDb/{tag}",method = RequestMethod.POST)
+    public SystemSecurityMessage saveSwybScsOrMsjgParamToDb(@RequestBody CalibrationMSJGAndScsVo  calibrationMSJGAndScsVo,@PathVariable Integer tag){
+        try {
+            modelPlanInfoManageService.saveSwybScsOrMsjgParamToDb(calibrationMSJGAndScsVo,tag);
+            if (tag == 0){
+                return SystemSecurityMessage.getSuccessMsg("数据管理:维护水文预报马斯京根参数成功");
+            }
+            return SystemSecurityMessage.getSuccessMsg("数据管理:维护水文预报SCS-CN参数成功");
+
+        }catch (Exception e){
+            e.printStackTrace();
+            if (tag == 0){
+                return SystemSecurityMessage.getFailMsg("数据管理:维护水文预报马斯京根参数失败！");
+            }
+            return SystemSecurityMessage.getFailMsg("数据管理:维护水文预报SCS-CN参数失败");
+
+        }
+    }
+
+
+    /**
+     * 参数维护 : 获取水文预报参数scs或者msjg
+     * @return
+     */
+    @RequestMapping(value = "/getSwybScsOrMsjgParam", method = RequestMethod.GET)
+    public SystemSecurityMessage getSwybScsOrMsjgParam() {
+
+        try {
+            List<YwkPlanBasicScsmsjgParam> result = modelPlanInfoManageService.getSwybScsOrMsjgParam();
+            return SystemSecurityMessage.getSuccessMsg("数据维护:获取水文预报参数scs或者msjg成功",result);
+        }catch (Exception e){
+            e.printStackTrace();
+            return SystemSecurityMessage.getFailMsg("数据维护:获取水文预报参数scs或者msjg失败！",new ArrayList<>());
+
         }
     }
 

@@ -1,7 +1,10 @@
 package com.essence.business.xqh.api.fhybdd.service;
 
+import com.essence.business.xqh.api.fhybdd.dto.CalibrationMSJGAndScsVo;
+import com.essence.business.xqh.api.fhybdd.dto.CalibrationXAJVo;
+import com.essence.business.xqh.api.fhybdd.dto.CalibrationXGGXVo;
 import com.essence.business.xqh.api.fhybdd.dto.ModelPlanInfoManageDto;
-import com.essence.business.xqh.dao.entity.fhybdd.YwkPlaninfo;
+import com.essence.business.xqh.dao.entity.fhybdd.*;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -96,4 +99,22 @@ public interface ModelPlanInfoManageService {
     Object getHistoryJingDuResult(String planId, String rvcrcrsccd);
 
     void deleteHistoryJingDu(String planId, String rvcrcrsccd);
+
+    List<Map<String, Double>> importParamWithDWX(MultipartFile mutilpartFile);
+
+    void saveSwybDwxParamToDb(List<Map<String, Double>> result);
+
+    void saveSwybXajParamToDb(List<CalibrationXAJVo> calibrationXAJVos);
+
+    void saveSwybXggxParamToDb(List<CalibrationXGGXVo> calibrationXGGXVo);
+
+    void saveSwybScsOrMsjgParamToDb(CalibrationMSJGAndScsVo calibrationMSJGAndScsVo, Integer tag);
+
+    List<YwkPlanBasicDwxParam> getSwybDwxParam();
+
+    List<YwkPlanBasicXajParam> getSwybXajParam();
+
+    List<YwkPlanBasicXggxParam> getSwybXggxParam();
+
+    List<YwkPlanBasicScsmsjgParam> getSwybScsOrMsjgParam();
 }

@@ -3,8 +3,7 @@ package com.essence.business.xqh.service.fhybdd;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.essence.business.xqh.api.fhybdd.dto.ModelPlanInfoManageDto;
-import com.essence.business.xqh.api.fhybdd.dto.WrpRcsBsinDto;
+import com.essence.business.xqh.api.fhybdd.dto.*;
 import com.essence.business.xqh.api.fhybdd.service.ModelCallHandleDataService;
 import com.essence.business.xqh.api.fhybdd.service.ModelPlanInfoManageService;
 import com.essence.business.xqh.common.returnFormat.SystemSecurityMessage;
@@ -14,6 +13,7 @@ import com.essence.business.xqh.dao.entity.fhybdd.*;
 import com.essence.framework.jpa.Criterion;
 import com.essence.framework.jpa.Paginator;
 import com.essence.framework.jpa.PaginatorParam;
+import com.essence.framework.util.StrUtil;
 import javafx.beans.binding.ObjectExpression;
 import jdk.internal.dynalink.linker.LinkerServices;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -36,6 +36,7 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -994,6 +995,198 @@ public class ModelPlanInfoManageServiceImpl implements ModelPlanInfoManageServic
                     + File.separator + "INPUT" + File.separator + planId));
             FileUtil.deleteFile(new File(JDPD_MODEL_RUN + File.separator + planId));
         }
+    }
+
+    @Autowired
+    YwkPlanBasicDwxParamDao ywkPlanBasicDwxParamDao;
+
+
+    @Override
+    public List<Map<String, Double>> importParamWithDWX(MultipartFile mutilpartFile) {
+        //解析ecxel数据 不包含第一行
+        List<String[]> excelList = ExcelUtil.readFiles(mutilpartFile, 0);
+
+        if (excelList == null || excelList.size() < 2) {
+            return new ArrayList<>();
+        }
+        List<String> head = Arrays.asList(excelList.get(0));
+        if (CollectionUtils.isEmpty(head) || head.size() != 3){
+            System.out.println("SCS单位线表格有问题。。。。");
+            return new ArrayList<>();
+        }
+        List<Map<String,Double>> results = new ArrayList<>();
+        try {
+            // 遍历每行数据（除了标题）
+            for (int i = 1; i < excelList.size(); i++) {
+                String[] strings = excelList.get(i);
+                List<String> l = Arrays.asList(strings);
+                if (CollectionUtils.isEmpty(l)){
+                    continue;
+                }
+                Map<String,Double> map = new HashMap();
+                for (int j = 0;j < l.size();j++){
+                    String data = l.get(j);
+                    Double dataValue = null;
+                    if (data != null && !"".equals(data.trim())){
+                        try {
+                            dataValue = Double.parseDouble(data.trim());
+                        }catch (Exception e){
+                            System.out.println("数据非数字，转换异常");
+                            dataValue = null;
+                            e.printStackTrace();
+                        }
+                    }
+                    String key = "";
+                    if (j == 0){
+                        key = "unitOne";
+                    }else if (j == 1){
+                        key = "unitTwo";
+                    }else if (j == 2){
+                        key = "unitThree";
+                    }
+                    map.put(key,dataValue);
+                }
+                results.add(map);
+            }
+
+        }catch (Exception e){
+            System.out.println("error::::"+e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+        CacheUtil.saveOrUpdate("paramCache", "dwx", results);
+        return results;
+    }
+
+    @Transactional
+    @Override
+    public void saveSwybDwxParamToDb(List<Map<String, Double>> result) {
+        ywkPlanBasicDwxParamDao.deleteAll();//删除
+        List<YwkPlanBasicDwxParam> insert = new ArrayList<>();
+        for (Map<String,Double> map : result){
+            YwkPlanBasicDwxParam ywkPlanBasicDwxParam = new YwkPlanBasicDwxParam();
+            Double d1 = map.get("unitOne");
+            Double d2 = map.get("unitTwo");
+            Double d3 = map.get("unitThree");
+            ywkPlanBasicDwxParam.setUnitOne(d1);
+            ywkPlanBasicDwxParam.setUnitTwo(d2);
+            ywkPlanBasicDwxParam.setUnitThree(d3);
+            ywkPlanBasicDwxParam.setcId(StrUtil.getUUID());
+            insert.add(ywkPlanBasicDwxParam);
+        }
+        ywkPlanBasicDwxParamDao.saveAll(insert);
+    }
+
+    @Autowired
+    YwkPlanBasicXajParamDao ywkPlanBasicXajParamDao;
+
+    @Transactional
+    @Override
+    public void saveSwybXajParamToDb(List<CalibrationXAJVo> calibrationXAJVos) {
+        ywkPlanBasicXajParamDao.deleteAll();
+        //todo 这个地方传的zoneid不是那个主键id  不是river_zone的主键id
+        for (CalibrationXAJVo xajVo : calibrationXAJVos){
+            YwkPlanBasicXajParam  ywkPlanBasicXajParam  = new YwkPlanBasicXajParam();
+            ywkPlanBasicXajParam.setcId(StrUtil.getUUID());
+            ywkPlanBasicXajParam.setZoneId(xajVo.getcId());
+            ywkPlanBasicXajParam.setXajB(xajVo.getXajB());
+            ywkPlanBasicXajParam.setXajC(xajVo.getXajC());
+            ywkPlanBasicXajParam.setXajK(xajVo.getXajK());
+            ywkPlanBasicXajParam.setXajWum(xajVo.getXajWum());
+            ywkPlanBasicXajParam.setXajWdm(xajVo.getXajWdm());
+            ywkPlanBasicXajParam.setXajWlm(xajVo.getXajWlm());
+            ywkPlanBasicXajParam.setXajWu0(xajVo.getXajWu0());
+            ywkPlanBasicXajParam.setXajWd0(xajVo.getXajWd0());
+            ywkPlanBasicXajParam.setXajWl0(xajVo.getXajWl0());
+            ywkPlanBasicXajParam.setXajEp(xajVo.getXajEp());
+            ywkPlanBasicXajParamDao.save(ywkPlanBasicXajParam);//保存
+        }
+    }
+
+    @Autowired
+    YwkPlanBasicXggxParamDao ywkPlanBasicXggxParamDao;
+
+    @Transactional
+    @Override
+    public void saveSwybXggxParamToDb(List<CalibrationXGGXVo> calibrationXGGXVos) {
+
+        ywkPlanBasicXggxParamDao.deleteAll();
+
+        for (CalibrationXGGXVo xggxVo : calibrationXGGXVos){
+            YwkPlanBasicXggxParam ywkPlanBasicXggxParam  = new YwkPlanBasicXggxParam();
+            ywkPlanBasicXggxParam.setcId(StrUtil.getUUID());
+            ywkPlanBasicXggxParam.setZoneId(xggxVo.getcId());
+            ywkPlanBasicXggxParam.setXggxA(xggxVo.getXggxA());
+            ywkPlanBasicXggxParam.setXggxB(xggxVo.getXggxB());
+            ywkPlanBasicXggxParamDao.save(ywkPlanBasicXggxParam);//保存
+        }
+    }
+
+    @Autowired
+    YwkPlanBasicScsmsjgParamDao ywkPlanBasicScsmsjgParamDao;
+    @Transactional
+    @Override
+    public void saveSwybScsOrMsjgParamToDb(CalibrationMSJGAndScsVo calibrationMSJGAndScsVo, Integer tag) {
+
+        List<String> ids = new ArrayList<>();
+        Map<String,CalibrationMSJGAndScsVo.MSJGAndScSVo> keyMap = new HashMap();
+        if (calibrationMSJGAndScsVo.getMsjg1() != null){
+            ids.add(calibrationMSJGAndScsVo.getMsjg1().getcId() );
+            keyMap.put(calibrationMSJGAndScsVo.getMsjg1().getcId(),calibrationMSJGAndScsVo.getMsjg1());
+        }
+        if (calibrationMSJGAndScsVo.getMsjg2() != null){
+            ids.add(calibrationMSJGAndScsVo.getMsjg2().getcId() );
+            keyMap.put(calibrationMSJGAndScsVo.getMsjg2().getcId(),calibrationMSJGAndScsVo.getMsjg2());
+        }
+        if (calibrationMSJGAndScsVo.getMsjg3() != null){
+            ids.add(calibrationMSJGAndScsVo.getMsjg3().getcId() );
+            keyMap.put(calibrationMSJGAndScsVo.getMsjg3().getcId(),calibrationMSJGAndScsVo.getMsjg3());
+        }
+
+        List<YwkPlanBasicScsmsjgParam> ywkPlanBasicScsmsjgParams = ywkPlanBasicScsmsjgParamDao.findAll();
+        Map<String, YwkPlanBasicScsmsjgParam> zoneMap = ywkPlanBasicScsmsjgParams.stream().collect(Collectors.toMap(YwkPlanBasicScsmsjgParam::getZoneId, Function.identity()));
+
+        for (String id : ids){
+            YwkPlanBasicScsmsjgParam ywkPlanBasicScsmsjgParam = zoneMap.get(id);
+            if (ywkPlanBasicScsmsjgParam == null){
+                ywkPlanBasicScsmsjgParam  = new YwkPlanBasicScsmsjgParam();
+                ywkPlanBasicScsmsjgParam.setcId(StrUtil.getUUID());
+                ywkPlanBasicScsmsjgParam.setZoneId(id);
+            }
+            CalibrationMSJGAndScsVo.MSJGAndScSVo msjgAndScSVo = keyMap.get(id);
+            if (tag == 0){
+                ywkPlanBasicScsmsjgParam.setMsjgK(msjgAndScSVo.getMsjgK());
+                ywkPlanBasicScsmsjgParam.setMsjgX(msjgAndScSVo.getMsjgX());
+            }else {
+                ywkPlanBasicScsmsjgParam.setScsCn(msjgAndScSVo.getScsCn());
+            }
+
+            ywkPlanBasicScsmsjgParamDao.save(ywkPlanBasicScsmsjgParam);//保存
+        }
+    }
+
+    @Override
+    public List<YwkPlanBasicDwxParam> getSwybDwxParam() {
+        List<YwkPlanBasicDwxParam> all = ywkPlanBasicDwxParamDao.findAll();
+        return all;
+    }
+
+    @Override
+    public List<YwkPlanBasicXajParam> getSwybXajParam() {
+        List<YwkPlanBasicXajParam> all = ywkPlanBasicXajParamDao.findAll();
+        return all;
+    }
+
+    @Override
+    public List<YwkPlanBasicXggxParam> getSwybXggxParam() {
+        List<YwkPlanBasicXggxParam> all = ywkPlanBasicXggxParamDao.findAll();
+        return all;
+    }
+
+    @Override
+    public List<YwkPlanBasicScsmsjgParam> getSwybScsOrMsjgParam() {
+        List<YwkPlanBasicScsmsjgParam> all = ywkPlanBasicScsmsjgParamDao.findAll();
+        return all;
     }
 }
 

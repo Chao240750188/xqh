@@ -164,5 +164,14 @@
            overflowToDisk="false"
            memoryStoreEvictionPolicy="FIFO"
     />
+    <!-- 预报参数-缓存  -->
+    <cache name="paramCache"
+           maxElementsInMemory="10000"
+           eternal="false"
+           timeToIdleSeconds="1800"
+           timeToLiveSeconds="1800"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="FIFO"
+    />
 
 </ehcache>
